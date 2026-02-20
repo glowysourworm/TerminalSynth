@@ -50,12 +50,9 @@ have experience on a bigger project.
 
 The synth currently has:
 
-1) Oscillator (VCO)
-2) Input Envelope
-3) Envelope Filter (Manual / VLO / Sweep)
-4) Compressor
-5) Reverb (Airwindows kCathedral)
-6) Delay (simple tap delay via a Comb Filter)
+1) Oscillator Section (with Envelope)
+2) Airwindows Effects Library (see airwindows@github.com
+3) Wave table based sample library (forth-coming)
 
 There are people who dedicate their LIVES to audio effects! I'd highly recommend visiting
 the Airwindows DSP / DAW site and looking through their source code.
