@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug_Brinstar|Win32">
+      <Configuration>Debug_Brinstar</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_Brinstar|x64">
+      <Configuration>Debug_Brinstar</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{C957E0FF-74D6-4972-B4C9-9029ED733023}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>consolesynth</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Brinstar|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <PreferredToolArchitecture>
+    </PreferredToolArchitecture>
+    <UseDynamicDebugging>true</UseDynamicDebugging>
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Brinstar|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Brinstar|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Brinstar|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <Linkage-SDL>
+    </Linkage-SDL>
+    <SdlEntryPoint-SDL>
+    </SdlEntryPoint-SDL>
+    <IncludePath>C:\Backup\_Source\Git\console-synth\rtaudio-master;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Backup\_Source\Git\console-synth\rtaudio-master\.libs;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Brinstar|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <Linkage-SDL />
+    <SdlEntryPoint-SDL />
+    <IncludePath>C:\Backup\_Source\Git\console-synth\rtaudio-master;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Backup\_Source\Git\console-synth\rtaudio-master\.libs;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <CopyLocalProjectReference>true</CopyLocalProjectReference>
+    <IncludePath>..\airwindows-plugins;$(LIB)\rtaudio;$(LIB)\FTXUI\include;$(IncludePath)</IncludePath>
+    <SourcePath>..\airwindows-plugins;$(SourcePath)</SourcePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Brinstar|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;__WINDOWS_WASAPI__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)portaudio\include;$(SolutionDir)SDL2-2.0.12\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Brinstar|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;__WINDOWS_WASAPI__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)portaudio\include;$(SolutionDir)SDL2-2.0.12\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp23</LanguageStandard>
+      <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(LIB)\rtaudio\Debug;$(LIB)\FTXUI\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ftxui-component.lib;ftxui-dom.lib;ftxui-screen.lib;rtaudiod.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>LinkVerbose</ShowProgress>
+      <ForceFileOutput>MultiplyDefinedSymbolOnly</ForceFileOutput>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy /Y C:\Backup\_Source\Git\rtaudio\build\Debug\rtaudiod.dll $(OutDir)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Brinstar|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="AirwindowsEffect.cpp" />
+    <ClCompile Include="AudioController.cpp" />
+    <ClCompile Include="BiQuadFilter.cpp" />
+    <ClCompile Include="CombFilter.cpp" />
+    <ClCompile Include="IntervalTimer.cpp" />
+    <ClCompile Include="ButterworthFilter.cpp" />
+    <ClCompile Include="MainController.cpp" />
+    <ClCompile Include="MainUI.cpp" />
+    <ClCompile Include="Oscillator.cpp" />
+    <ClCompile Include="SignalChain.cpp" />
+    <ClCompile Include="SignalFactory.cpp" />
+    <ClCompile Include="Binasc.cpp" />
+    <ClCompile Include="Envelope.cpp" />
+    <ClCompile Include="LoopTimer.cpp" />
+    <ClCompile Include="MidiEvent.cpp" />
+    <ClCompile Include="MidiEventList.cpp" />
+    <ClCompile Include="MidiFile.cpp" />
+    <ClCompile Include="MidiMessage.cpp" />
+    <ClCompile Include="Options.cpp" />
+    <ClCompile Include="PlaybackClock.cpp" />
+    <ClCompile Include="RtAudioController.cpp" />
+    <ClCompile Include="StopWatch.cpp" />
+    <ClCompile Include="Synth.cpp" />
+    <ClCompile Include="program.cpp" />
+    <ClCompile Include="SynthSettings.cpp" />
+    <ClCompile Include="SynthEffect.cpp" />
+    <ClCompile Include="SynthNote.cpp" />
+    <ClCompile Include="SynthNoteMap.cpp" />
+    <ClCompile Include="SynthNoteQueue.cpp" />
+    <ClCompile Include="UIController.cpp" />
+    <ClCompile Include="WaveTable.cpp" />
+    <ClCompile Include="WaveTableCache.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Accumulator.h" />
+    <ClInclude Include="AirwindowsEffect.h" />
+    <ClInclude Include="AtomicLock.h" />
+    <ClInclude Include="BiQuadFilter.h" />
+    <ClInclude Include="CheckListUI.h" />
+    <ClInclude Include="CombFilter.h" />
+    <ClInclude Include="EffectUI.h" />
+    <ClInclude Include="AudioController.h" />
+    <ClInclude Include="BaseController.h" />
+    <ClInclude Include="CheckboxUI.h" />
+    <ClInclude Include="EqualizerOutput.h" />
+    <ClInclude Include="IntervalTimer.h" />
+    <ClInclude Include="MainController.h" />
+    <ClInclude Include="MainUI.h" />
+    <ClInclude Include="Oscillator.h" />
+    <ClInclude Include="Binasc.h" />
+    <ClInclude Include="ButterworthFilter.h" />
+    <ClInclude Include="Constant.h" />
+    <ClInclude Include="Envelope.h" />
+    <ClInclude Include="LoopTimer.h" />
+    <ClInclude Include="MidiEvent.h" />
+    <ClInclude Include="MidiEventList.h" />
+    <ClInclude Include="MidiFile.h" />
+    <ClInclude Include="MidiMessage.h" />
+    <ClInclude Include="MidiPlaybackDevice.h" />
+    <ClInclude Include="Options.h" />
+    <ClInclude Include="OscillatorParameters.h" />
+    <ClInclude Include="OscillatorUI.h" />
+    <ClInclude Include="OutputUI.h" />
+    <ClInclude Include="PlaybackClock.h" />
+    <ClInclude Include="PlaybackDevice.h" />
+    <ClInclude Include="PlaybackBuffer.h" />
+    <ClInclude Include="OutputSettings.h" />
+    <ClInclude Include="PlaybackFrame.h" />
+    <ClInclude Include="RtAudioController.h" />
+    <ClInclude Include="SignalChain.h" />
+    <ClInclude Include="SignalChainSettings.h" />
+    <ClInclude Include="SignalChainUI.h" />
+    <ClInclude Include="SignalFactory.h" />
+    <ClInclude Include="SignalBase.h" />
+    <ClInclude Include="SignalParameter.h" />
+    <ClInclude Include="EffectRegistry.h" />
+    <ClInclude Include="SignalSettings.h" />
+    <ClInclude Include="SliderUI.h" />
+    <ClInclude Include="StopWatch.h" />
+    <ClInclude Include="Synth.h" />
+    <ClInclude Include="SynthSettings.h" />
+    <ClInclude Include="SynthEffect.h" />
+    <ClInclude Include="SynthInformationUI.h" />
+    <ClInclude Include="SynthNote.h" />
+    <ClInclude Include="SynthNoteMap.h" />
+    <ClInclude Include="SynthNoteQueue.h" />
+    <ClInclude Include="SynthPlaybackDevice.h" />
+    <ClInclude Include="UIBase.h" />
+    <ClInclude Include="UIController.h" />
+    <ClInclude Include="WaveTable.h" />
+    <ClInclude Include="WaveTableCache.h" />
+    <ClInclude Include="WindowsKeyCodes.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\airwindows-plugins\airwindows-plugins.vcxproj">
+      <Project>{6334518d-36f2-45f5-b518-bb88898954ff}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RtAudioUserData.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

@@ -1,0 +1,10 @@
+DSP RESOURCES
+-------------
+
+https://github.com/BillyDM/Awesome-Audio-DSP
+http://www.rossbencina.com/code/real-time-audio-programming-101-time-waits-for-nothing
+
+Bi-Quad Implementation:
+-----------------------
+
+https://webaudio.github.io/Audio-EQ-Cookbook/audio-eq-cookbook.html
