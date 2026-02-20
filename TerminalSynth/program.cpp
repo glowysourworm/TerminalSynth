@@ -92,11 +92,11 @@ int main(int argc, char* argv[], char* envp[])
 	}
 
 	// Manual keyboard input
-	else
-	{
+	//else
+	//{
 		if (!controller.Initialize(configuration, parameters, registry))
 			return -1;
-	}
+	//}
 
 	controller.Start();
 
