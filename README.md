@@ -51,7 +51,7 @@ have experience on a bigger project.
 The synth currently has:
 
 1) Oscillator Section (with Envelope)
-2) Airwindows Effects Library (see airwindows@github.com
+2) Airwindows Effects Library (see airwindows@github.com)
 3) Wave table based sample library (forth-coming)
 
 There are people who dedicate their LIVES to audio effects! I'd highly recommend visiting
