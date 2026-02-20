@@ -1,4 +1,4 @@
-# console-synth
+# Terminal Synth
 
 A console synthesizer implementation using FTXUI / RTAudio / Airwindows built in native C++ to
 play around with and understand real time audio. 
@@ -65,9 +65,9 @@ the Airwindows DSP / DAW site and looking through their source code.
 Currently, you'll need Visual Studio 2022 (Community Edition), or an equivalent compiler
 to build and run this project.
 
-For dependencies, you'll need to build FTXUI, RT Audio, and set up your project to build
-and run the terminal synth based on these libs. In the future, there could be a build 
-process to help out users; but it depends on how much time I have to finish it. 
+Check environment variables, and project settings. You'll need to install RtAudio, and
+FTXUI at the $LIB environment location. This will be automated, in the future, using
+CMake.
 
 For now, you'll have to use what's there; and I'd be happy to answer any questions you
 have.
