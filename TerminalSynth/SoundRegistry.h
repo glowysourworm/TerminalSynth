@@ -23,7 +23,7 @@ class SoundRegistry
 {
 public:
 
-	SoundRegistry(const std::vector<std::string>& soundBanks, const std::map<std::string, std::vector<std::string>>& soundBankMap);
+	SoundRegistry();
 	~SoundRegistry();
 
 	bool Initialize(float samplingRate);
@@ -32,9 +32,6 @@ public:
 	std::string GetName(int index) const;
 	SignalSettings GetSettings(const std::string& name) const;
 	SignalBase* GetEffect(const std::string& name) const;
-
-	std::vector<std::string> GetSoundBanks() const;
-	std::vector<std::string> GetSoundNames(const std::string& soundBank) const;
 
 private:
 
@@ -46,27 +43,13 @@ private:
 
 	// SignalBase* -> Signal Chain Settings (ALL EFFECTS)
 	std::map<SignalBase*, SignalSettings*>* _signalChainAll;
-
-	// Sound Banks / Sound Bank Entries
-	std::vector<std::string>* _soundBanks;
-	std::map<std::string, std::vector<std::string>*>* _soundBankMap;
 };
 
-SoundRegistry::SoundRegistry(const std::vector<std::string>& soundBanks, const std::map<std::string, std::vector<std::string>>& soundBankMap)
+SoundRegistry::SoundRegistry()
 {
 	_airwinEffectRegistry = new AirwinRegistry();
 	_effectsByName = new std::map<std::string, SignalBase*>();
 	_signalChainAll = new std::map<SignalBase*, SignalSettings*>();
-	_soundBanks = new std::vector<std::string>(soundBanks);
-	_soundBankMap = new std::map<std::string, std::vector<std::string>*>();
-
-	for (auto iter = soundBankMap.begin(); iter != soundBankMap.end(); ++iter)
-	{
-		// (MEMORY!) ~SoundRegistry
-		std::vector<std::string>* soundBankList = new std::vector<std::string>(iter->second);
-
-		_soundBankMap->insert(std::make_pair(iter->first, soundBankList));
-	}
 }
 
 SoundRegistry::~SoundRegistry()
@@ -76,10 +59,6 @@ SoundRegistry::~SoundRegistry()
 		delete iter->second;
 	}
 	for (auto iter = _signalChainAll->begin(); iter != _signalChainAll->end(); ++iter)
-	{
-		delete iter->second;
-	}
-	for (auto iter = _soundBankMap->begin(); iter != _soundBankMap->end(); ++iter)
 	{
 		delete iter->second;
 	}
@@ -157,16 +136,6 @@ SignalSettings SoundRegistry::GetSettings(const std::string& name) const
 SignalBase* SoundRegistry::GetEffect(const std::string& name) const
 {
 	return _effectsByName->at(name);
-}
-
-std::vector<std::string> SoundRegistry::GetSoundBanks() const
-{
-	return *_soundBanks;
-}
-
-std::vector<std::string> SoundRegistry::GetSoundNames(const std::string& soundBank) const
-{
-	return *_soundBankMap->at(soundBank);
 }
 
 #endif

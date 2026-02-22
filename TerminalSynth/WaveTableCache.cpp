@@ -9,7 +9,6 @@
 #include "WaveTableCache.h"
 #include "WaveTableCacheKey.h"
 #include <exception>
-#include <filesystem>
 #include <map>
 #include <sndfile.h>
 #include <string>
@@ -71,30 +70,20 @@ bool WaveTableCache::Initialize_SoundBanks(const SynthSettings* synthSettings, c
 {
 	try
 	{
-		// Sound Library Folder:  /{base folder}/{individual library folder(s)}
-		for (auto const& dirEntry : std::filesystem::directory_iterator{ synthSettings->GetSoundBankDirectory() })
+		std::vector<std::string> soundBanks = synthSettings->GetSoundBankSettings()->GetSoundBanks();
+
+		for (int index = 0; index < soundBanks.size(); index++)
 		{
-			// {individual library folder}
-			if (dirEntry.is_directory())
+			std::vector<std::string> soundNames = synthSettings->GetSoundBankSettings()->GetSoundNames(soundBanks[index]);
+
+			for (int nameIndex = 0; nameIndex < soundNames.size(); nameIndex++)
 			{
-				// Sound Bank:  Iterate sound files in sub-directory
-				for (auto const& dirSubEntry : std::filesystem::directory_iterator{ dirEntry.path() })
-				{
-					if (dirSubEntry.path().extension().string() == ".wav" ||
-						dirSubEntry.path().extension().string() == ".aif" ||
-						dirSubEntry.path().extension().string() == ".aiff")
-					{
-						int extensionSize = dirSubEntry.path().extension().string().size();
-						std::string soundBankName = dirEntry.path().filename().string();
-						std::string soundFileName = dirSubEntry.path().filename().string();
-						std::string soundName = soundFileName.replace(soundFileName.size() - extensionSize, soundFileName.size() - 1, "");		// Remove Extension
+				std::string soundFileName = synthSettings->GetSoundBankSettings()->GetSoundFileName(soundBanks[index], soundNames[nameIndex]);
 
-						// (MEMORY!) ~WaveTableCache
-						WTCacheKey_SoundBank* cacheKey = new WTCacheKey_SoundBank(soundBankName, soundName, soundFileName);
+				// (MEMORY!) ~WaveTableCache
+				WTCacheKey_SoundBank* cacheKey = new WTCacheKey_SoundBank(soundBanks[index], soundNames[nameIndex], soundFileName);
 
-						_soundBankList->push_back(cacheKey);
-					}
-				}
+				_soundBankList->push_back(cacheKey);
 			}
 		}
 	}
@@ -117,7 +106,7 @@ bool WaveTableCache::Initialize_Oscillators(const SynthSettings* synthSettings, 
 			for (int oscillatorType = 0; oscillatorType <= (int)BuiltInOscillators::SynthesizedStringPluck; oscillatorType++)
 			{
 				float frequency = TerminalSynth::GetMidiFrequency(midiNumber);
-				OscillatorParameters parameters((BuiltInOscillators)oscillatorType, frequency, SIGNAL_LOW, SIGNAL_HIGH, Envelope());
+				OscillatorParameters parameters(OscillatorType::BuiltIn, (BuiltInOscillators)oscillatorType, "", "", frequency, SIGNAL_LOW, SIGNAL_HIGH, Envelope());
 
 				// (MEMORY!) ~WaveTableCache
 				WTCacheKey_Oscillator* cacheKey = new WTCacheKey_Oscillator(parameters, midiNumber, outputSettings->GetSamplingRate());

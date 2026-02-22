@@ -9,6 +9,7 @@
 #include "SignalChainSettings.h"
 #include "SignalChainUI.h"
 #include "SignalSettings.h"
+#include "SoundBankSettings.h"
 #include "SynthInformationUI.h"
 #include "SynthSettings.h"
 #include "UIBase.h"
@@ -21,7 +22,7 @@
 #include <string>
 #include <vector>
 
-MainUI::MainUI(const std::string& title, const ftxui::Color& titleColor) : UIBase(title, title, titleColor)
+MainUI::MainUI(const SoundBankSettings* soundBankSettings, const std::string& title, const ftxui::Color& titleColor) : UIBase(title, title, titleColor)
 {
 	// Tab Headers
 	_tabHeaders = new std::vector<std::string>({
@@ -33,7 +34,7 @@ MainUI::MainUI(const std::string& title, const ftxui::Color& titleColor) : UIBas
 	_airwinPluginListUI = new CheckListUI(ftxui::Color::White);
 	_signalChainUI = new SignalChainUI();
 	_synthInformationUI = new SynthInformationUI("Terminal Synth", ftxui::Color::GreenYellow);
-	_oscillatorUI = new OscillatorUI("Oscillator", "Oscillator", ftxui::Color::Blue);
+	_oscillatorUI = new OscillatorUI(soundBankSettings, "Oscillator", "Oscillator", ftxui::Color::Blue);
 	_outputUI = new OutputUI("Output", ftxui::Color::Green);
 
 	_scrollY = new float(0);

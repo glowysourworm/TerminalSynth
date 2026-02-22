@@ -7,18 +7,19 @@
 #include "Envelope.h"
 #include "OscillatorParameters.h"
 #include "SliderUI.h"
+#include "SoundBankSettings.h"
+#include "SoundSourceUI.h"
 #include "UIBase.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
 #include <string>
-#include <vector>
 
 class OscillatorUI : public UIBase<OscillatorParameters>
 {
 public:
-	OscillatorUI(const std::string& name, const std::string& label, const ftxui::Color& labelColor);
+	OscillatorUI(const SoundBankSettings* soundBankSettings, const std::string& name, const std::string& label, const ftxui::Color& labelColor);
 	~OscillatorUI();
 
 	void Initialize(const OscillatorParameters& parameters) override;
@@ -32,11 +33,8 @@ private:
 
 	ftxui::Component _component;
 
-	// Oscillator Selected Index
-	int* _oscillatorSelectedIndex;
-
-	// Oscillator Choices
-	std::vector<std::string>* _oscillatorItems;
+	// Sound Source UI
+	SoundSourceUI* _soundSourceUI;
 
 	// Slider UI's
 	SliderUI* _attack;
@@ -46,18 +44,10 @@ private:
 	SliderUI* _sustainPeak;
 };
 
-OscillatorUI::OscillatorUI(const std::string& name, const std::string& label, const ftxui::Color& labelColor)
+OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const std::string& name, const std::string& label, const ftxui::Color& labelColor)
 	: UIBase(name, label, labelColor)
 {
-	_oscillatorItems = new std::vector<std::string>({
-		"Sine",
-		"Square",
-		"Triangle",
-		"Sawtooth",
-		"SynthesizedStringPluck"
-		});
-
-	_oscillatorSelectedIndex = new int(0);
+	_soundSourceUI = new SoundSourceUI(soundBankSettings, labelColor);
 
 	_attack = new SliderUI(0.1f, 0.01f, 1.0f, 0.01f, "Attack", "Attack   (s) {:.2f}", ftxui::Color::White);
 	_decay = new SliderUI(0.1f, 0.01f, 2.0f, 0.01f, "Decay", "Decay    (s) {:.2f}", ftxui::Color::White);
@@ -69,9 +59,7 @@ OscillatorUI::~OscillatorUI()
 {
 	UIBase::~UIBase();
 
-	delete _oscillatorItems;
-	delete _oscillatorSelectedIndex;
-
+	delete _soundSourceUI;
 	delete _attack;
 	delete _decay;
 	delete _release;
@@ -85,6 +73,7 @@ void OscillatorUI::Initialize(const OscillatorParameters& parameters)
 
 	Envelope envelope = *parameters.GetEnvelope();
 
+	_soundSourceUI->Initialize(parameters);
 	_attack->Initialize(envelope.GetAttack());
 	_decay->Initialize(envelope.GetDecay());
 	_release->Initialize(envelope.GetRelease());
@@ -106,14 +95,13 @@ void OscillatorUI::Initialize(const OscillatorParameters& parameters)
 		_sustainPeak->GetComponent()
 	});
 
-	auto radioboxUI = ftxui::Radiobox(_oscillatorItems, _oscillatorSelectedIndex);
-
 	auto oscillatorUI = ftxui::Container::Vertical(
-		{
-			ftxui::Renderer([&] { return ftxui::text(this->GetLabel()) | ftxui::color(this->GetLabelColor()); }),
-			ftxui::Renderer([&] { return ftxui::separator(); }),
-			radioboxUI | ftxui::flex_grow
-		});
+	{
+		ftxui::Renderer([&] { return ftxui::text(this->GetLabel()) | ftxui::color(this->GetLabelColor()); }),
+		ftxui::Renderer([&] { return ftxui::separator(); }),
+
+		_soundSourceUI->GetComponent() | ftxui::flex_grow
+	});
 
 	_component = ftxui::Container::Horizontal({
 
@@ -130,6 +118,7 @@ ftxui::Component OscillatorUI::GetComponent()
 
 void OscillatorUI::UpdateComponent(bool clearDirty)
 {
+	_soundSourceUI->UpdateComponent(clearDirty);
 	_attack->UpdateComponent(clearDirty);
 	_decay->UpdateComponent(clearDirty);
 	_release->UpdateComponent(clearDirty);
@@ -150,16 +139,14 @@ void OscillatorUI::FromUI(OscillatorParameters& destination, bool clearDirty)
 {
 	float attack, decay, release, attackPeak, sustainPeak;
 
+	_soundSourceUI->FromUI(destination, clearDirty);
 	_attack->FromUI(attack, clearDirty);
 	_decay->FromUI(decay, clearDirty);
 	_release->FromUI(release, clearDirty);
 	_attackPeak->FromUI(attackPeak, clearDirty);
 	_sustainPeak->FromUI(sustainPeak, clearDirty);
 
-	BuiltInOscillators builtInType = (BuiltInOscillators)*_oscillatorSelectedIndex;
-	Envelope envelope(attack, decay, 0, release, attackPeak, sustainPeak);
-
-	destination.Update(OscillatorParameters(builtInType, 0, SIGNAL_LOW, SIGNAL_HIGH, envelope));
+	destination.GetEnvelope()->Set(attack, decay, 0, release, attackPeak, sustainPeak);
 
 	if (clearDirty)
 		this->ClearDirty();

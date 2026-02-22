@@ -4,13 +4,9 @@
 #include "RtAudioController.h"
 #include "SoundRegistry.h"
 #include "SynthSettings.h"
-#include "WaveTableCache.h"
 #include "Windows.h"
 #include "WindowsKeyCodes.h"
-#include <map>
 #include <string>
-#include <utility>
-#include <vector>
 
 /// <summary>
 /// This will eventually come from a file, so there'll be some new component
@@ -77,40 +73,20 @@ SynthSettings* CreateConfiguration(OutputSettings* deviceSettings, const std::st
 
 int main(int argc, char* argv[], char* envp[])
 {
-	// This pointer is shared (see controllers)
-	//
-	OutputSettings* parameters = RtAudioController::GetPlaybackParametersUnsafe();
-	SynthSettings* configuration = CreateConfiguration(parameters, "");
-
-	// Sound Banks
-	std::vector<std::string> soundBanks;
-	std::map<std::string, std::vector<std::string>> soundBankMap;
+	std::string soundBankDirectory = "";
 
 	// Arguments:  {Sound Bank Dir}, ..
 	if (argc > 1)
 	{
 		// Sound Library Folder:  /{base folder}/{individual library folder(s)}
-		configuration->SetSoundBankDirectory(std::string(argv[1]));
-
-		// Load Sound Banks:  The UI needs a copy of the strings to call a sound bank. The rest of the
-		//					  WaveTableCache* will be on the AudioController* thread.
-		//
-		WaveTableCache waveTableCache;
-
-		// -> Initialize() -> Searches sound bank directories...
-		waveTableCache.Initialize(configuration, parameters);
-		waveTableCache.GetSoundBanks(soundBanks);
-		
-		for (int index = 0; index < soundBanks.size(); index++)
-		{
-			std::vector<std::string> soundNames;
-			waveTableCache.GetSoundNames(soundBanks[index], soundNames);
-			
-			soundBankMap.insert(std::make_pair(soundBanks[index], soundNames));
-		}
+		soundBankDirectory = std::string(argv[1]);
 	}
 
-	SoundRegistry* registry = new SoundRegistry(soundBanks, soundBankMap);									// NEEDS INITIALIZATION (W/ SAMPLING RATE)
+	// This pointer is shared (see controllers)
+	//
+	OutputSettings* parameters = RtAudioController::GetPlaybackParametersUnsafe();
+	SynthSettings* configuration = CreateConfiguration(parameters, soundBankDirectory);
+	SoundRegistry* registry = new SoundRegistry();											// NEEDS INITIALIZATION (W/ SAMPLING RATE)
 	AtomicLock* atomicLock = new AtomicLock();
 
 	// Manual keyboard input

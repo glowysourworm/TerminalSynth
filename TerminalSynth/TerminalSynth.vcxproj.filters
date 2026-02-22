@@ -353,6 +353,12 @@
     <ClInclude Include="WaveTableCacheKey.h">
       <Filter>Header Files\Signal</Filter>
     </ClInclude>
+    <ClInclude Include="SoundBankSettings.h">
+      <Filter>Header Files\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="SoundSourceUI.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="RtAudioUserData.h">

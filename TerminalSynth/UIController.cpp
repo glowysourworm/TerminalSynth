@@ -42,7 +42,7 @@ bool UIController::Initialize(SynthSettings* configuration, OutputSettings* para
 	// https://arthursonzogni.github.io/FTXUI/
 	//
 
-	_mainUI = new MainUI("Terminal Synth", ftxui::Color::GreenYellow);
+	_mainUI = new MainUI(configuration->GetSoundBankSettings(), "Terminal Synth", ftxui::Color::GreenYellow);
 	_mainUI->Initialize(*configuration);
 
 	return true;

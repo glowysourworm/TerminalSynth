@@ -7,6 +7,7 @@
 #include "OscillatorParameters.h"
 #include "OutputSettings.h"
 #include "SignalChainSettings.h"
+#include "SoundBankSettings.h"
 #include "SynthNoteMap.h"
 #include "WindowsKeyCodes.h"
 #include <string>
@@ -22,8 +23,7 @@ public:
 	bool IsDirty() const;
 	void ClearDirty();
 
-	void SetSoundBankDirectory(const std::string& directory);
-
+	void SetSoundBankSettings(const SoundBankSettings& parameters);
 	void SetOscillator(const OscillatorParameters& value);
 	void SetSignalChain(const SignalChainSettings& elements);
 	void SetEqualizerOutput(const EqualizerOutput& value);
@@ -34,9 +34,7 @@ public:
 	void SetMidiNote(WindowsKeyCodes keyCode, int midiNote);
 
 	void SetOutputLeftRight(float value);
-	void SetOutputGain(float value);
-
-	std::string GetSoundBankDirectory() const;
+	void SetOutputGain(float value);	
 
 	int GetMidiLow() const;
 	int GetMidiHigh() const;
@@ -46,6 +44,7 @@ public:
 	int GetMidiNote(WindowsKeyCodes keyCode) const;
 	WindowsKeyCodes GetKeyCode(int midiNote) const;
 
+	SoundBankSettings* GetSoundBankSettings() const;
 	OscillatorParameters* GetOscillator() const;
 	SignalChainSettings* GetSignalChainRegistry() const;
 	OutputSettings* GetOutputSettings() const;
@@ -61,9 +60,7 @@ public:
 private:
 
 	SynthNoteMap* _keyMap;
-
-	std::string* _soundBankDirectory;
-
+	SoundBankSettings* _soundBankSettings;
 	OutputSettings* _outputSettings;
 	EqualizerOutput* _equalizerOutput;
 

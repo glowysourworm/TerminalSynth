@@ -55,7 +55,10 @@ bool SynthSoundMap::SetNote(int midiNumber, bool pressed, double absoluteTime, c
 			// Oscillator Parameters
 			OscillatorParameters currentParameters = *configuration->GetOscillator();
 			OscillatorParameters parameters(
+				currentParameters.GetType(),
 				currentParameters.GetBuiltInType(),
+				currentParameters.GetSoundBank(),
+				currentParameters.GetSoundName(),
 				frequency,
 				currentParameters.GetSignalLow(),
 				currentParameters.GetSignalHigh(),

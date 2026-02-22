@@ -8,6 +8,7 @@
 #include "OutputUI.h"
 #include "SignalChainSettings.h"
 #include "SignalChainUI.h"
+#include "SoundBankSettings.h"
 #include "SynthInformationUI.h"
 #include "SynthSettings.h"
 #include "UIBase.h"
@@ -20,7 +21,7 @@ class MainUI : public UIBase<SynthSettings>
 {
 public:
 
-	MainUI(const std::string& title, const ftxui::Color& titleColor);
+	MainUI(const SoundBankSettings* soundBankSettings, const std::string& title, const ftxui::Color& titleColor);
 	~MainUI();
 
 	void Initialize(const SynthSettings& initialValue) override;

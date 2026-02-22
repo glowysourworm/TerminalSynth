@@ -311,9 +311,11 @@
     <ClInclude Include="SignalFactory.h" />
     <ClInclude Include="SignalBase.h" />
     <ClInclude Include="SignalParameter.h" />
+    <ClInclude Include="SoundBankSettings.h" />
     <ClInclude Include="SoundRegistry.h" />
     <ClInclude Include="SignalSettings.h" />
     <ClInclude Include="SliderUI.h" />
+    <ClInclude Include="SoundSourceUI.h" />
     <ClInclude Include="StopWatch.h" />
     <ClInclude Include="Synth.h" />
     <ClInclude Include="SynthSettings.h" />

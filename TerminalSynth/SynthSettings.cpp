@@ -4,6 +4,7 @@
 #include "OscillatorParameters.h"
 #include "OutputSettings.h"
 #include "SignalChainSettings.h"
+#include "SoundBankSettings.h"
 #include "SynthNoteMap.h"
 #include "SynthSettings.h"
 #include "WindowsKeyCodes.h"
@@ -14,11 +15,11 @@ SynthSettings::SynthSettings(OutputSettings* deviceSettings, const std::string& 
 	_keyMap = new SynthNoteMap();
 	_isDirty = false;
 
-	_soundBankDirectory = new std::string(soundBankDirectory);
-	_oscillatorParameters = new OscillatorParameters(BuiltInOscillators::Sine, 440, SIGNAL_LOW, SIGNAL_HIGH, Envelope());
+	_oscillatorParameters = new OscillatorParameters(OscillatorType::BuiltIn, BuiltInOscillators::Sine, "", "", 440, SIGNAL_LOW, SIGNAL_HIGH, Envelope());
 	_signalChainRegistry = new SignalChainSettings();
 	_outputSettings = deviceSettings;
-	_equalizerOutput = new EqualizerOutput();
+	_equalizerOutput = new EqualizerOutput();	
+	_soundBankSettings = new SoundBankSettings();
 
 	_midiLow = MIDI_PIANO_LOW_NUMBER;
 	_midiHigh = MIDI_PIANO_HIGH_NUMBER;
@@ -31,13 +32,13 @@ SynthSettings::SynthSettings(const SynthSettings& copy)
 	if (_keyMap != nullptr)
 		delete _keyMap;
 
-	delete _soundBankDirectory;
+	delete _soundBankSettings;
 	delete _oscillatorParameters;
 	delete _signalChainRegistry;
 	delete _outputSettings;
 	delete _equalizerOutput;
 
-	_soundBankDirectory = new std::string(copy.GetSoundBankDirectory());
+	_soundBankSettings = new SoundBankSettings(*copy.GetSoundBankSettings());
 
 	_outputSettings = copy.GetOutputSettings();
 	_equalizerOutput = copy.GetEqualizerOutput();
@@ -62,6 +63,7 @@ SynthSettings::~SynthSettings()
 	delete _signalChainRegistry;
 	delete _outputSettings;
 	delete _equalizerOutput;
+	delete _soundBankSettings;
 }
 bool SynthSettings::IsDirty() const
 {
@@ -72,10 +74,9 @@ void SynthSettings::ClearDirty()
 	_isDirty = false;
 }
 
-void SynthSettings::SetSoundBankDirectory(const std::string& directory)
+void SynthSettings::SetSoundBankSettings(const SoundBankSettings& parameters)
 {
-	_soundBankDirectory->clear();
-	_soundBankDirectory->append(directory);
+	_soundBankSettings = new SoundBankSettings(parameters);
 }
 
 void SynthSettings::SetOscillator(const OscillatorParameters& value)
@@ -128,6 +129,10 @@ void SynthSettings::SetOutputSettings(const OutputSettings& value, bool updateDe
 SynthNoteMap SynthSettings::GetNoteMap() const
 {
 	return *_keyMap;
+}
+SoundBankSettings* SynthSettings::GetSoundBankSettings() const
+{
+	return _soundBankSettings;
 }
 OscillatorParameters* SynthSettings::GetOscillator() const
 {
@@ -216,10 +221,5 @@ void SynthSettings::SetOutputGain(float value)
 		_isDirty = true;
 
 	_gain = value;
-}
-
-std::string SynthSettings::GetSoundBankDirectory() const
-{
-	return *_soundBankDirectory;
 }
 
