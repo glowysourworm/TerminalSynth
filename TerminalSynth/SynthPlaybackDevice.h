@@ -4,7 +4,7 @@
 #define SYNTH_PLAYBACK_DEVICE_H
 
 #include "Accumulator.h"
-#include "EffectRegistry.h"
+#include "SoundRegistry.h"
 #include "OutputSettings.h"
 #include "PlaybackBuffer.h"
 #include "PlaybackDevice.h"
@@ -23,8 +23,8 @@ public:
 	SynthPlaybackDevice();
 	~SynthPlaybackDevice();
 
-	bool Initialize(const EffectRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters) override;
-	bool Update(const EffectRegistry* effectRegistry, const SynthSettings* configuration) override;
+	bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters) override;
+	bool Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration) override;
 	bool SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration) override;
 
 	int WritePlaybackBuffer(
@@ -77,7 +77,7 @@ SynthPlaybackDevice<TSignal>::~SynthPlaybackDevice()
 }
 
 template<SignalValue TSignal>
-bool SynthPlaybackDevice<TSignal>::Initialize(const EffectRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
+bool SynthPlaybackDevice<TSignal>::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
 {
 	_numberOfChannels = parameters->GetNumberOfChannels();
 	_samplingRate = parameters->GetSamplingRate();
@@ -94,7 +94,7 @@ bool SynthPlaybackDevice<TSignal>::Initialize(const EffectRegistry* effectRegist
 }
 
 template<SignalValue TSignal>
-bool SynthPlaybackDevice<TSignal>::Update(const EffectRegistry* effectRegistry, const SynthSettings* configuration)
+bool SynthPlaybackDevice<TSignal>::Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
 	_synth->Update(effectRegistry, configuration);
 

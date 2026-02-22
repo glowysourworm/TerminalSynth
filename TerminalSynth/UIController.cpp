@@ -1,6 +1,6 @@
 #include "AtomicLock.h"
 #include "BaseController.h"
-#include "EffectRegistry.h"
+#include "SoundRegistry.h"
 #include "MainUI.h"
 #include "OutputSettings.h"
 #include "SynthSettings.h"
@@ -24,7 +24,7 @@ UIController::~UIController()
 	delete _thread;
 }
 
-bool UIController::Initialize(SynthSettings* configuration, OutputSettings* parameters, EffectRegistry* effectRegistry)
+bool UIController::Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry)
 {
 	// FTX-UI (Terminal Loop / Renderer)
 	// 

@@ -4,8 +4,8 @@
 #define BASE_CONTROLLER_H
 
 #include "AtomicLock.h"
-#include "EffectRegistry.h"
 #include "OutputSettings.h"
+#include "SoundRegistry.h"
 #include "SynthSettings.h"
 
 /// <summary>
@@ -26,7 +26,7 @@ public:
 	/// <summary>
 	/// Initialization function for the synth backend. This must be called before starting the player!
 	/// </summary>
-	virtual bool Initialize(SynthSettings* configuration, OutputSettings* parameters, EffectRegistry* effectRegistry) = 0;
+	virtual bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry) = 0;
 
 	/// <summary>
 	/// Starts any threads associated with the controller, after initialization.

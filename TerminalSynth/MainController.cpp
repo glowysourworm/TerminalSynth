@@ -1,7 +1,6 @@
 #include "AtomicLock.h"
 #include "AudioController.h"
 #include "BaseController.h"
-#include "EffectRegistry.h"
 #include "LoopTimer.h"
 #include "MainController.h"
 #include "OutputSettings.h"
@@ -9,6 +8,7 @@
 #include "RtAudioUserData.h"
 #include "SignalChainSettings.h"
 #include "SignalSettings.h"
+#include "SoundRegistry.h"
 #include "SynthSettings.h"
 #include "UIController.h"
 #include <chrono>
@@ -37,7 +37,7 @@ MainController::~MainController()
 /// <summary>
 /// Initialization function for the synth backend. This must be called before starting the player!
 /// </summary>
-bool MainController::Initialize(SynthSettings* configuration, OutputSettings* parameters, EffectRegistry* effectRegistry)
+bool MainController::Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry)
 {
 	_configuration = configuration;
 

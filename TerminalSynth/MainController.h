@@ -6,10 +6,10 @@
 #include "AtomicLock.h"
 #include "AudioController.h"
 #include "BaseController.h"
-#include "EffectRegistry.h"
 #include "LoopTimer.h"
 #include "OutputSettings.h"
 #include "RtAudioUserData.h"
+#include "SoundRegistry.h"
 #include "SynthSettings.h"
 #include "UIController.h"
 
@@ -20,7 +20,7 @@ public:
 	MainController(AtomicLock* atomicLock);
 	~MainController();
 
-	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, EffectRegistry* effectRegistry) override;
+	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry) override;
 	bool Dispose() override;
 
 	/// <summary>

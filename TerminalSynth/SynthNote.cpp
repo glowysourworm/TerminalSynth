@@ -1,16 +1,23 @@
-﻿#include "Oscillator.h"
+﻿#include "OscillatorParameters.h"
 #include "PlaybackFrame.h"
 #include "SynthNote.h"
+#include "WaveTable.h"
 
-SynthNote::SynthNote(Oscillator* oscillator, unsigned int midiNumber, unsigned int samplingRate)
+SynthNote::SynthNote(const OscillatorParameters& parameters, WaveTable* waveTable, unsigned int midiNumber)
 {
 	_midiNumber = midiNumber;
-	_oscillator = oscillator;
+	_waveTable = waveTable;
+	_parameters = new OscillatorParameters(parameters);
 }
 
 SynthNote::~SynthNote()
 {
-	delete _oscillator;
+	// DO NOTE DELETE:  WaveTable*  
+	//
+	// These are sound sources, and are handled by the wave table cache
+	//
+
+	delete _parameters;
 }
 
 unsigned int SynthNote::GetMidiNumber() const
@@ -20,8 +27,11 @@ unsigned int SynthNote::GetMidiNumber() const
 
 void SynthNote::GetSample(PlaybackFrame* frame, float absoluteTime)
 {
-	// Generate Oscillator
-	_oscillator->SetFrame(frame, absoluteTime);
+	float left = _waveTable->GetSampleL(absoluteTime);
+	float right = _waveTable->GetSampleR(absoluteTime);
+	float envelopeLevel = _parameters->GetEnvelope()->GetEnvelopeLevel(absoluteTime);
+
+	frame->SetFrame(left * envelopeLevel, right * envelopeLevel);
 }
 
 void SynthNote::AddSample(PlaybackFrame* frame, float absoluteTime)
@@ -37,15 +47,15 @@ void SynthNote::AddSample(PlaybackFrame* frame, float absoluteTime)
 
 bool SynthNote::HasOutput(float absoluteTime)
 {
-	return _oscillator->HasOutput(absoluteTime);
+	return _parameters->GetEnvelope()->HasOutput(absoluteTime);
 }
 
 void SynthNote::Engage(float absoluteTime)
 {
-	_oscillator->Engage(absoluteTime);
+	_parameters->GetEnvelope()->Engage(absoluteTime);
 }
 
 void SynthNote::DisEngage(float absoluteTime)
 {
-	_oscillator->DisEngage(absoluteTime);
+	_parameters->GetEnvelope()->DisEngage(absoluteTime);
 }

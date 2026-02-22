@@ -1,7 +1,7 @@
 #ifndef RT_AUDIO_USER_DATA_H
 #define RT_AUDIO_USER_DATA_H
 
-#include "EffectRegistry.h"
+#include "SoundRegistry.h"
 #include "SynthSettings.h"
 #include <atomic>
 
@@ -16,8 +16,7 @@ public:
 		_initialized = false;
 	}
 
-	void Initialize(SynthSettings* synthSettings,
-					EffectRegistry* effectRegistry)
+	void Initialize(SynthSettings* synthSettings, SoundRegistry* effectRegistry)
 	{
 		_synthSettings = synthSettings;
 		_effectRegistry = effectRegistry;
@@ -26,14 +25,14 @@ public:
 	}
 
 	SynthSettings* GetSynthSettings() const { return _synthSettings; }
-	EffectRegistry* GetEffectRegistry() const { return _effectRegistry; }
+	SoundRegistry* GetEffectRegistry() const { return _effectRegistry; }
 
 	bool IsInitialized() const { return _initialized; }
 
 private:
 
 	SynthSettings* _synthSettings;
-	EffectRegistry* _effectRegistry;
+	SoundRegistry* _effectRegistry;
 
 	std::atomic<bool> _initialized;			// This will be used once prior to stream running it's first callback (std::atomic is not necessary)
 };

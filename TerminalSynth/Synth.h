@@ -3,12 +3,12 @@
 #ifndef SYNTH_H
 #define SYNTH_H
 
-#include "EffectRegistry.h"
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalChain.h"
-#include "SynthNoteQueue.h"
+#include "SoundRegistry.h"
 #include "SynthSettings.h"
+#include "SynthSoundMap.h"
 
 // Class to define static piano notes and store their names / frequencies w.r.t. the SDL keyboard
 // defined inputs.
@@ -21,10 +21,10 @@ public:
 	~Synth();
 
 	// Update Configuration
-	void Initialize(const EffectRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters);
+	void Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters);
 
 	// Update Configuration
-	void Update(const EffectRegistry* effectRegistry, const SynthSettings* configuration);
+	void Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration);
 
 	// Sets midi notes on / off
 	void Set(int midiNumber, bool pressed, double absoluteTime, const SynthSettings* configuration);
@@ -37,7 +37,7 @@ public:
 private:
 
 	// Synth Notes by Midi Number
-	SynthNoteQueue* _pianoNotes;
+	SynthSoundMap* _pianoNotes;
 
 	// Post-processing effects	
 	SignalChain* _postProcessing;

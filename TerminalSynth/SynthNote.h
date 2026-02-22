@@ -3,8 +3,9 @@
 #ifndef SYNTH_NOTE_H
 #define SYNTH_NOTE_H
 
-#include "Oscillator.h"
+#include "OscillatorParameters.h"
 #include "PlaybackFrame.h"
+#include "WaveTable.h"
 
 class SynthNote
 {
@@ -14,10 +15,11 @@ public:
 	/// Creates a synth note from the provided oscillator. The oscillator is cached by other components, and should
 	/// NOT BE DELETED!
 	/// </summary>
-	/// <param name="oscillator">Oscillator* to a sound source</param>
+	/// <param name="parameters">Parameters for the oscillator</param>
+	/// <param name="waveTable">WaveTable* sound source. THIS SHOULD NOT BE DELETED! (~WaveTableCache)</param>
 	/// <param name="midiNumber">Midi number for this note</param>
 	/// <param name="samplingRate">Sampling rate for this note</param>
-	SynthNote(Oscillator* oscillator, unsigned int midiNumber, unsigned int samplingRate);
+	SynthNote(const OscillatorParameters& parameters, WaveTable* waveTable, unsigned int midiNumber);
 	~SynthNote();
 
 	unsigned int GetMidiNumber() const;
@@ -31,7 +33,8 @@ public:
 
 private:
 
-	Oscillator* _oscillator;
+	OscillatorParameters* _parameters;
+	WaveTable* _waveTable;
 
 	unsigned int _midiNumber;
 };

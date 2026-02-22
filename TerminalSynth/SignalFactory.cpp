@@ -1,18 +1,14 @@
 #include "BiQuadFilter.h"
 #include "CombFilter.h"
 #include "Constant.h"
-#include "Oscillator.h"
 #include "OscillatorParameters.h"
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalFactory.h"
-#include "WaveTable.h"
 #include <cmath>
 #include <cstdlib>
 #include <exception>
-#include <functional>
 #include <numbers>
-#include <string>
 
 SignalFactory::SignalFactory(const OutputSettings* outputSettings)
 {
@@ -28,7 +24,7 @@ SignalFactory::~SignalFactory()
 	delete _combFilter;
 }
 
-void SignalFactory::Initialize(const OscillatorParameters& parameters)
+void SignalFactory::Reset(const OscillatorParameters& parameters)
 {
 	if (_lowPassFilter != nullptr)
 		delete _lowPassFilter;
@@ -52,17 +48,18 @@ void SignalFactory::Initialize(const OscillatorParameters& parameters)
 
 float SignalFactory::GetFrequency(unsigned int midiNote)
 {
-	return 440.0f * powf(2, ((midiNote - 69.0f) / 12.0f));
+	return TerminalSynth::GetMidiFrequency(midiNote);		// We need a namespace!
 }
 
-Oscillator* SignalFactory::Generate(unsigned int midiNote, const OscillatorParameters& parameters)
+void SignalFactory::GenerateSample(const OscillatorParameters& parameters, PlaybackFrame& frame, float absoluteTime)
 {
-	// RESET STATE-CARRYING FILTERS
-	Initialize(parameters);
+	int samplingRate = _outputSettings->GetSamplingRate();
+	float signalHigh = parameters.GetSignalHigh();
+	float signalLow = parameters.GetSignalLow();
+	float frequency = parameters.GetFrequency();
+	float monoSample = 0;
 
-	WaveTable* waveTable;
-	std::string name;
-
+	// Create Sample
 	switch (parameters.GetType())
 	{
 	case OscillatorType::BuiltIn:
@@ -70,49 +67,19 @@ Oscillator* SignalFactory::Generate(unsigned int midiNote, const OscillatorParam
 		switch (parameters.GetBuiltInType())
 		{
 		case BuiltInOscillators::Sine:
-			waveTable = SignalFactory::CreateWaveTable(midiNote, parameters,
-				std::bind(&SignalFactory::GenerateSineSample, this,
-					std::placeholders::_1,
-					std::placeholders::_2,
-					std::placeholders::_3,
-					std::placeholders::_4));
-			name = "Sine Wave";
+			monoSample = this->GenerateSineSample(parameters.GetFrequency(), parameters.GetSignalHigh(), parameters.GetSignalLow(), absoluteTime);
 			break;
 		case BuiltInOscillators::Square:
-			waveTable = SignalFactory::CreateWaveTable(midiNote, parameters,
-				std::bind(&SignalFactory::GenerateSquareSample, this,
-					std::placeholders::_1,
-					std::placeholders::_2,
-					std::placeholders::_3,
-					std::placeholders::_4));
-			name = "Square Wave";
+			monoSample = this->GenerateSquareSample(parameters.GetFrequency(), parameters.GetSignalHigh(), parameters.GetSignalLow(), absoluteTime);
 			break;
 		case BuiltInOscillators::Triangle:
-			waveTable = SignalFactory::CreateWaveTable(midiNote, parameters,
-				std::bind(&SignalFactory::GenerateTriangleSample, this,
-					std::placeholders::_1,
-					std::placeholders::_2,
-					std::placeholders::_3,
-					std::placeholders::_4));
-			name = "Triangle Wave";
+			monoSample = this->GenerateTriangleSample(parameters.GetFrequency(), parameters.GetSignalHigh(), parameters.GetSignalLow(), absoluteTime);
 			break;
 		case BuiltInOscillators::Sawtooth:
-			waveTable = SignalFactory::CreateWaveTable(midiNote, parameters,
-				std::bind(&SignalFactory::GenerateSawtoothSample, this,
-					std::placeholders::_1,
-					std::placeholders::_2,
-					std::placeholders::_3,
-					std::placeholders::_4));
-			name = "Sawtooth Wave";
+			monoSample = this->GenerateSawtoothSample(parameters.GetFrequency(), parameters.GetSignalHigh(), parameters.GetSignalLow(), absoluteTime);
 			break;
 		case BuiltInOscillators::SynthesizedStringPluck:
-			waveTable = SignalFactory::CreateWaveTable(midiNote, parameters,
-				std::bind(&SignalFactory::GeneratePluckedStringSample, this,
-					std::placeholders::_1,
-					std::placeholders::_2,
-					std::placeholders::_3,
-					std::placeholders::_4));
-			name = "String Pluck Wave";
+			monoSample = this->GeneratePluckedStringSample(parameters.GetFrequency(), parameters.GetSignalHigh(), parameters.GetSignalLow(), absoluteTime);
 			break;
 		default:
 			throw new std::exception("Unhandled built in oscillator type");
@@ -120,45 +87,13 @@ Oscillator* SignalFactory::Generate(unsigned int midiNote, const OscillatorParam
 	}
 	break;
 	case OscillatorType::SampleBased:
-		waveTable = SignalFactory::CreateWaveTable(midiNote, parameters,
-			std::bind(&SignalFactory::GenerateSineSample, this,
-				std::placeholders::_1,
-				std::placeholders::_2,
-				std::placeholders::_3,
-				std::placeholders::_4));
-		name = "Sampled";
+		monoSample = this->GenerateSineSample(parameters.GetFrequency(), parameters.GetSignalHigh(), parameters.GetSignalLow(), absoluteTime);
 		break;
 	default:
 		throw new std::exception("Unhandled oscillator type");
 	}
 
-	return new Oscillator(name, parameters, waveTable);
-}
-
-WaveTable* SignalFactory::CreateWaveTable(unsigned int midiNote, const OscillatorParameters& parameters, GenerateSampleCallback sampleCallback)
-{
-	int samplingRate = _outputSettings->GetSamplingRate();
-	float signalHigh = parameters.GetSignalHigh();
-	float signalLow = parameters.GetSignalLow();
-	float frequency = parameters.GetFrequency();
-	WaveTable* result = new WaveTable(midiNote, frequency, samplingRate);
-
-	// Reset Filters
-	_lowPassFilter->Clear();
-	_combFilter->Clear();
-
-	// WaveTable manages a buffer of frames for a single period of oscillation
-	//
-	result->CreateSamples([&sampleCallback, &samplingRate, &frequency, &signalHigh, &signalLow](float sampleTime, float& leftSample, float& rightSample) {
-
-		// Create Sample
-		float monoSample = sampleCallback(frequency, signalHigh, signalLow, sampleTime);
-
-		leftSample = monoSample;
-		rightSample = monoSample;
-	});
-
-	return result;
+	frame.SetFrame(monoSample, monoSample);
 }
 
 float SignalFactory::GenerateTriangleSample(float frequency, float signalHigh, float signalLow, float sampleTime)

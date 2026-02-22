@@ -117,7 +117,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <CopyLocalProjectReference>true</CopyLocalProjectReference>
-    <IncludePath>..\airwindows-plugins;$(LIB)\rtaudio;$(LIB)\FTXUI\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\airwindows-plugins;$(LIB)\rtaudio;$(LIB)\FTXUI\include;$(LIB)\libsndfile\include;$(IncludePath)</IncludePath>
     <SourcePath>..\airwindows-plugins;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Brinstar|x64'">
@@ -176,8 +176,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(LIB)\rtaudio\Debug;$(LIB)\FTXUI\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ftxui-component.lib;ftxui-dom.lib;ftxui-screen.lib;rtaudiod.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(LIB)\rtaudio\Debug;$(LIB)\FTXUI\Debug;$(LIB)\libsndfile\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ftxui-component.lib;ftxui-dom.lib;ftxui-screen.lib;rtaudiod.lib;sndfile.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>LinkVerbose</ShowProgress>
       <ForceFileOutput>MultiplyDefinedSymbolOnly</ForceFileOutput>
     </Link>
@@ -264,7 +264,7 @@
     <ClCompile Include="SynthEffect.cpp" />
     <ClCompile Include="SynthNote.cpp" />
     <ClCompile Include="SynthNoteMap.cpp" />
-    <ClCompile Include="SynthNoteQueue.cpp" />
+    <ClCompile Include="SynthSoundMap.cpp" />
     <ClCompile Include="UIController.cpp" />
     <ClCompile Include="WaveTable.cpp" />
     <ClCompile Include="WaveTableCache.cpp" />
@@ -311,7 +311,7 @@
     <ClInclude Include="SignalFactory.h" />
     <ClInclude Include="SignalBase.h" />
     <ClInclude Include="SignalParameter.h" />
-    <ClInclude Include="EffectRegistry.h" />
+    <ClInclude Include="SoundRegistry.h" />
     <ClInclude Include="SignalSettings.h" />
     <ClInclude Include="SliderUI.h" />
     <ClInclude Include="StopWatch.h" />
@@ -321,12 +321,13 @@
     <ClInclude Include="SynthInformationUI.h" />
     <ClInclude Include="SynthNote.h" />
     <ClInclude Include="SynthNoteMap.h" />
-    <ClInclude Include="SynthNoteQueue.h" />
+    <ClInclude Include="SynthSoundMap.h" />
     <ClInclude Include="SynthPlaybackDevice.h" />
     <ClInclude Include="UIBase.h" />
     <ClInclude Include="UIController.h" />
     <ClInclude Include="WaveTable.h" />
     <ClInclude Include="WaveTableCache.h" />
+    <ClInclude Include="WaveTableCacheKey.h" />
     <ClInclude Include="WindowsKeyCodes.h" />
   </ItemGroup>
   <ItemGroup>

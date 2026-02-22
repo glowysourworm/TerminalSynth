@@ -5,13 +5,13 @@
 
 #include "AtomicLock.h"
 #include "BaseController.h"
-#include "EffectRegistry.h"
 #include "IntervalTimer.h"
 #include "LoopTimer.h"
 #include "MidiPlaybackDevice.h"
 #include "OutputSettings.h"
 #include "PlaybackClock.h"
 #include "RtAudioUserData.h"
+#include "SoundRegistry.h"
 #include "SynthPlaybackDevice.h"
 #include "SynthSettings.h"
 #include <string>
@@ -23,7 +23,7 @@ public:
 	AudioController(AtomicLock* atomicLock);
 	~AudioController();
 
-	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, EffectRegistry* effectRegistry) override;
+	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry) override;
 	bool Dispose() override;
 	void Start() override;
 

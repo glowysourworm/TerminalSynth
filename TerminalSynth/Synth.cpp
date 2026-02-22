@@ -1,10 +1,10 @@
-#include "EffectRegistry.h"
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalChain.h"
+#include "SoundRegistry.h"
 #include "Synth.h"
-#include "SynthNoteQueue.h"
 #include "SynthSettings.h"
+#include "SynthSoundMap.h"
 
 Synth::Synth(const SynthSettings* configuration, unsigned int numberOfChannels, unsigned int samplingRate)
 {
@@ -19,13 +19,13 @@ Synth::~Synth()
 	delete _postProcessing;
 }
 
-void Synth::Initialize(const EffectRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
+void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
 {
-	_pianoNotes = new SynthNoteQueue(configuration, parameters, 10);
+	_pianoNotes = new SynthSoundMap(configuration, parameters, 10);
 	_postProcessing->Initialize(effectRegistry, configuration->GetSignalChainRegistry(), parameters);
 }
 
-void Synth::Update(const EffectRegistry* effectRegistry, const SynthSettings* configuration)
+void Synth::Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
 	_postProcessing->Update(effectRegistry, configuration->GetSignalChainRegistry());
 }

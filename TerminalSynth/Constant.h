@@ -1,4 +1,5 @@
 #pragma once
+#include <cmath>
 
 #ifndef CONSTANT_H
 #define CONSTANT_H
@@ -9,16 +10,24 @@ enum class OscillatorType : int {
 };
 enum class BuiltInOscillators : int {
 	Sine = 0,
-	Square,
-	Triangle,
-	Sawtooth,
-	SynthesizedStringPluck
+	Square = 1,
+	Triangle = 2,
+	Sawtooth = 3,
+	SynthesizedStringPluck = 4
 };
 enum class EnvelopeFilterType : int {
 	Constant = 0,
 	Oscillator,
 	EnvelopeSweep
 };
+
+namespace TerminalSynth
+{
+	float GetMidiFrequency(int midiNumber)
+	{
+		return 440.0f * powf(2, ((midiNumber - 69.0f) / 12.0f));
+	}
+}
 
 const int REVERB_COMB_SIZE = 4;
 const int REVERB_ALLPASS_SIZE = 4;

@@ -3,9 +3,9 @@
 #ifndef PLAYBACK_DEVICE_H
 #define PLAYBACK_DEVICE_H
 
-#include "EffectRegistry.h"
 #include "OutputSettings.h"
 #include "PlaybackBuffer.h"
+#include "SoundRegistry.h"
 #include "SynthSettings.h"
 
 template<SignalValue TSignal>
@@ -20,13 +20,13 @@ public:
 	/// Initialization of playback device is required before starting RT Audio playback.
 	/// </summary>
 	/// <returns>Returns true if device is ready, otherwise false for some sort of error</returns>
-	virtual bool Initialize(const EffectRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters) = 0;
+	virtual bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters) = 0;
 
 	/// <summary>
 	/// Update of playback device with current settings
 	/// </summary>
 	/// <returns>Returns true if device is ready, otherwise false for some sort of error</returns>
-	virtual bool Update(const EffectRegistry* effectRegistry, const SynthSettings* configuration) = 0;
+	virtual bool Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration) = 0;
 
 	/// <summary>
 	/// Returns true if the synth had output last call to WritePlaybackBuffer. This output means there's more in the 

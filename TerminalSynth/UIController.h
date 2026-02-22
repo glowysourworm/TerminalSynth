@@ -5,9 +5,9 @@
 
 #include "AtomicLock.h"
 #include "BaseController.h"
-#include "EffectRegistry.h"
 #include "MainUI.h"
 #include "OutputSettings.h"
+#include "SoundRegistry.h"
 #include "SynthSettings.h"
 #include <thread>
 
@@ -18,7 +18,7 @@ public:
 	UIController(AtomicLock* atomicLock);
 	~UIController();
 
-	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, EffectRegistry* effectRegistry) override;
+	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry) override;
 	bool Dispose() override;
 	void Start() override;
 

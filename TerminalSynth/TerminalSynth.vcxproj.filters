@@ -144,7 +144,7 @@
     <ClCompile Include="SignalFactory.cpp">
       <Filter>Source Files\Signal</Filter>
     </ClCompile>
-    <ClCompile Include="SynthNoteQueue.cpp">
+    <ClCompile Include="SynthSoundMap.cpp">
       <Filter>Source Files\Synth</Filter>
     </ClCompile>
     <ClCompile Include="WaveTable.cpp">
@@ -172,7 +172,7 @@
       <Filter>Source Files\Filter</Filter>
     </ClCompile>
     <ClCompile Include="WaveTableCache.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Signal</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -287,7 +287,7 @@
     <ClInclude Include="StopWatch.h">
       <Filter>Header Files\Playback</Filter>
     </ClInclude>
-    <ClInclude Include="SynthNoteQueue.h">
+    <ClInclude Include="SynthSoundMap.h">
       <Filter>Header Files\Synth</Filter>
     </ClInclude>
     <ClInclude Include="MainUI.h">
@@ -335,7 +335,7 @@
     <ClInclude Include="SignalChainSettings.h">
       <Filter>Header Files\Model</Filter>
     </ClInclude>
-    <ClInclude Include="EffectRegistry.h">
+    <ClInclude Include="SoundRegistry.h">
       <Filter>Header Files\SignalRegistry</Filter>
     </ClInclude>
     <ClInclude Include="BiQuadFilter.h">
@@ -348,6 +348,9 @@
       <Filter>Header Files\Playback</Filter>
     </ClInclude>
     <ClInclude Include="WaveTableCache.h">
+      <Filter>Header Files\Signal</Filter>
+    </ClInclude>
+    <ClInclude Include="WaveTableCacheKey.h">
       <Filter>Header Files\Signal</Filter>
     </ClInclude>
   </ItemGroup>

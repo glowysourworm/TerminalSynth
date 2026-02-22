@@ -11,22 +11,31 @@ class WaveTable
 public:
 
 	/// <summary>
-	/// Delegate to create L/R channel samples for a given midi note. The absoluteTime [0, period] will go until the period
+	/// Delegate to create L/R channel samples for the wave table. The sampleTime [0, period] will go until the period
+	/// has been reached. The WaveTable's responsibility is to provide time points for its oversampled range. Each sample
+	/// will be set into the local frame buffer.
+	/// </summary>
+	using WaveTableSampleGenerateSecondCallback = std::function<void(float sampleTime, float& leftSample, float& rightSample)>;
+
+	/// <summary>
+	/// Delegate to create L/R channel samples for the wave table. The frameIndex [0, period] will go until the period
 	/// has been reached. The WaveTable's responsability is to provide time points for its oversampled range. Each sample
 	/// will be set into the local frame buffer.
 	/// </summary>
-	using WaveTableSampleGenerateCallback = std::function<void(float sampleTime, float& leftSample, float& rightSample)>;
+	using WaveTableSampleGenerateFrameCallback = std::function<void(int frameIndex, float& leftSample, float& rightSample)>;
 
-	WaveTable(unsigned int midiNote, unsigned int frequency, unsigned int samplingRate);
+	WaveTable(unsigned int frameLength, unsigned int samplingRate, unsigned int systemSamplingRate);
 	~WaveTable();
 
 	/// <summary>
-	/// Adds sample array to the wave table
+	/// Sets samples into the wave table (using stream time)
 	/// </summary>
-	/// <param name="midiNote">Midi note to key the sample array</param>
-	/// <param name="samples">Samples created for the wave table for this MIDI note</param>
-	/// <param name="callback">Callback for creating the next sample</param>
-	void CreateSamples(WaveTableSampleGenerateCallback callback);
+	void CreateSamplesByTime(WaveTableSampleGenerateSecondCallback callback);
+
+	/// <summary>
+	/// Sets samples into the wave table (per frame)
+	/// </summary>
+	void CreateSamplesByFrame(WaveTableSampleGenerateFrameCallback callback);
 
 	/// <summary>
 	/// Gets a sample value for playback given the input stream time
@@ -36,15 +45,10 @@ public:
 
 private:
 
-	unsigned int _midiNote;
-	unsigned int _samplingRate;
+	unsigned int _samplingRate;					// These two sampling rates may differ depending on how the table was built.
+	unsigned int _systemSamplingRate;			// The ratio of the two will show the scale factor for providing accurate samples.
 	PlaybackFrame* _frames;
-	unsigned int _scaleFactor;				// Oversampling:  Factor is applied to the length of the 
-											// buffer relative to it's otherwise natural period.
 	unsigned int _frameLength;
-
-	float _frequency;
-	float _period;
 };
 
 #endif

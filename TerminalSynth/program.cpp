@@ -1,19 +1,23 @@
 #include "AtomicLock.h"
-#include "EffectRegistry.h"
 #include "MainController.h"
 #include "OutputSettings.h"
 #include "RtAudioController.h"
+#include "SoundRegistry.h"
 #include "SynthSettings.h"
+#include "WaveTableCache.h"
 #include "Windows.h"
 #include "WindowsKeyCodes.h"
+#include <map>
 #include <string>
+#include <utility>
+#include <vector>
 
 /// <summary>
 /// This will eventually come from a file, so there'll be some new component
 /// </summary>
-SynthSettings* CreateConfiguration(OutputSettings* deviceSettings)
+SynthSettings* CreateConfiguration(OutputSettings* deviceSettings, const std::string& soundBankDirectory)
 {
-	SynthSettings* configuration = new SynthSettings(deviceSettings);
+	SynthSettings* configuration = new SynthSettings(deviceSettings, soundBankDirectory);
 
 	// Octave 1
 	configuration->SetMidiNote(WindowsKeyCodes::Z, 21);
@@ -76,27 +80,46 @@ int main(int argc, char* argv[], char* envp[])
 	// This pointer is shared (see controllers)
 	//
 	OutputSettings* parameters = RtAudioController::GetPlaybackParametersUnsafe();
-	SynthSettings* configuration = CreateConfiguration(parameters);
-	EffectRegistry* registry = new EffectRegistry();									// NEEDS INITIALIZATION (W/ SAMPLING RATE)
+	SynthSettings* configuration = CreateConfiguration(parameters, "");
+
+	// Sound Banks
+	std::vector<std::string> soundBanks;
+	std::map<std::string, std::vector<std::string>> soundBankMap;
+
+	// Arguments:  {Sound Bank Dir}, ..
+	if (argc > 1)
+	{
+		// Sound Library Folder:  /{base folder}/{individual library folder(s)}
+		configuration->SetSoundBankDirectory(std::string(argv[1]));
+
+		// Load Sound Banks:  The UI needs a copy of the strings to call a sound bank. The rest of the
+		//					  WaveTableCache* will be on the AudioController* thread.
+		//
+		WaveTableCache waveTableCache;
+
+		// -> Initialize() -> Searches sound bank directories...
+		waveTableCache.Initialize(configuration, parameters);
+		waveTableCache.GetSoundBanks(soundBanks);
+		
+		for (int index = 0; index < soundBanks.size(); index++)
+		{
+			std::vector<std::string> soundNames;
+			waveTableCache.GetSoundNames(soundBanks[index], soundNames);
+			
+			soundBankMap.insert(std::make_pair(soundBanks[index], soundNames));
+		}
+	}
+
+	SoundRegistry* registry = new SoundRegistry(soundBanks, soundBankMap);									// NEEDS INITIALIZATION (W/ SAMPLING RATE)
 	AtomicLock* atomicLock = new AtomicLock();
 
+	// Manual keyboard input
 	MainController controller(atomicLock);
 
 	SetConsoleTitleA("Terminal Synth");
 
-	// Arguments
-	if (argc > 1)
-	{
-		// Sound Library Folder:  /{base folder}/{individual library folder(s)}
-		std::string soundLibraryFolder = std::string(argv[1]);
-	}
-
-	// Manual keyboard input
-	//else
-	//{
-		if (!controller.Initialize(configuration, parameters, registry))
-			return -1;
-	//}
+	if (!controller.Initialize(configuration, parameters, registry))
+		return -1;
 
 	controller.Start();
 

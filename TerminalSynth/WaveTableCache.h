@@ -1,52 +1,26 @@
 #pragma once
 
+#ifndef WAVE_TABLE_CACHE_H
+#define WAVE_TABLE_CACHE_H
+
+#include "OscillatorParameters.h"
 #include "OutputSettings.h"
+#include "SignalFactory.h"
+#include "SynthSettings.h"
 #include "WaveTable.h"
+#include "WaveTableCacheKey.h"
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 class WaveTableCache
 {
-protected:
-
-	class CacheKey
-	{
-	public:
-
-		CacheKey(const std::string& soundBank, const std::string& name)
-		{
-			_soundBank = new std::string(soundBank);
-			_name = new std::string(name);
-			_hashCode = new std::string(soundBank + name);
-		}
-		~CacheKey()
-		{
-			delete _soundBank;
-			delete _name;
-			delete _hashCode;
-		}
-
-		std::string GetName() const { return *_name; }
-		std::string GetSoundBank() const { return *_soundBank; }
-		std::string GetHashCode() const { return *_hashCode; }
-
-	private:
-		std::string* _soundBank;
-		std::string* _name;
-		std::string* _hashCode;
-	};
-
 public:
 
-	WaveTableCache(const OutputSettings* outputSettings);
+	WaveTableCache();
 	~WaveTableCache();
 
-	/// <summary>
-	/// Creates WaveTable* instances for each supported file type in the directory (.wav, .aiff)
-	/// </summary>
-	/// <param name="soundBankDir">Full path to sound bank directory</param>
-	bool CreateSoundBank(const std::string& soundBankDir);
+	bool Initialize(const SynthSettings* synthSettings, const OutputSettings* outputSettings);
 
 	/// <summary>
 	/// Loads the list of sound bank(s) (last directory name(s)) into the user's destination vector
@@ -69,7 +43,47 @@ public:
 	/// <returns>Best fit WaveTable* instance - not to be deleted!</returns>
 	WaveTable* Get(const std::string& soundBankName, const std::string& soundName, float fundamentalFrequency);
 
+	/// <summary>
+	/// Returns the closest possible wave table for the requested oscillator. If midi note numbers were used, then 
+	/// the table should be one-to-one with the audio stream.
+	/// </summary>
+	/// <returns>Best fit Oscillator* instance - not to be deleted!</returns>
+	WaveTable* Get(const OscillatorParameters& parameters, int midiNumber);
+
 private:
 
-	std::map<std::string, WaveTable*>* _cache;
+	/// <summary>
+	/// Creates WaveTable* instance for the sound file name, and puts it in the cache.
+	/// </summary>
+	/// <param name="soundBankDir">Full path to sound bank directory</param>
+	bool CreateWaveTable(WTCacheKey_SoundBank* cacheKey);
+
+	/// <summary>
+	/// Creates WaveTable* instance for the oscillator, and puts it in the cache.
+	/// </summary>
+	bool CreateWaveTable(WTCacheKey_Oscillator* cacheKey);
+
+private:
+
+	bool Initialize_SoundBanks(const SynthSettings* synthSettings, const OutputSettings* outputSettings);
+	bool Initialize_Oscillators(const SynthSettings* synthSettings, const OutputSettings* outputSettings);
+
+private:
+
+	SignalFactory* _signalFactory;
+
+	// Cache Keys (loaded during initialization)
+	std::vector<WTCacheKey_SoundBank*>* _soundBankList;
+	std::vector<WTCacheKey_Oscillator*>* _oscillatorList;
+
+	// Lazy loaded during playback
+	std::map<size_t, WaveTable*>* _cacheSoundBank;
+	std::map<size_t, WaveTable*>* _cacheOscillator;
+
+	unsigned int _systemSamplingRate;
+	unsigned int _oscillatorSamplingRate;						// This may be set differently - which is compensated for by the WaveTable*
+																// which takes two sampling rates. The sound file sampling rate is read by
+																// libsndfile, and will be used for the sound bank samples.
 };
+
+#endif

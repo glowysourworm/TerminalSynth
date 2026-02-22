@@ -1,10 +1,10 @@
-#include "EffectRegistry.h"
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
 #include "SignalChain.h"
 #include "SignalChainSettings.h"
 #include "SignalSettings.h"
+#include "SoundRegistry.h"
 #include <vector>
 
 SignalChain::SignalChain()
@@ -17,7 +17,7 @@ SignalChain::~SignalChain()
 	delete _chain;
 }
 
-void SignalChain::Initialize(const EffectRegistry* effectRegistry, const SignalChainSettings* signalChainSettings, const OutputSettings* parameters)
+void SignalChain::Initialize(const SoundRegistry* effectRegistry, const SignalChainSettings* signalChainSettings, const OutputSettings* parameters)
 {
 	// Add
 	for (int index = 0; index < signalChainSettings->GetCount(); index++)
@@ -29,7 +29,7 @@ void SignalChain::Initialize(const EffectRegistry* effectRegistry, const SignalC
 	}
 }
 
-void SignalChain::Update(const EffectRegistry* effectRegistry, const SignalChainSettings* signalChainSettings)
+void SignalChain::Update(const SoundRegistry* effectRegistry, const SignalChainSettings* signalChainSettings)
 {
 	_chain->clear();
 

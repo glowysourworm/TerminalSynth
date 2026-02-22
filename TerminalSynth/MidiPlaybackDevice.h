@@ -4,7 +4,7 @@
 #define MIDI_PLAYBACK_DEVICE_H
 
 #include "Accumulator.h"
-#include "EffectRegistry.h"
+#include "SoundRegistry.h"
 #include "MidiEvent.h"
 #include "MidiEventList.h"
 #include "MidiFile.h"
@@ -25,8 +25,8 @@ public:
 	MidiPlaybackDevice();
 	~MidiPlaybackDevice();
 
-	bool Initialize(const EffectRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters) override;
-	bool Update(const EffectRegistry* effectRegistry, const SynthSettings* configuration) override;
+	bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters) override;
+	bool Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration) override;
 	bool GetLastOutput() const override;
 	bool SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration) override;
 	int WritePlaybackBuffer(
@@ -114,7 +114,7 @@ MidiPlaybackDevice<TSignal>::~MidiPlaybackDevice()
 }
 
 template<SignalValue TSignal>
-bool MidiPlaybackDevice<TSignal>::Initialize(const EffectRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
+bool MidiPlaybackDevice<TSignal>::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
 {
 	_numberOfChannels = parameters->GetNumberOfChannels();
 	_samplingRate = parameters->GetSamplingRate();
@@ -130,7 +130,7 @@ bool MidiPlaybackDevice<TSignal>::Initialize(const EffectRegistry* effectRegistr
 }
 
 template<SignalValue TSignal>
-bool MidiPlaybackDevice<TSignal>::Update(const EffectRegistry* effectRegistry, const SynthSettings* configuration)
+bool MidiPlaybackDevice<TSignal>::Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
 	_synth->Update(effectRegistry, configuration);
 

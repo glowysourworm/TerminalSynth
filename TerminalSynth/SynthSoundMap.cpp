@@ -1,24 +1,29 @@
-#include "Oscillator.h"
+#include "Constant.h"
 #include "OscillatorParameters.h"
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
-#include "SignalFactory.h"
 #include "SynthNote.h"
-#include "SynthNoteQueue.h"
 #include "SynthSettings.h"
+#include "SynthSoundMap.h"
+#include "WaveTable.h"
+#include "WaveTableCache.h"
 #include <map>
+#include <string>
 #include <utility>
 #include <vector>
 
-SynthNoteQueue::SynthNoteQueue(const SynthSettings* configuration, const OutputSettings* parameters, int capacity)
+SynthSoundMap::SynthSoundMap(const SynthSettings* configuration, const OutputSettings* parameters, int capacity)
 {
 	_capacity = capacity;
-	_signalFactory = new SignalFactory(parameters);
 	_engagedNotes = new std::map<int, SynthNote*>();
 	_disengagedNotes = new std::vector<SynthNote*>();
+	_waveTableCache = new WaveTableCache();
+
+	// Initialize (CHECK SOUND BANKS!) (NO LOGGING!)
+	_waveTableCache->Initialize(configuration, parameters);
 }
 
-SynthNoteQueue::~SynthNoteQueue()
+SynthSoundMap::~SynthSoundMap()
 {
 	for (auto iter = _engagedNotes->begin(); iter != _engagedNotes->end(); ++iter)
 	{
@@ -30,10 +35,10 @@ SynthNoteQueue::~SynthNoteQueue()
 	}
 	delete _engagedNotes;
 	delete _disengagedNotes;
-	delete _signalFactory;
+	delete _waveTableCache;
 }
 
-bool SynthNoteQueue::SetNote(int midiNumber, bool pressed, double absoluteTime, const SynthSettings* configuration, unsigned int samplingRate) const
+bool SynthSoundMap::SetNote(int midiNumber, bool pressed, double absoluteTime, const SynthSettings* configuration, unsigned int samplingRate) const
 {
 	if (pressed)
 	{
@@ -45,7 +50,7 @@ bool SynthNoteQueue::SetNote(int midiNumber, bool pressed, double absoluteTime, 
 		else if (_engagedNotes->size() < _capacity)
 		{
 			// Calculate frequency from MIDI number
-			unsigned int frequency = _signalFactory->GetFrequency(midiNumber);
+			float frequency = TerminalSynth::GetMidiFrequency(midiNumber);
 
 			// Oscillator Parameters
 			OscillatorParameters currentParameters = *configuration->GetOscillator();
@@ -56,11 +61,11 @@ bool SynthNoteQueue::SetNote(int midiNumber, bool pressed, double absoluteTime, 
 				currentParameters.GetSignalHigh(),
 				*currentParameters.GetEnvelope());
 
-			// (MEMORY!) These may be cached, but, for now we're going to delete these with the synth note
-			Oscillator* oscillator = _signalFactory->Generate(midiNumber, parameters);
+			// Cache handles memory for WaveTable*
+			WaveTable* waveTable =  _waveTableCache->Get(parameters, midiNumber);
 
 			// (MEMORY!) Delete notes when they're removed from the dis-engaged list
-			SynthNote* note = new SynthNote(oscillator, midiNumber, samplingRate);
+			SynthNote* note = new SynthNote(parameters, waveTable, midiNumber);
 
 			note->Engage(absoluteTime);
 
@@ -96,7 +101,7 @@ bool SynthNoteQueue::SetNote(int midiNumber, bool pressed, double absoluteTime, 
 	}
 }
 
-bool SynthNoteQueue::SetFrame(PlaybackFrame* frame, double absoluteTime, double gain, double leftRight)
+bool SynthSoundMap::SetFrame(PlaybackFrame* frame, double absoluteTime, double gain, double leftRight)
 {
 	// Use local frame to mix the note output
 	PlaybackFrame noteFrame;
@@ -132,4 +137,14 @@ bool SynthNoteQueue::SetFrame(PlaybackFrame* frame, double absoluteTime, double 
 	frame->SetFrame(&noteFrame);
 
 	return _engagedNotes->size() > 0 || _disengagedNotes->size() > 0;
+}
+
+void SynthSoundMap::GetSoundBanks(std::vector<std::string>& destination)
+{
+	_waveTableCache->GetSoundBanks(destination);
+}
+
+void SynthSoundMap::GetSounds(const std::string& soundBankName, std::vector<std::string>& destination)
+{
+	_waveTableCache->GetSoundNames(soundBankName, destination);
 }

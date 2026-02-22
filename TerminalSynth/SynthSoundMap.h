@@ -5,18 +5,19 @@
 
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
-#include "SignalFactory.h"
 #include "SynthNote.h"
 #include "SynthSettings.h"
+#include "WaveTableCache.h"
 #include <map>
+#include <string>
 #include <vector>
 
-class SynthNoteQueue
+class SynthSoundMap
 {
 public:
 
-	SynthNoteQueue(const SynthSettings* configuration, const OutputSettings* parameters, int capacity);
-	~SynthNoteQueue();
+	SynthSoundMap(const SynthSettings* configuration, const OutputSettings* parameters, int capacity);
+	~SynthSoundMap();
 
 	/// <summary>
 	/// Sets midi note to either engaged / disengaged. Returns true if there are enough voice slots
@@ -33,6 +34,19 @@ public:
 	/// </summary>
 	bool SetFrame(PlaybackFrame* frame, double absoluteTime, double gain, double leftRight);
 
+	/// <summary>
+	/// Gets a list of sound banks (sample folders) from the WaveTableCache*
+	/// </summary>
+	/// <param name="destination">Destination list for the sound bank names</param>
+	void GetSoundBanks(std::vector<std::string>& destination);
+
+	/// <summary>
+	/// Gets a list of sounds from the specified sound bank from the WaveTableCache*
+	/// </summary>
+	/// <param name="soundBankName">Name of Sound Bank</param>
+	/// <param name="destination">Destination list for the sound names</param>
+	void GetSounds(const std::string& soundBankName, std::vector<std::string>& destination);
+
 private:
 
 	int _capacity;
@@ -43,8 +57,8 @@ private:
 	// N-sized map, will hold notes until they've dissipated
 	std::vector<SynthNote*>* _disengagedNotes;
 
-	// Signal Factory:  Used to generate Oscillator* instances - caching wave table output (which can be time consuming to build)
-	SignalFactory* _signalFactory;
+	// Wave Table Cache:  This will lazy load WaveTable* instances for sound banks and oscillators
+	WaveTableCache* _waveTableCache;
 
 };
 

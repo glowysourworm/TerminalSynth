@@ -15,12 +15,16 @@
 #include <utility>
 #include <vector>
 
-class EffectRegistry
+/// <summary>
+/// Registry for AirwinEffect* instances, SignalSettings* for the signal chain, and also sound bank
+/// data for the UI. (This was separated from the configuration because of a circular dependency with SignalBase*)
+/// </summary>
+class SoundRegistry
 {
 public:
 
-	EffectRegistry();
-	~EffectRegistry();
+	SoundRegistry(const std::vector<std::string>& soundBanks, const std::map<std::string, std::vector<std::string>>& soundBankMap);
+	~SoundRegistry();
 
 	bool Initialize(float samplingRate);
 
@@ -28,6 +32,9 @@ public:
 	std::string GetName(int index) const;
 	SignalSettings GetSettings(const std::string& name) const;
 	SignalBase* GetEffect(const std::string& name) const;
+
+	std::vector<std::string> GetSoundBanks() const;
+	std::vector<std::string> GetSoundNames(const std::string& soundBank) const;
 
 private:
 
@@ -39,16 +46,30 @@ private:
 
 	// SignalBase* -> Signal Chain Settings (ALL EFFECTS)
 	std::map<SignalBase*, SignalSettings*>* _signalChainAll;
+
+	// Sound Banks / Sound Bank Entries
+	std::vector<std::string>* _soundBanks;
+	std::map<std::string, std::vector<std::string>*>* _soundBankMap;
 };
 
-EffectRegistry::EffectRegistry()
+SoundRegistry::SoundRegistry(const std::vector<std::string>& soundBanks, const std::map<std::string, std::vector<std::string>>& soundBankMap)
 {
 	_airwinEffectRegistry = new AirwinRegistry();
 	_effectsByName = new std::map<std::string, SignalBase*>();
 	_signalChainAll = new std::map<SignalBase*, SignalSettings*>();
+	_soundBanks = new std::vector<std::string>(soundBanks);
+	_soundBankMap = new std::map<std::string, std::vector<std::string>*>();
+
+	for (auto iter = soundBankMap.begin(); iter != soundBankMap.end(); ++iter)
+	{
+		// (MEMORY!) ~SoundRegistry
+		std::vector<std::string>* soundBankList = new std::vector<std::string>(iter->second);
+
+		_soundBankMap->insert(std::make_pair(iter->first, soundBankList));
+	}
 }
 
-EffectRegistry::~EffectRegistry()
+SoundRegistry::~SoundRegistry()
 {
 	for (auto iter = _effectsByName->begin(); iter != _effectsByName->end(); ++iter)
 	{
@@ -58,13 +79,17 @@ EffectRegistry::~EffectRegistry()
 	{
 		delete iter->second;
 	}
+	for (auto iter = _soundBankMap->begin(); iter != _soundBankMap->end(); ++iter)
+	{
+		delete iter->second;
+	}
 
 	delete _airwinEffectRegistry;
 	delete _effectsByName;
 	delete _signalChainAll;
 }
 
-bool EffectRegistry::Initialize(float samplingRate)
+bool SoundRegistry::Initialize(float samplingRate)
 {
 	// LOAD AIRWIN PLUGINS! (This may take a couple seconds)
 	bool success = _airwinEffectRegistry->Load(samplingRate);
@@ -104,12 +129,12 @@ bool EffectRegistry::Initialize(float samplingRate)
 	return true;
 }
 
-int EffectRegistry::GetCount() const
+int SoundRegistry::GetCount() const
 {
 	return _signalChainAll->size();
 }
 
-std::string EffectRegistry::GetName(int index) const
+std::string SoundRegistry::GetName(int index) const
 {
 	int counter = 0;
 
@@ -119,19 +144,29 @@ std::string EffectRegistry::GetName(int index) const
 			return iter->first;
 	}
 
-	throw new std::exception("Effect not found by index:  EffectRegistry.h");
+	throw new std::exception("Effect not found by index:  SoundRegistry.h");
 }
 
-SignalSettings EffectRegistry::GetSettings(const std::string& name) const
+SignalSettings SoundRegistry::GetSettings(const std::string& name) const
 {
 	SignalBase* effect = _effectsByName->at(name);
 
 	return *_signalChainAll->at(effect);
 }
 
-SignalBase* EffectRegistry::GetEffect(const std::string& name) const
+SignalBase* SoundRegistry::GetEffect(const std::string& name) const
 {
 	return _effectsByName->at(name);
+}
+
+std::vector<std::string> SoundRegistry::GetSoundBanks() const
+{
+	return *_soundBanks;
+}
+
+std::vector<std::string> SoundRegistry::GetSoundNames(const std::string& soundBank) const
+{
+	return *_soundBankMap->at(soundBank);
 }
 
 #endif

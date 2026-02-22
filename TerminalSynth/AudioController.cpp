@@ -1,13 +1,13 @@
 #include "AtomicLock.h"
 #include "AudioController.h"
 #include "BaseController.h"
-#include "EffectRegistry.h"
 #include "IntervalTimer.h"
 #include "LoopTimer.h"
 #include "MidiPlaybackDevice.h"
 #include "OutputSettings.h"
 #include "PlaybackClock.h"
 #include "RtAudioUserData.h"
+#include "SoundRegistry.h"
 #include "SynthPlaybackDevice.h"
 #include "SynthSettings.h"
 #include <exception>
@@ -34,7 +34,7 @@ AudioController::~AudioController()
 		this->Dispose();
 }
 
-bool AudioController::Initialize(SynthSettings* configuration, OutputSettings* parameters, EffectRegistry* effectRegistry)
+bool AudioController::Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry)
 {
 	if (_initialized)
 		throw new std::exception("Audio Controller already initialized!");
@@ -64,7 +64,7 @@ int AudioController::ProcessAudioCallback(float* outputBuffer, unsigned int numb
 	_synthIntervalTimer->Reset();
 
 	SynthSettings* configuration = userData->GetSynthSettings();
-	EffectRegistry* effectRegistry = userData->GetEffectRegistry();
+	SoundRegistry* effectRegistry = userData->GetEffectRegistry();
 
 	// std::atomic wait loop
 	this->Lock->AcquireLock();

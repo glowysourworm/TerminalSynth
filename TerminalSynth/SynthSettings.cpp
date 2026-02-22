@@ -7,12 +7,14 @@
 #include "SynthNoteMap.h"
 #include "SynthSettings.h"
 #include "WindowsKeyCodes.h"
+#include <string>
 
-SynthSettings::SynthSettings(OutputSettings* deviceSettings)
+SynthSettings::SynthSettings(OutputSettings* deviceSettings, const std::string& soundBankDirectory)
 {
 	_keyMap = new SynthNoteMap();
 	_isDirty = false;
 
+	_soundBankDirectory = new std::string(soundBankDirectory);
 	_oscillatorParameters = new OscillatorParameters(BuiltInOscillators::Sine, 440, SIGNAL_LOW, SIGNAL_HIGH, Envelope());
 	_signalChainRegistry = new SignalChainSettings();
 	_outputSettings = deviceSettings;
@@ -29,10 +31,13 @@ SynthSettings::SynthSettings(const SynthSettings& copy)
 	if (_keyMap != nullptr)
 		delete _keyMap;
 
+	delete _soundBankDirectory;
 	delete _oscillatorParameters;
 	delete _signalChainRegistry;
 	delete _outputSettings;
 	delete _equalizerOutput;
+
+	_soundBankDirectory = new std::string(copy.GetSoundBankDirectory());
 
 	_outputSettings = copy.GetOutputSettings();
 	_equalizerOutput = copy.GetEqualizerOutput();
@@ -65,6 +70,12 @@ bool SynthSettings::IsDirty() const
 void SynthSettings::ClearDirty()
 {
 	_isDirty = false;
+}
+
+void SynthSettings::SetSoundBankDirectory(const std::string& directory)
+{
+	_soundBankDirectory->clear();
+	_soundBankDirectory->append(directory);
 }
 
 void SynthSettings::SetOscillator(const OscillatorParameters& value)
@@ -205,5 +216,10 @@ void SynthSettings::SetOutputGain(float value)
 		_isDirty = true;
 
 	_gain = value;
+}
+
+std::string SynthSettings::GetSoundBankDirectory() const
+{
+	return *_soundBankDirectory;
 }
 

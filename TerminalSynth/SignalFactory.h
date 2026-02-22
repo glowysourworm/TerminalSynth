@@ -5,11 +5,9 @@
 
 #include "BiQuadFilter.h"
 #include "CombFilter.h"
-#include "Oscillator.h"
 #include "OscillatorParameters.h"
 #include "OutputSettings.h"
-#include "WaveTable.h"
-#include <functional>
+#include "PlaybackFrame.h"
 
 class SignalFactory
 {
@@ -19,17 +17,16 @@ public:
 	~SignalFactory();
 
 	float GetFrequency(unsigned int midiNote);
-	Oscillator* Generate(unsigned int midiNote, const OscillatorParameters& parameters);
 
-private:
+	/// <summary>
+	/// Sets the signal factory for the specified oscillator parameters, and resets all filters
+	/// </summary>
+	void Reset(const OscillatorParameters& parameters);
 
-	using GenerateSampleCallback = std::function<float(float frequency, float signalHigh, float signalLow, float absoluteTime)>;
-
-	WaveTable* CreateWaveTable(unsigned int midiNote, const OscillatorParameters& parameters, GenerateSampleCallback sampleCallback);
-
-private:
-
-	void Initialize(const OscillatorParameters& parameters);
+	/// <summary>
+	/// Generates a sample for the specified stream time
+	/// </summary>
+	void GenerateSample(const OscillatorParameters& parameters, PlaybackFrame& frame, float absoluteTime);
 
 private:
 

@@ -9,18 +9,20 @@
 #include "SignalChainSettings.h"
 #include "SynthNoteMap.h"
 #include "WindowsKeyCodes.h"
+#include <string>
 
 class SynthSettings
 {
 public:
 
-	SynthSettings(OutputSettings* deviceSettings);
+	SynthSettings(OutputSettings* deviceSettings, const std::string& soundBankDirectory);
 	SynthSettings(const SynthSettings& copy);
 	~SynthSettings();
 
 	bool IsDirty() const;
-
 	void ClearDirty();
+
+	void SetSoundBankDirectory(const std::string& directory);
 
 	void SetOscillator(const OscillatorParameters& value);
 	void SetSignalChain(const SignalChainSettings& elements);
@@ -29,11 +31,12 @@ public:
 
 	void SetMidiLow(int value);
 	void SetMidiHigh(int value);
-
 	void SetMidiNote(WindowsKeyCodes keyCode, int midiNote);
 
 	void SetOutputLeftRight(float value);
 	void SetOutputGain(float value);
+
+	std::string GetSoundBankDirectory() const;
 
 	int GetMidiLow() const;
 	int GetMidiHigh() const;
@@ -58,6 +61,8 @@ public:
 private:
 
 	SynthNoteMap* _keyMap;
+
+	std::string* _soundBankDirectory;
 
 	OutputSettings* _outputSettings;
 	EqualizerOutput* _equalizerOutput;
