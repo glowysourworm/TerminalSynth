@@ -3,7 +3,6 @@
 #ifndef OSCILLATOR_UI_H
 #define OSCILLATOR_UI_H
 
-#include "Constant.h"
 #include "Envelope.h"
 #include "OscillatorParameters.h"
 #include "SliderUI.h"
@@ -28,6 +27,8 @@ public:
 
 	void ToUI(const OscillatorParameters& source) override;
 	void FromUI(OscillatorParameters& destination, bool clearDirty) override;
+
+	bool GetDirty() const override;
 
 private:
 
@@ -106,6 +107,7 @@ void OscillatorUI::Initialize(const OscillatorParameters& parameters)
 	_component = ftxui::Container::Horizontal({
 
 		oscillatorUI | ftxui::flex_grow,
+		ftxui::Renderer([&] { return ftxui::separator(); }),
 		envelopeUI | ftxui::flex_grow
 
 	}) | ftxui::flex_grow;
@@ -150,6 +152,16 @@ void OscillatorUI::FromUI(OscillatorParameters& destination, bool clearDirty)
 
 	if (clearDirty)
 		this->ClearDirty();
+}
+
+inline bool OscillatorUI::GetDirty() const
+{
+	return _soundSourceUI->GetDirty() ||
+		   _attack->GetDirty() ||
+		   _decay->GetDirty() ||
+		   _release->GetDirty() ||
+		   _attackPeak->GetDirty() ||
+		   _sustainPeak->GetDirty();
 }
 
 #endif

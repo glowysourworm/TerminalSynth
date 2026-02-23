@@ -101,22 +101,19 @@ void MainUI::Initialize(const SynthSettings& configuration)
 		_synthTab | ftxui::flex_grow,
 		midiSettings | ftxui::flex_grow,
 
-		}, _tabIndex) | ftxui::CatchEvent([&](ftxui::Event event) {
-
-		// Only allow mouse events through
-		if (event.is_mouse())
-		{
-			return false;
-		}
-
-		// Cancel keyboard events
-		return true;
-
-	}) | ftxui::flex_grow;
+		}, _tabIndex) | ftxui::flex_grow;
 
 	_mainControl = ftxui::Container::Vertical({
 		_tabControlMenu,
 		_tabControl
+	}) | ftxui::CatchEvent([&](ftxui::Event event) {
+
+		// Passthrough
+		if (event.is_mouse())
+			return false;
+
+		// Cancel
+		return true;
 	});
 }
 

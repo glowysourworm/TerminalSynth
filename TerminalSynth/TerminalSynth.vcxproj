@@ -327,6 +327,7 @@
     <ClInclude Include="SynthPlaybackDevice.h" />
     <ClInclude Include="UIBase.h" />
     <ClInclude Include="UIController.h" />
+    <ClInclude Include="ValueCapture.h" />
     <ClInclude Include="WaveTable.h" />
     <ClInclude Include="WaveTableCache.h" />
     <ClInclude Include="WaveTableCacheKey.h" />

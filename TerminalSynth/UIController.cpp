@@ -72,7 +72,7 @@ bool UIController::IsDirty() const
 	// std::atomic end loop
 	this->Lock->Release();
 
-	return true;
+	return isDirty;
 }
 
 void UIController::FromUI(SynthSettings* configuration)

@@ -50,18 +50,12 @@ void CheckboxUI::Initialize(const bool& initialValue)
 {
 	UIBase::Initialize(initialValue);
 
-	_component = ftxui::Checkbox(this->GetLabel(), _value) | ftxui::CatchEvent([&](ftxui::Event event) {
+	_component = ftxui::Checkbox(this->GetLabel(), _value, { .on_change = [&] {
 
-		// Pass through
-		if (event.is_mouse() && event.mouse().button == ftxui::Mouse::Button::Left)
-		{
-			this->SetDirty();
-			return false;
-		}
+		// Sets dirty flag in the base class
+		this->SetDirty();
 
-		// Cancel keyboard events
-		return true;
-	});
+	} });
 }
 
 ftxui::Component CheckboxUI::GetComponent()

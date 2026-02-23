@@ -100,12 +100,13 @@ private:
 							std::string soundBankName = dirEntry.path().filename().string();
 							std::string soundFileName = dirSubEntry.path().filename().string();
 							std::string soundName = soundFileName.replace(soundFileName.size() - extensionSize, soundFileName.size() - 1, "");		// Remove Extension
-
-							_soundBanks->push_back(soundBankName);
-
+						
 							if (!_soundBankMaps->contains(soundBankName))
+							{
+								_soundBanks->push_back(soundBankName);
 								_soundBankMaps->insert(std::make_pair(soundBankName, new std::vector<std::string>()));
-
+							}
+							
 							_soundBankMaps->at(soundBankName)->push_back(soundName);
 							_soundFileMap->insert(std::make_pair(soundBankName + soundName, soundFileName));
 						}

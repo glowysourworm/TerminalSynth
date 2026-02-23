@@ -19,7 +19,7 @@ SynthSettings::SynthSettings(OutputSettings* deviceSettings, const std::string& 
 	_signalChainRegistry = new SignalChainSettings();
 	_outputSettings = deviceSettings;
 	_equalizerOutput = new EqualizerOutput();	
-	_soundBankSettings = new SoundBankSettings();
+	_soundBankSettings = new SoundBankSettings(soundBankDirectory);		// May fail during a try / catch. Settings will be empty, but useable.
 
 	_midiLow = MIDI_PIANO_LOW_NUMBER;
 	_midiHigh = MIDI_PIANO_HIGH_NUMBER;

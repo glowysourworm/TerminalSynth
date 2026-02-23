@@ -97,7 +97,7 @@ void EffectUI::Initialize(const SignalSettings& parameters)
 	_component = ftxui::Container::Vertical({
 		ftxui::Renderer([&] { return ftxui::text(this->GetLabel()) | ftxui::color(this->GetLabelColor()); }),
 		ftxui::Renderer([&] { return ftxui::separator(); })
-		});
+	});
 
 	// We have to get components from our UI container for the vector - which will re-render each time.
 	for (int index = 0; index < _parameterUIs->size(); index++)

@@ -76,6 +76,9 @@
     <Filter Include="Header Files\SignalRegistry">
       <UniqueIdentifier>{acfba9ef-3acf-4e67-ba5e-ef3310913f0f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\RealTime">
+      <UniqueIdentifier>{8a617c3e-23c6-451f-b196-ec6d5d0d84e6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp">
@@ -251,15 +254,6 @@
     <ClInclude Include="ButterworthFilter.h">
       <Filter>Header Files\Filter</Filter>
     </ClInclude>
-    <ClInclude Include="Accumulator.h">
-      <Filter>Header Files\Playback</Filter>
-    </ClInclude>
-    <ClInclude Include="IntervalTimer.h">
-      <Filter>Header Files\Playback</Filter>
-    </ClInclude>
-    <ClInclude Include="LoopTimer.h">
-      <Filter>Header Files\Playback</Filter>
-    </ClInclude>
     <ClInclude Include="PlaybackFrame.h">
       <Filter>Header Files\Playback</Filter>
     </ClInclude>
@@ -283,9 +277,6 @@
     </ClInclude>
     <ClInclude Include="SignalBase.h">
       <Filter>Header Files\Signal</Filter>
-    </ClInclude>
-    <ClInclude Include="StopWatch.h">
-      <Filter>Header Files\Playback</Filter>
     </ClInclude>
     <ClInclude Include="SynthSoundMap.h">
       <Filter>Header Files\Synth</Filter>
@@ -344,9 +335,6 @@
     <ClInclude Include="CombFilter.h">
       <Filter>Header Files\Filter</Filter>
     </ClInclude>
-    <ClInclude Include="AtomicLock.h">
-      <Filter>Header Files\Playback</Filter>
-    </ClInclude>
     <ClInclude Include="WaveTableCache.h">
       <Filter>Header Files\Signal</Filter>
     </ClInclude>
@@ -358,6 +346,24 @@
     </ClInclude>
     <ClInclude Include="SoundSourceUI.h">
       <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Accumulator.h">
+      <Filter>Header Files\RealTime</Filter>
+    </ClInclude>
+    <ClInclude Include="AtomicLock.h">
+      <Filter>Header Files\RealTime</Filter>
+    </ClInclude>
+    <ClInclude Include="IntervalTimer.h">
+      <Filter>Header Files\RealTime</Filter>
+    </ClInclude>
+    <ClInclude Include="LoopTimer.h">
+      <Filter>Header Files\RealTime</Filter>
+    </ClInclude>
+    <ClInclude Include="StopWatch.h">
+      <Filter>Header Files\RealTime</Filter>
+    </ClInclude>
+    <ClInclude Include="ValueCapture.h">
+      <Filter>Header Files\RealTime</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

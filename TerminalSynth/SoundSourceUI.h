@@ -7,8 +7,11 @@
 #include "OscillatorParameters.h"
 #include "SoundBankSettings.h"
 #include "UIBase.h"
+#include "ValueCapture.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
+#include <ftxui/component/component_options.hpp>
+#include <ftxui/component/event.hpp>
 #include <ftxui/screen/color.hpp>
 #include <string>
 #include <vector>
@@ -33,10 +36,10 @@ private:
 	const SoundBankSettings* _soundBankSettings;
 
 	// Oscillator Selected Index
-	int* _soundSourceChoiceIndex;
-	int* _oscillatorSelectedIndex;
-	int* _soundBankSelectedIndex;
-	int* _soundNameSelectedIndex;
+	ValueCapture<int>* _soundSourceChoiceIndex;
+	ValueCapture<int>* _oscillatorSelectedIndex;
+	ValueCapture<int>* _soundBankSelectedIndex;
+	ValueCapture<int>* _soundNameSelectedIndex;
 
 	// Oscillator Choices
 	std::vector<std::string>* _soundSourceChoices;
@@ -68,10 +71,10 @@ SoundSourceUI::SoundSourceUI(const SoundBankSettings* soundBankSettings, const f
 	_soundBankItems = new std::vector<std::string>(soundBanks);
 	_soundNameItems = new std::vector<std::string>(soundNames);
 
-	_oscillatorSelectedIndex = new int(0);
-	_soundSourceChoiceIndex = new int(0);
-	_soundBankSelectedIndex = new int(0);
-	_soundNameSelectedIndex = new int(0);
+	_oscillatorSelectedIndex = new ValueCapture<int>(0);
+	_soundSourceChoiceIndex = new ValueCapture<int>(0);
+	_soundBankSelectedIndex = new ValueCapture<int>(0);
+	_soundNameSelectedIndex = new ValueCapture<int>(0);
 }
 
 SoundSourceUI::~SoundSourceUI()
@@ -91,21 +94,32 @@ SoundSourceUI::~SoundSourceUI()
 
 void SoundSourceUI::Initialize(const OscillatorParameters& parameters)
 {
-	auto soundSourceChoiceUI = ftxui::Dropdown(_soundSourceChoices, _soundSourceChoiceIndex);
-	auto oscillatorItemsUI = ftxui::Dropdown(_oscillatorItems, _oscillatorSelectedIndex);
-	auto soundBankItemsUI = ftxui::Dropdown(_soundBankItems, _soundBankSelectedIndex);
-	auto soundNameItemsUI = ftxui::Dropdown(_soundNameItems, _soundNameSelectedIndex);
+	auto soundSourceChoiceUI = ftxui::Dropdown(_soundSourceChoices, _soundSourceChoiceIndex->GetRef());
+	auto oscillatorItemsUI = ftxui::Dropdown(_oscillatorItems, _oscillatorSelectedIndex->GetRef());
+	auto soundBankItemsUI = ftxui::Dropdown(_soundBankItems, _soundBankSelectedIndex->GetRef());
+	auto soundNameItemsUI = ftxui::Dropdown(_soundNameItems, _soundNameSelectedIndex->GetRef());
 
-	_component = ftxui::Container::Horizontal({
-		ftxui::Container::Vertical({
+	_component = ftxui::Container::Vertical({
 			soundSourceChoiceUI,
-			oscillatorItemsUI
-		}),
-		ftxui::Container::Vertical({
-			soundBankItemsUI,
-			soundNameItemsUI
-		})
-	});
+			oscillatorItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 0; }),
+			soundBankItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 1; }),
+			soundNameItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 1; }),
+		}) | ftxui::CatchEvent([&] (ftxui::Event event) {
+
+			// Is Dirty
+			if (_soundSourceChoiceIndex->HasChanged() ||
+				_oscillatorSelectedIndex->HasChanged() ||
+				_soundBankSelectedIndex->HasChanged() ||
+				_soundNameSelectedIndex->HasChanged())
+				this->SetDirty();
+
+			// Passthrough
+			if (event.is_mouse())
+				return false;
+
+			// Cancel
+			return true;
+		});
 }
 
 ftxui::Component SoundSourceUI::GetComponent()
@@ -115,16 +129,41 @@ ftxui::Component SoundSourceUI::GetComponent()
 
 void SoundSourceUI::UpdateComponent(bool clearDirty)
 {
+	if (this->GetDirty())
+	{
+		if (_soundBankSelectedIndex->HasChanged())
+		{
+			std::string soundBank = _soundBankItems->at(_soundBankSelectedIndex->GetValue());
 
+			// Update Sound Names
+			std::vector<std::string> soundNames = _soundBankSettings->GetSoundNames(soundBank);
+
+			_soundNameItems->clear();
+
+			for (int index = 0; index < soundNames.size(); index++)
+			{
+				_soundNameItems->push_back(soundNames[index]);
+			}
+		}
+	}
+
+	if (clearDirty)
+	{
+		_soundSourceChoiceIndex->Clear();
+		_oscillatorSelectedIndex->Clear();
+		_soundBankSelectedIndex->Clear();
+		_soundNameSelectedIndex->Clear();
+		this->ClearDirty();
+	}
 }
 
 void SoundSourceUI::ToUI(const OscillatorParameters& source)
 {
-	*_soundSourceChoiceIndex = (int)source.GetType();
-	*_oscillatorSelectedIndex = (int)source.GetBuiltInType();
+	_soundSourceChoiceIndex->SetValue((int)source.GetType());
+	_oscillatorSelectedIndex->SetValue((int)source.GetBuiltInType());
 
-	*_soundBankSelectedIndex = 0;
-	*_soundNameSelectedIndex = 0;
+	_soundBankSelectedIndex->SetValue(0);
+	_soundNameSelectedIndex->SetValue(0);
 
 	std::string soundBank = source.GetSoundBank();
 	std::string soundName = source.GetSoundName();
@@ -136,7 +175,7 @@ void SoundSourceUI::ToUI(const OscillatorParameters& source)
 	{
 		if (_soundBankItems->at(index) == soundBank)
 		{
-			*_soundBankSelectedIndex = index;
+			_soundBankSelectedIndex->SetValue(index);
 			break;
 		}
 	}
@@ -147,7 +186,7 @@ void SoundSourceUI::ToUI(const OscillatorParameters& source)
 	{
 		if (soundNames.at(index) == soundName)
 		{
-			*_soundNameSelectedIndex = index;
+			_soundNameSelectedIndex->SetValue(index);
 			break;
 		}
 	}
@@ -155,14 +194,23 @@ void SoundSourceUI::ToUI(const OscillatorParameters& source)
 
 void SoundSourceUI::FromUI(OscillatorParameters& destination, bool clearDirty)
 {
-	destination.SetType((OscillatorType)*_soundSourceChoiceIndex);
-	destination.SetBuiltInType((BuiltInOscillators)*_oscillatorSelectedIndex);
+	destination.SetType((OscillatorType)_soundSourceChoiceIndex->GetValue());
+	destination.SetBuiltInType((BuiltInOscillators)_oscillatorSelectedIndex->GetValue());
 
 	if (_soundBankItems->size() > 0)
-		destination.SetSoundBank(_soundBankItems->at(*_soundBankSelectedIndex));
+		destination.SetSoundBank(_soundBankItems->at(_soundBankSelectedIndex->GetValue()));
 
 	if (_soundNameItems->size() > 0)
-		destination.SetSoundName(_soundNameItems->at(*_soundNameSelectedIndex));
+		destination.SetSoundName(_soundNameItems->at(_soundNameSelectedIndex->GetValue()));
+
+	if (clearDirty)
+	{
+		_soundSourceChoiceIndex->Clear();
+		_oscillatorSelectedIndex->Clear();
+		_soundBankSelectedIndex->Clear();
+		_soundNameSelectedIndex->Clear();
+		this->ClearDirty();
+	}		
 }
 
 #endif	

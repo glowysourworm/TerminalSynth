@@ -7,6 +7,7 @@
 #include <format>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
+#include <ftxui/component/component_options.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/mouse.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -79,22 +80,20 @@ void SliderUI::Initialize(const float& initialValue)
 {
     UIBase::Initialize(initialValue);
 
-    // Create Component
-    _component = ftxui::Slider(_label, _value, _minValue, _maxValue, _increment)
-        | ftxui::color(this->GetLabelColor())
-        | ftxui::CatchEvent([&](ftxui::Event event)
-        {
-            // Only allow mouse events through
-            if (event.mouse().button == ftxui::Mouse::Left &&
-                event.is_mouse())
-            {
-                this->SetDirty();
-                return false;
-            }
+    auto slider = ftxui::Slider<float>({
+        .value = _value,
+        .min = _minValue,
+        .max = _maxValue,
+        .increment = _increment,
+        .color_active = this->GetLabelColor(),
+        .on_change = [&] { this->SetDirty(); }
+    });
 
-            // Cancel keyboard events
-            return true;
-        });
+    // Create Component
+    _component = ftxui::Container::Horizontal({
+        ftxui::Renderer([&] { return ftxui::text(*_label); }),
+        slider
+    });
 }
 
 ftxui::Component SliderUI::GetComponent()

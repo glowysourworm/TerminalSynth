@@ -9,6 +9,7 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/take_any_args.hpp>
 #include <ftxui/screen/color.hpp>
 #include <string>
 

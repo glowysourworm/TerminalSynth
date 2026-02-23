@@ -38,6 +38,7 @@ private:
 	ftxui::Component _component;
 	ftxui::Component _list;
 
+	bool* _isMouseOver;
 	float* _scrollY;
 	float _scrollDeltaY;
 
@@ -49,6 +50,7 @@ CheckListUI::CheckListUI(const ftxui::Color& labelColor) : UIBase("", "", labelC
 	_checkBoxes = new std::vector<CheckboxUI*>();
 	_scrollY = new float(0);
 	_scrollDeltaY = 0.005f;
+	_isMouseOver = new bool(false);
 }
 
 CheckListUI::~CheckListUI()
@@ -62,6 +64,7 @@ CheckListUI::~CheckListUI()
 
 	delete _checkBoxes;
 	delete _scrollY;
+	delete _isMouseOver;
 }
 
 void CheckListUI::Initialize(const std::vector<std::string>& initialValue)
@@ -109,12 +112,12 @@ void CheckListUI::Initialize(const std::vector<std::string>& initialValue)
 
 		}) | ftxui::CatchEvent([&](ftxui::Event event) {
 
-			if (event.mouse().button == ftxui::Mouse::Button::WheelUp && _component->Focused())
+			if (event.mouse().button == ftxui::Mouse::Button::WheelUp && *_isMouseOver)
 			{
 				// Set Mouse Wheel (clipped [0,1])
 				*_scrollY = fminf(fmaxf(*_scrollY - _scrollDeltaY, 0), 1);
 			}
-			else if (event.mouse().button == ftxui::Mouse::Button::WheelDown && _component->Focused())
+			else if (event.mouse().button == ftxui::Mouse::Button::WheelDown && *_isMouseOver)
 			{
 				// Set Mouse Wheel (clipped [0,1])
 				*_scrollY = fminf(fmaxf(*_scrollY + _scrollDeltaY, 0), 1);
@@ -126,7 +129,8 @@ void CheckListUI::Initialize(const std::vector<std::string>& initialValue)
 
 		// Cancel keyboard events
 		return true;
-	});
+
+	}) | ftxui::Hoverable(_isMouseOver);
 }
 
 ftxui::Component CheckListUI::GetComponent()
