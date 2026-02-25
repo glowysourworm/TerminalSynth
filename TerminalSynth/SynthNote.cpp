@@ -27,11 +27,11 @@ unsigned int SynthNote::GetMidiNumber() const
 
 void SynthNote::GetSample(PlaybackFrame* frame, float absoluteTime)
 {
-	float left = _waveTable->GetSampleL(absoluteTime);
-	float right = _waveTable->GetSampleR(absoluteTime);
+	_waveTable->SetFrame(frame, absoluteTime);
+
 	float envelopeLevel = _parameters->GetEnvelope()->GetEnvelopeLevel(absoluteTime);
 
-	frame->SetFrame(left * envelopeLevel, right * envelopeLevel);
+	frame->SetFrame(envelopeLevel * frame->GetLeft(), envelopeLevel * frame->GetRight());
 }
 
 void SynthNote::AddSample(PlaybackFrame* frame, float absoluteTime)

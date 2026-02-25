@@ -33,11 +33,15 @@ public:
 	void SetMidiHigh(int value);
 	void SetMidiNote(WindowsKeyCodes keyCode, int midiNote);
 
+	void SetOversamplingFactor(float value);
+
 	void SetOutputLeftRight(float value);
 	void SetOutputGain(float value);	
 
 	int GetMidiLow() const;
 	int GetMidiHigh() const;
+
+	float GetOversamplingFactor() const;
 
 	SynthNoteMap GetNoteMap() const;
 	bool HasMidiNote(WindowsKeyCodes keyCode) const;
@@ -69,6 +73,8 @@ private:
 
 	int _midiLow;
 	int _midiHigh;
+
+	float _oversamplingFactor;
 
 	OscillatorParameters* _oscillatorParameters;
 	SignalChainSettings* _signalChainRegistry;				// Signal Chain (with registry loaded!)

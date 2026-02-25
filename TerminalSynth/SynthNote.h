@@ -12,7 +12,7 @@ class SynthNote
 public:
 
 	/// <summary>
-	/// Creates a synth note from the provided oscillator. The oscillator is cached by other components, and should
+	/// Creates a synth note from the provided wave table. The wave table is cached by other components, and should
 	/// NOT BE DELETED!
 	/// </summary>
 	/// <param name="parameters">Parameters for the oscillator</param>

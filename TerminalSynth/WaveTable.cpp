@@ -1,11 +1,13 @@
 #include "Matrix.h"
 #include "PlaybackFrame.h"
 #include "Vector.h"
+#include "WaveBase.h"
 #include "WaveTable.h"
 #include <cmath>
 #include <exception>
 
 WaveTable::WaveTable(unsigned int frameLength, unsigned int samplingRate, unsigned int systemSamplingRate)
+	: WaveBase(samplingRate)
 {
 	_samplingRate = samplingRate;
 	_systemSamplingRate = systemSamplingRate;
@@ -16,6 +18,8 @@ WaveTable::WaveTable(unsigned int frameLength, unsigned int samplingRate, unsign
 	_splineAInverse = new Matrix<double>(3, 3);
 	_splineB = new Vector<double>(3);
 	_splineK = new Vector<double>(3);
+
+	_lastPeriodTime = 0;
 }
 
 WaveTable::~WaveTable()
@@ -34,7 +38,7 @@ void WaveTable::CreateSamplesByTime(WaveTableSampleGenerateSecondCallback callba
 	{
 		float left = 0;
 		float right = 0;
-		float sampleTime = (index / (float)_samplingRate) * (_samplingRate / (float)_systemSamplingRate);				// Frame Length is scaled
+		float sampleTime = (index / (float)_samplingRate) /* (_samplingRate / (float)_systemSamplingRate)*/;				// Frame Length is scaled
 		callback(sampleTime, left, right);
 
 		_frames[index].SetFrame(left, right);
@@ -54,27 +58,96 @@ void WaveTable::CreateSamplesByFrame(WaveTableSampleGenerateFrameCallback callba
 	}
 }
 
-float WaveTable::GetSampleL(double absoluteTime)
+bool WaveTable::HasOutput(float absoluteTime) const
 {
-	// First, take our oversampled array, and get the necessary points to match it to the spline
-	int bigIndex = absoluteTime * (double)_systemSamplingRate * (_samplingRate / (double)_systemSamplingRate);		// Oversampled
-	int frameIndex = bigIndex % _frameLength;
-
-	return _frames[frameIndex].GetLeft();
-
-	//return GetCubicSpline(absoluteTime, true);
+	return true;
 }
 
-float WaveTable::GetSampleR(double absoluteTime)
+void WaveTable::SetFrameImpl(PlaybackFrame* frame, double absoluteTime)
+{
+	float left = GetLinearSpline(absoluteTime, true);
+	float right = GetLinearSpline(absoluteTime, false);
+
+	frame->SetFrame(left, right);
+}
+
+float WaveTable::GetLinearSpline(double absoluteTime, bool channelLeft)
 {
 	// First, take our oversampled array, and get the necessary points to match it to the spline
-	int bigIndex = absoluteTime * (double)_systemSamplingRate * (_samplingRate / (double)_systemSamplingRate);		// Oversampled
-	int frameIndex = bigIndex % _frameLength;
+	int bigIndex = absoluteTime * _systemSamplingRate * (_samplingRate / (float)_systemSamplingRate);			// Expanded to Frame Length (which is oversampled)
 
-	return _frames[frameIndex].GetRight();
+	// Oversampled frame domain
+	int frame0Index = bigIndex % _frameLength;
+	int frame1Index = (bigIndex + 1) % _frameLength;
 
-	//return GetCubicSpline(absoluteTime, false);
+	// These signal coordaintes are from our oversampled domain
+	double y0 = channelLeft ? _frames[frame0Index].GetLeft() : _frames[frame0Index].GetRight();
+	double y1 = channelLeft ? _frames[frame1Index].GetLeft() : _frames[frame1Index].GetRight();
+
+	// Anti-Aliasing (restart the wave period)
+	if (frame1Index < frame0Index)
+		return y0;
+
+	// Can't interpolate (no need to interpolate)
+	if (y0 == y1)
+		return y0;
+
+	// These time coordinates are calculated in system time (but just for the duration of one buffer length!)
+	double x0 = frame0Index / (double)_samplingRate;
+	double x1 = frame1Index / (double)_samplingRate;
+	
+	// y = m * x + b
+	//
+	// y0 = m * x0 + b
+	// y1 = m * x1 + b
+	//
+	// y1 - y0 = m * (x1 - x0)
+	//
+	// b = y0 - m * x0
+	//
+	double m = (x1 - x0) / (y1 - y0);
+	double b = y0 - (m * x0);
+
+	// We need to get the closest wave time (in system time coordinates).
+	double waveTime = fmod(absoluteTime, _frameLength / (double)_samplingRate);
+
+	return (m * waveTime) + b;
 }
+//
+//float WaveTable::GetLinearSplineBuffered(double absoluteTime, bool channelLeft)
+//{
+//	// First, take our oversampled array, and get the necessary points to match it to the spline
+//	int bigIndex = absoluteTime * _systemSamplingRate * (_samplingRate / (float)_systemSamplingRate);			// Expanded to Frame Length (which is oversampled)
+//
+//	// Oversampled frame domain
+//	int frameIndex = bigIndex % _frameLength;
+//
+//	// These signal coordaintes are from our oversampled domain:  y0 = last output, y1 = next output
+//	double y0 = channelLeft ? this->GetOutput().GetLeft() : this->GetOutput().GetRight();
+//	double y1 = channelLeft ? _frames[frameIndex].GetLeft() : _frames[frameIndex].GetRight();
+//
+//	// These time coordinates are buffered (stored)
+//	//
+//	double x0 = this->GetLastTime();					// System time coordinate
+//	double x1 = absoluteTime;
+//
+//	// y = m * x + b
+//	//
+//	// y0 = m * x0 + b
+//	// y1 = m * x1 + b
+//	//
+//	// y1 - y0 = m * (x1 - x0)
+//	//
+//	// b = y0 - m * x0
+//	//
+//	double m = (x1 - x0) / (y1 - y0);
+//	double b = y0 - (m * x0);
+//
+//	// We need to get the closest wave time (in system time coordinates).
+//	double waveTime = fmod(absoluteTime, _frameLength / (double)_samplingRate);
+//
+//	return (m * waveTime) + b;
+//}
 
 float WaveTable::GetCubicSpline(double absoluteTime, bool channelLeft)
 {

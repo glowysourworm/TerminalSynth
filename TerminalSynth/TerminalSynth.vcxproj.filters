@@ -374,6 +374,9 @@
     <ClInclude Include="Vector.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
+    <ClInclude Include="WaveBase.h">
+      <Filter>Header Files\Signal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="RtAudioUserData.h">

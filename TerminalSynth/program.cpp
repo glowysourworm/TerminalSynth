@@ -15,6 +15,9 @@ SynthSettings* CreateConfiguration(OutputSettings* deviceSettings, const std::st
 {
 	SynthSettings* configuration = new SynthSettings(deviceSettings, soundBankDirectory);
 
+	// Oversampling
+	configuration->SetOversamplingFactor(10);
+
 	// Octave 1
 	configuration->SetMidiNote(WindowsKeyCodes::Z, 21);
 	configuration->SetMidiNote(WindowsKeyCodes::X, 22);

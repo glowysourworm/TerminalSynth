@@ -330,6 +330,7 @@
     <ClInclude Include="UIController.h" />
     <ClInclude Include="ValueCapture.h" />
     <ClInclude Include="Vector.h" />
+    <ClInclude Include="WaveBase.h" />
     <ClInclude Include="WaveTable.h" />
     <ClInclude Include="WaveTableCache.h" />
     <ClInclude Include="WaveTableCacheKey.h" />

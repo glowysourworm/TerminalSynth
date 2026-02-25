@@ -9,6 +9,7 @@
 #include "WaveTableCache.h"
 #include "WaveTableCacheKey.h"
 #include <exception>
+#include <limits>
 #include <map>
 #include <sndfile.h>
 #include <string>
@@ -108,8 +109,8 @@ bool WaveTableCache::Initialize_Oscillators(const SynthSettings* synthSettings, 
 				float frequency = TerminalSynth::GetMidiFrequency(midiNumber);
 				OscillatorParameters parameters(OscillatorType::BuiltIn, (BuiltInOscillators)oscillatorType, "", "", frequency, SIGNAL_LOW, SIGNAL_HIGH, Envelope());
 
-				// (MEMORY!) ~WaveTableCache
-				WTCacheKey_Oscillator* cacheKey = new WTCacheKey_Oscillator(parameters, midiNumber, outputSettings->GetSamplingRate());
+				// (MEMORY!) ~WaveTableCache (Also, note oversampling factor!) (this is propagated using the second sampling rate in WaveTable*)
+				WTCacheKey_Oscillator* cacheKey = new WTCacheKey_Oscillator(parameters, midiNumber, outputSettings->GetSamplingRate() * synthSettings->GetOversamplingFactor());
 
 				_oscillatorList->push_back(cacheKey);
 			}
@@ -143,8 +144,33 @@ bool WaveTableCache::CreateWaveTable(WTCacheKey_SoundBank* cacheKey)
 
 		waveTable->CreateSamplesByFrame(WaveTable::WaveTableSampleGenerateFrameCallback([&sfinfo, &sndFile](int frameIndex, float& leftSample, float& rightSample)
 		{
-			// FLOAT
-			if ((sfinfo.format & SF_FORMAT_FLOAT) == 0)
+			// Format:  File Type | Data Type
+			//
+			if ((sfinfo.format == (SF_FORMAT_WAV  | SF_FORMAT_DOUBLE) ||
+				 sfinfo.format == (SF_FORMAT_AIFF | SF_FORMAT_DOUBLE)))
+			{
+				// MONO
+				if (sfinfo.channels == 1)
+				{
+					double buffer[1];
+					sf_read_double(sndFile, buffer, 1);
+					leftSample = buffer[0];
+					rightSample = buffer[0];
+				}
+
+				// STEREO
+				else if (sfinfo.channels == 2)
+				{
+					double buffer[2];
+					sf_read_double(sndFile, buffer, 2);
+					leftSample = buffer[0];
+					rightSample = buffer[1];
+				}
+				else
+					throw new std::exception("Unhandled libsndfile format type:  WaveTableCache.cpp");
+			}
+			else if ((sfinfo.format == (SF_FORMAT_WAV | SF_FORMAT_FLOAT) ||
+					  sfinfo.format == (SF_FORMAT_AIFF | SF_FORMAT_FLOAT)))
 			{
 				// MONO
 				if (sfinfo.channels == 1)
@@ -163,27 +189,28 @@ bool WaveTableCache::CreateWaveTable(WTCacheKey_SoundBank* cacheKey)
 					leftSample = buffer[0];
 					rightSample = buffer[1];
 				}
-				else 
+				else
 					throw new std::exception("Unhandled libsndfile format type:  WaveTableCache.cpp");
 			}
-			else if ((sfinfo.format & SF_FORMAT_DOUBLE) == 0)
+			else if ((sfinfo.format == (SF_FORMAT_WAV | SF_FORMAT_PCM_16) ||
+					  sfinfo.format == (SF_FORMAT_AIFF | SF_FORMAT_PCM_16)))
 			{
 				// MONO
 				if (sfinfo.channels == 1)
 				{
-					double buffer[1];
-					sf_read_double(sndFile, buffer, 1);
-					leftSample = buffer[0];
-					rightSample = buffer[0];
+					short buffer[1];
+					sf_readf_short(sndFile, buffer, 1);
+					leftSample = buffer[0] / (float)std::numeric_limits<short>::max();
+					rightSample = buffer[0] / (float)std::numeric_limits<short>::max();
 				}
 
 				// STEREO
 				else if (sfinfo.channels == 2)
 				{
-					double buffer[2];
-					sf_read_double(sndFile, buffer, 2);
-					leftSample = buffer[0];
-					rightSample = buffer[1];
+					short buffer[2];
+					sf_readf_short(sndFile, buffer, 2);
+					leftSample = buffer[0] / (float)std::numeric_limits<short>::max();;
+					rightSample = buffer[1] / (float)std::numeric_limits<short>::max();;
 				}
 				else
 					throw new std::exception("Unhandled libsndfile format type:  WaveTableCache.cpp");
@@ -260,6 +287,10 @@ void WaveTableCache::GetSoundNames(const std::string& soundBank, std::vector<std
 
 WaveTable* WaveTableCache::Get(const OscillatorParameters& parameters, int midiNumber)
 {
+	// Other overload...
+	if (parameters.GetType() == OscillatorType::SampleBased)
+		return Get(parameters.GetSoundBank(), parameters.GetSoundName(), parameters.GetFrequency());
+
 	WTCacheKey_Oscillator* cacheKey = nullptr;
 	WTCacheKey_Oscillator cacheMatch(parameters, midiNumber, _oscillatorSamplingRate);
 

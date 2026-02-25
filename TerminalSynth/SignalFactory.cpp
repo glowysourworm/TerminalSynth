@@ -105,7 +105,7 @@ float SignalFactory::GenerateTriangleSample(float frequency, float signalHigh, f
 	float sample = 0;
 
 	// Using modulo arithmetic to get the relative period time
-	float periodTime = fmodf(sampleTime, period);
+	float periodTime = fmod(sampleTime, period);
 
 	// First Quadrant
 	if (periodTime < periodQuarter)
@@ -138,7 +138,7 @@ float SignalFactory::GenerateSquareSample(float frequency, float signalHigh, flo
 {
 	// Using modulo arithmetic to get the relative period time
 	float period = 1 / frequency;
-	float periodTime = fmodf(sampleTime, period);
+	float periodTime = fmod(sampleTime, period);
 	float sample = 0;
 
 	if (periodTime < period / 2.0)
@@ -154,7 +154,7 @@ float SignalFactory::GenerateSawtoothSample(float frequency, float signalHigh, f
 {
 	// Using modulo arithmetic to get the relative period time
 	float period = 1 / frequency;
-	float periodTime = fmodf(sampleTime, period);
+	float periodTime = fmod(sampleTime, period);
 
 	return (((signalHigh - signalLow) / period) * periodTime) + signalLow;
 }
@@ -177,19 +177,19 @@ float SignalFactory::GeneratePluckedStringSample(float frequency, float signalHi
 	float sample = 0;
 
 	// Noise Attack:  The delay + filter will make the line dissipate
-	//if (sampleTime < attackTime)
-	//{
+	if (sampleTime < attackTime)
+	{
 		sample = ((float)rand() / (float)RAND_MAX);
-	//}
-	//else
-	//{
-		//sample = 0;
-	//}
+	}
+	else
+	{
+		sample = 0;
+	}
 
 	// Process Sample
 	PlaybackFrame frame(0, 0);
-	//_combFilter->SetFrame(&frame, sampleTime);
-	//_lowPassFilter->SetFrame(&frame, sampleTime);
+	_combFilter->SetFrame(&frame, sampleTime);
+	_lowPassFilter->SetFrame(&frame, sampleTime);
 
 	// Mix with input
 	frame.SetFrame(frame.GetLeft() + sample, frame.GetRight() + sample);

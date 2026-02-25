@@ -98,6 +98,7 @@ private:
 						{
 							int extensionSize = dirSubEntry.path().extension().string().size();
 							std::string soundBankName = dirEntry.path().filename().string();
+							std::string soundFilePath = dirSubEntry.path().string();
 							std::string soundFileName = dirSubEntry.path().filename().string();
 							std::string soundName = soundFileName.replace(soundFileName.size() - extensionSize, soundFileName.size() - 1, "");		// Remove Extension
 						
@@ -108,7 +109,7 @@ private:
 							}
 							
 							_soundBankMaps->at(soundBankName)->push_back(soundName);
-							_soundFileMap->insert(std::make_pair(soundBankName + soundName, soundFileName));
+							_soundFileMap->insert(std::make_pair(soundBankName + soundName, soundFilePath));
 						}
 					}
 				}

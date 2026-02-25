@@ -34,11 +34,11 @@ void Oscillator::Initialize(const SignalSettings* configuration, const OutputSet
 
 void Oscillator::SetFrame(PlaybackFrame* frame, float absoluteTime)
 {
-	float left = _waveTable->GetSampleL(absoluteTime);
-	float right = _waveTable->GetSampleR(absoluteTime);
+	_waveTable->SetFrame(frame, absoluteTime);
+
 	float envelopeLevel = _parameters->GetEnvelope()->GetEnvelopeLevel(absoluteTime);
 
-	frame->SetFrame(envelopeLevel * left, envelopeLevel * right);
+	frame->SetFrame(envelopeLevel * frame->GetLeft(), envelopeLevel * frame->GetRight());
 }
 
 bool Oscillator::HasOutput(float absoluteTime) const

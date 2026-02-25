@@ -24,6 +24,8 @@ SynthSettings::SynthSettings(OutputSettings* deviceSettings, const std::string& 
 	_midiLow = MIDI_PIANO_LOW_NUMBER;
 	_midiHigh = MIDI_PIANO_HIGH_NUMBER;
 
+	_oversamplingFactor = 1.0;
+
 	_leftRight = 0.5f;
 	_gain = 1.0f;
 }
@@ -175,6 +177,11 @@ int SynthSettings::GetMidiHigh() const
 	return _midiHigh;
 }
 
+float SynthSettings::GetOversamplingFactor() const
+{
+	return _oversamplingFactor;
+}
+
 bool SynthSettings::HasMidiNote(WindowsKeyCodes keyCode) const
 {
 	return _keyMap->HasMidiNote(keyCode);
@@ -207,6 +214,10 @@ void SynthSettings::SetMidiHigh(int value)
 void SynthSettings::SetMidiNote(WindowsKeyCodes keyCode, int midiNote)
 {
 	_keyMap->Add(keyCode, midiNote);
+}
+void SynthSettings::SetOversamplingFactor(float value)
+{
+	_oversamplingFactor = value;
 }
 void SynthSettings::SetOutputLeftRight(float value)
 {

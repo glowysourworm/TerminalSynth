@@ -6,9 +6,10 @@
 #include "Matrix.h"
 #include "PlaybackFrame.h"
 #include "Vector.h"
+#include "WaveBase.h"
 #include <functional>
 
-class WaveTable
+class WaveTable : public WaveBase
 {
 public:
 
@@ -27,7 +28,7 @@ public:
 	using WaveTableSampleGenerateFrameCallback = std::function<void(int frameIndex, float& leftSample, float& rightSample)>;
 
 	WaveTable(unsigned int frameLength, unsigned int samplingRate, unsigned int systemSamplingRate);
-	~WaveTable();
+	~WaveTable() override;
 
 	/// <summary>
 	/// Sets samples into the wave table (using stream time)
@@ -39,14 +40,16 @@ public:
 	/// </summary>
 	void CreateSamplesByFrame(WaveTableSampleGenerateFrameCallback callback);
 
-	/// <summary>
-	/// Gets a sample value for playback given the input stream time
-	/// </summary>
-	float GetSampleL(double absoluteTime);
-	float GetSampleR(double absoluteTime);
+	bool HasOutput(float absoluteTime) const override;
+
+protected:
+
+	void SetFrameImpl(PlaybackFrame* frame, double absoluteTime) override;
 
 private:
 
+	float GetLinearSpline(double absoluteTime, bool channelLeft);
+	//float GetLinearSplineBuffered(double absoluteTime, bool channelLeft);
 	float GetCubicSpline(double absoluteTime, bool channelLeft);
 
 private:
@@ -55,6 +58,7 @@ private:
 	unsigned int _systemSamplingRate;			// The ratio of the two will show the scale factor for providing accurate samples.
 	PlaybackFrame* _frames;
 	unsigned int _frameLength;
+	double _lastPeriodTime;
 
 	// A-Matrix from our cubic spline interpolation
 	Matrix<double>* _splineA;
