@@ -177,19 +177,19 @@ float SignalFactory::GeneratePluckedStringSample(float frequency, float signalHi
 	float sample = 0;
 
 	// Noise Attack:  The delay + filter will make the line dissipate
-	if (sampleTime < attackTime)
-	{
+	//if (sampleTime < attackTime)
+	//{
 		sample = ((float)rand() / (float)RAND_MAX);
-	}
-	else
-	{
-		sample = 0;
-	}
+	//}
+	//else
+	//{
+		//sample = 0;
+	//}
 
 	// Process Sample
 	PlaybackFrame frame(0, 0);
-	_combFilter->SetFrame(&frame, sampleTime);
-	_lowPassFilter->SetFrame(&frame, sampleTime);
+	//_combFilter->SetFrame(&frame, sampleTime);
+	//_lowPassFilter->SetFrame(&frame, sampleTime);
 
 	// Mix with input
 	frame.SetFrame(frame.GetLeft() + sample, frame.GetRight() + sample);

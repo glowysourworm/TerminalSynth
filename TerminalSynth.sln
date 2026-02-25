@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "airwindows-plugins", "airwi
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TerminalSynth", "TerminalSynth\TerminalSynth.vcxproj", "{C957E0FF-74D6-4972-B4C9-9029ED733023}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TerminalSynth.UnitTest", "TerminalSynth.UnitTest\TerminalSynth.UnitTest.vcxproj", "{F4887534-999C-4BE8-A46A-8803F5CB47A3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{C957E0FF-74D6-4972-B4C9-9029ED733023}.Release|x64.Build.0 = Release|x64
 		{C957E0FF-74D6-4972-B4C9-9029ED733023}.Release|x86.ActiveCfg = Release|Win32
 		{C957E0FF-74D6-4972-B4C9-9029ED733023}.Release|x86.Build.0 = Release|Win32
+		{F4887534-999C-4BE8-A46A-8803F5CB47A3}.Debug|x64.ActiveCfg = Debug|x64
+		{F4887534-999C-4BE8-A46A-8803F5CB47A3}.Debug|x64.Build.0 = Debug|x64
+		{F4887534-999C-4BE8-A46A-8803F5CB47A3}.Debug|x86.ActiveCfg = Debug|Win32
+		{F4887534-999C-4BE8-A46A-8803F5CB47A3}.Debug|x86.Build.0 = Debug|Win32
+		{F4887534-999C-4BE8-A46A-8803F5CB47A3}.Release|x64.ActiveCfg = Release|x64
+		{F4887534-999C-4BE8-A46A-8803F5CB47A3}.Release|x64.Build.0 = Release|x64
+		{F4887534-999C-4BE8-A46A-8803F5CB47A3}.Release|x86.ActiveCfg = Release|Win32
+		{F4887534-999C-4BE8-A46A-8803F5CB47A3}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

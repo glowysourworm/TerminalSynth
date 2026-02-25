@@ -79,6 +79,9 @@
     <Filter Include="Header Files\RealTime">
       <UniqueIdentifier>{8a617c3e-23c6-451f-b196-ec6d5d0d84e6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Math">
+      <UniqueIdentifier>{634f9de3-e760-4189-9368-7cd99b9760c1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp">
@@ -364,6 +367,12 @@
     </ClInclude>
     <ClInclude Include="ValueCapture.h">
       <Filter>Header Files\RealTime</Filter>
+    </ClInclude>
+    <ClInclude Include="Matrix.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector.h">
+      <Filter>Header Files\Math</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

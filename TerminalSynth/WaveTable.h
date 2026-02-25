@@ -3,7 +3,9 @@
 #ifndef WAVETABLE_H
 #define WAVETABLE_H
 
+#include "Matrix.h"
 #include "PlaybackFrame.h"
+#include "Vector.h"
 #include <functional>
 
 class WaveTable
@@ -45,10 +47,20 @@ public:
 
 private:
 
+	float GetCubicSpline(double absoluteTime, bool channelLeft);
+
+private:
+
 	unsigned int _samplingRate;					// These two sampling rates may differ depending on how the table was built.
 	unsigned int _systemSamplingRate;			// The ratio of the two will show the scale factor for providing accurate samples.
 	PlaybackFrame* _frames;
 	unsigned int _frameLength;
+
+	// A-Matrix from our cubic spline interpolation
+	Matrix<double>* _splineA;
+	Matrix<double>* _splineAInverse;
+	Vector<double>* _splineB;
+	Vector<double>* _splineK;
 };
 
 #endif

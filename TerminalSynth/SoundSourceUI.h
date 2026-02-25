@@ -106,12 +106,7 @@ void SoundSourceUI::Initialize(const OscillatorParameters& parameters)
 			soundNameItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 1; }),
 		}) | ftxui::CatchEvent([&] (ftxui::Event event) {
 
-			// Is Dirty
-			if (_soundSourceChoiceIndex->HasChanged() ||
-				_oscillatorSelectedIndex->HasChanged() ||
-				_soundBankSelectedIndex->HasChanged() ||
-				_soundNameSelectedIndex->HasChanged())
-				this->SetDirty();
+
 
 			// Passthrough
 			if (event.is_mouse())
@@ -146,8 +141,16 @@ void SoundSourceUI::UpdateComponent(bool clearDirty)
 			}
 		}
 	}
-
-	if (clearDirty)
+	
+	// Is Dirty
+	if (_soundSourceChoiceIndex->HasChanged() ||
+		_oscillatorSelectedIndex->HasChanged() ||
+		_soundBankSelectedIndex->HasChanged() ||
+		_soundNameSelectedIndex->HasChanged())
+	{
+		this->SetDirty();
+	}		
+	else if (clearDirty)
 	{
 		_soundSourceChoiceIndex->Clear();
 		_oscillatorSelectedIndex->Clear();

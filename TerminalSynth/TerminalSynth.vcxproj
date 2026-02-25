@@ -169,7 +169,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp23</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -284,6 +284,7 @@
     <ClInclude Include="IntervalTimer.h" />
     <ClInclude Include="MainController.h" />
     <ClInclude Include="MainUI.h" />
+    <ClInclude Include="Matrix.h" />
     <ClInclude Include="Oscillator.h" />
     <ClInclude Include="Binasc.h" />
     <ClInclude Include="ButterworthFilter.h" />
@@ -328,6 +329,7 @@
     <ClInclude Include="UIBase.h" />
     <ClInclude Include="UIController.h" />
     <ClInclude Include="ValueCapture.h" />
+    <ClInclude Include="Vector.h" />
     <ClInclude Include="WaveTable.h" />
     <ClInclude Include="WaveTableCache.h" />
     <ClInclude Include="WaveTableCacheKey.h" />
