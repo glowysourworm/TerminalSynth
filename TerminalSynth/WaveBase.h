@@ -33,7 +33,7 @@ public:
 	/// <param name="samplingRate">System (or stream) sampling rate</param>
 	/// <param name="signalLow">High limit for the signal (default is SIGNAL_HIGH)</param>
 	/// <param name="signalHigh">Low limit for the signal (default is SIGNAL_LOW)</param>
-	WaveBase(unsigned int samplingRate, float signalLow, float signalHigh)
+	WaveBase(unsigned int samplingRate, double signalLow, double signalHigh)
 	{
 		_signalLow = signalLow;
 		_signalHigh = signalHigh;
@@ -56,13 +56,13 @@ public:
 	/// (SignalBase) Sets accumulators for signal, and stores a copy of the frame in the input / output
 	/// buffers, for the specified buffer length.
 	/// </summary>
-	void SetFrame(PlaybackFrame* frame, float absoluteTime)
+	void SetFrame(PlaybackFrame* frame, double zeroTime, double absoluteTime)
 	{
 		// Input (copy)
 		PlaybackFrame input = *frame;
 
 		// Call the class's implementation (modifies the frame)
-		this->SetFrameImpl(frame, absoluteTime);
+		this->SetFrameImpl(frame, zeroTime, absoluteTime);
 
 		// Input / Output Buffer
 		_input->SetFrame(&input);
@@ -72,13 +72,13 @@ public:
 		_leftAccumulator->Add(frame->GetLeft());
 		_rightAccumulator->Add(frame->GetRight());
 	}
-	virtual bool HasOutput(float absoluteTime) const = 0;
+	virtual bool HasOutput(double zeroTime, double absoluteTime) const = 0;
 
 	/// <summary>
 	/// Function to clear the signal base of all of its internal buffers, and signal history. Any parameters
 	/// or signal settings should NOT be cleared or reset to default. This is for any of the signal buffers.
 	/// </summary>
-	virtual void Clear(double absoluteTime)
+	virtual void Clear(double zeroTime, double absoluteTime)
 	{
 		_leftAccumulator->Reset();
 		_rightAccumulator->Reset();
@@ -97,7 +97,7 @@ protected:
 	/// </summary>
 	/// <param name="frame"></param>
 	/// <param name="absoluteTime"></param>
-	virtual void SetFrameImpl(PlaybackFrame* frame, double absoluteTime) = 0;
+	virtual void SetFrameImpl(PlaybackFrame* frame, double zeroTime, double absoluteTime) = 0;
 
 	PlaybackFrame GetInput() { return *_input; }
 	PlaybackFrame GetOutput() { return *_output; }

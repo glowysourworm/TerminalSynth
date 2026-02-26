@@ -70,13 +70,15 @@ int AudioController::ProcessAudioCallback(float* outputBuffer, unsigned int numb
 	this->Lock->AcquireLock();
 
 	// Update Synth Device (DIRTY FLAG IS IN REAL TIME! WE NEED TO AVOID IT UNTIL THE USER HAS CHANGED A SYNTH SETTING!)
-	//if (configuration->IsDirty())
-	//{
+	if (configuration->IsDirty())
+	{
 		if (_midiMode)
 			_midiDevice->Update(effectRegistry, configuration);
 		else
 			_synthDevice->Update(effectRegistry, configuration);
-	//}
+
+		configuration->ClearDirty();
+	}
 
 	int rtAudioReturnValue = 0;
 

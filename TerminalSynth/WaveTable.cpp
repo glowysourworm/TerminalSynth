@@ -58,38 +58,36 @@ void WaveTable::CreateSamplesByFrame(WaveTableSampleGenerateFrameCallback callba
 	}
 }
 
-bool WaveTable::HasOutput(float absoluteTime) const
+bool WaveTable::HasOutput(double zeroTime, double absoluteTime) const
 {
 	switch (_mode)
 	{
 	case WaveTable::Mode::Periodic:
 		return true;
 	case WaveTable::Mode::SoundSample:
-		return (absoluteTime - _zeroTime) < (_frameLength / (double)_samplingRate);			// Checks for more samples
+		return (absoluteTime - zeroTime) < (_frameLength / (double)_samplingRate);			// Checks for more samples
 	default:
 		throw new std::exception("Unhandled wave table mode:  WaveTable.cpp");
 	}
 }
 
-void WaveTable::Clear(double absoluteTime)
+void WaveTable::Clear(double zeroTime, double absoluteTime)
 {
-	WaveBase::Clear(absoluteTime);
-
-	_zeroTime = absoluteTime;
+	WaveBase::Clear(zeroTime, absoluteTime);
 }
 
-void WaveTable::SetFrameImpl(PlaybackFrame* frame, double absoluteTime)
+void WaveTable::SetFrameImpl(PlaybackFrame* frame, double zeroTime, double absoluteTime)
 {
-	float left = GetLinearSpline(absoluteTime, true);
-	float right = GetLinearSpline(absoluteTime, false);
+	float left = GetLinearSpline(zeroTime, absoluteTime, true);
+	float right = GetLinearSpline(zeroTime, absoluteTime, false);
 
 	frame->SetFrame(left, right);
 }
 
-float WaveTable::GetLinearSpline(double absoluteTime, bool channelLeft)
+float WaveTable::GetLinearSpline(double zeroTime, double absoluteTime, bool channelLeft)
 {
 	// The zero time is called by the SynthNote* when it is engaged
-	double sampleTime = absoluteTime - _zeroTime;
+	double sampleTime = absoluteTime - zeroTime;
 
 	// First, take our oversampled array, and get the necessary points to match it to the spline
 	int bigIndex = sampleTime * _systemSamplingRate * (_samplingRate / (float)_systemSamplingRate);			// Expanded to Frame Length (which is oversampled)

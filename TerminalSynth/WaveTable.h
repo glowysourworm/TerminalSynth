@@ -54,16 +54,16 @@ public:
 	/// </summary>
 	void CreateSamplesByFrame(WaveTableSampleGenerateFrameCallback callback);
 
-	bool HasOutput(float absoluteTime) const override;
-	void Clear(double absoluteTime) override;
+	bool HasOutput(double zeroTime, double absoluteTime) const override;
+	void Clear(double zeroTime, double absoluteTime) override;
 
 protected:
 
-	void SetFrameImpl(PlaybackFrame* frame, double absoluteTime) override;
+	void SetFrameImpl(PlaybackFrame* frame, double zeroTime, double absoluteTime) override;
 
 private:
 
-	float GetLinearSpline(double absoluteTime, bool channelLeft);
+	float GetLinearSpline(double zeroTime, double absoluteTime, bool channelLeft);
 	//float GetLinearSplineBuffered(double absoluteTime, bool channelLeft);
 	float GetCubicSpline(double absoluteTime, bool channelLeft);
 
@@ -75,7 +75,6 @@ private:
 	unsigned int _systemSamplingRate;			// The ratio of the two will show the scale factor for providing accurate samples.
 	PlaybackFrame* _frames;
 	unsigned int _frameLength;
-	double _zeroTime;
 
 	// A-Matrix from our cubic spline interpolation
 	Matrix<double>* _splineA;

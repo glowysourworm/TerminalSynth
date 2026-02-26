@@ -4,6 +4,7 @@
 #define OSCILLATOR_UI_H
 
 #include "Envelope.h"
+#include "OscillatorModelUI.h"
 #include "OscillatorParameters.h"
 #include "SliderUI.h"
 #include "SoundBankSettings.h"
@@ -15,18 +16,18 @@
 #include <ftxui/screen/color.hpp>
 #include <string>
 
-class OscillatorUI : public UIBase<OscillatorParameters>
+class OscillatorUI : public UIBase<OscillatorModelUI>
 {
 public:
 	OscillatorUI(const SoundBankSettings* soundBankSettings, const std::string& name, const std::string& label, const ftxui::Color& labelColor);
 	~OscillatorUI();
 
-	void Initialize(const OscillatorParameters& parameters) override;
+	void Initialize(const OscillatorModelUI& model) override;
 	ftxui::Component GetComponent() override;
 	void UpdateComponent(bool clearDirty) override;
 
-	void ToUI(const OscillatorParameters& source) override;
-	void FromUI(OscillatorParameters& destination, bool clearDirty) override;
+	void ToUI(const OscillatorModelUI& source) override;
+	void FromUI(OscillatorModelUI& destination, bool clearDirty) override;
 
 	bool GetDirty() const override;
 
@@ -68,11 +69,12 @@ OscillatorUI::~OscillatorUI()
 	delete _sustainPeak;
 }
 
-void OscillatorUI::Initialize(const OscillatorParameters& parameters)
+void OscillatorUI::Initialize(const OscillatorModelUI& model)
 {
-	UIBase::Initialize(parameters);
+	UIBase::Initialize(model);
 
-	Envelope envelope = *parameters.GetEnvelope();
+	Envelope envelope = *model.GetEnvelope();
+	OscillatorParameters parameters = *model.GetParameters();
 
 	_soundSourceUI->Initialize(parameters);
 	_attack->Initialize(envelope.GetAttack());
@@ -132,16 +134,17 @@ void OscillatorUI::UpdateComponent(bool clearDirty)
 }
 
 
-void OscillatorUI::ToUI(const OscillatorParameters& source)
+void OscillatorUI::ToUI(const OscillatorModelUI& source)
 {
 
 }
 
-void OscillatorUI::FromUI(OscillatorParameters& destination, bool clearDirty)
+void OscillatorUI::FromUI(OscillatorModelUI& destination, bool clearDirty)
 {
 	float attack, decay, release, attackPeak, sustainPeak;
+	OscillatorParameters parameters = *destination.GetParameters();
 
-	_soundSourceUI->FromUI(destination, clearDirty);
+	_soundSourceUI->FromUI(parameters, clearDirty);
 	_attack->FromUI(attack, clearDirty);
 	_decay->FromUI(decay, clearDirty);
 	_release->FromUI(release, clearDirty);
@@ -149,6 +152,7 @@ void OscillatorUI::FromUI(OscillatorParameters& destination, bool clearDirty)
 	_sustainPeak->FromUI(sustainPeak, clearDirty);
 
 	destination.GetEnvelope()->Set(attack, decay, 0, release, attackPeak, sustainPeak);
+	destination.GetParameters()->Update(parameters);
 
 	if (clearDirty)
 		this->ClearDirty();

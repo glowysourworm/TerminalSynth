@@ -3,6 +3,7 @@
 #ifndef SYNTH_NOTE_QUEUE_H
 #define SYNTH_NOTE_QUEUE_H
 
+#include "Envelope.h"
 #include "OscillatorParameters.h"
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
@@ -14,15 +15,15 @@
 #include <string>
 #include <vector>
 
-class SynthSoundMap
+class SynthNotePool
 {
 public:
 
-	SynthSoundMap(const SynthSettings* configuration, const OutputSettings* parameters, int capacity);
-	~SynthSoundMap();
+	SynthNotePool(const SynthSettings* configuration, const OutputSettings* parameters, int capacity);
+	~SynthNotePool();
 
 	// Update Configuration
-	void Update(const OscillatorParameters& parameters, unsigned int samplingRate);
+	void Update(const OscillatorParameters& parameters, const Envelope& envelope, unsigned int samplingRate);
 
 	/// <summary>
 	/// Sets midi note to either engaged / disengaged. Returns true if there are enough voice slots
@@ -52,17 +53,33 @@ public:
 	/// <param name="destination">Destination list for the sound names</param>
 	void GetSounds(const std::string& soundBankName, std::vector<std::string>& destination);
 
+	/// <summary>
+	/// Returns true if there are currently no Engaged / Dis-Engaged (ringing) SynthNote* instances
+	/// in the pool. This would give the synth time to evict old outdate cache.
+	/// </summary>
+	bool CanEvictCache() const;
+
+	/// <summary>
+	/// Tells the synth note pool to get rid of old notes from the previous synth update. This
+	/// will not be possible without first checking to see if there are any ringing notes still
+	/// int the pool (see CanEvictCache())
+	/// </summary>
+	void EvictOutdatedCache();
+
 private:
 
 	int _capacity;
 	unsigned int _systemSamplingRate; 
+
+	Envelope* _envelope;
 	OscillatorParameters* _oscillatorParameters;
+	bool _hasStaleParameters;
 
 	// Capacity-sized map, will hold notes up to the user capacity (should be 10, for 10 active voices)
 	std::map<int, SynthNote*>* _engagedNotes;
 
 	// N-sized map, will hold notes until they've dissipated
-	std::vector<SynthNote*>* _disengagedNotes;
+	std::map<SynthNote*, SynthNote*>* _disengagedNotes;
 
 	// Wave Table Cache:  This will lazy load WaveTable* instances for sound banks and oscillators
 	WaveTableCache* _waveTableCache;

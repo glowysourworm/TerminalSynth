@@ -244,7 +244,6 @@
     <ClCompile Include="ButterworthFilter.cpp" />
     <ClCompile Include="MainController.cpp" />
     <ClCompile Include="MainUI.cpp" />
-    <ClCompile Include="Oscillator.cpp" />
     <ClCompile Include="SignalChain.cpp" />
     <ClCompile Include="SignalFactory.cpp" />
     <ClCompile Include="Binasc.cpp" />
@@ -266,7 +265,7 @@
     <ClCompile Include="SynthEffect.cpp" />
     <ClCompile Include="SynthNote.cpp" />
     <ClCompile Include="SynthNoteMap.cpp" />
-    <ClCompile Include="SynthSoundMap.cpp" />
+    <ClCompile Include="SynthNotePool.cpp" />
     <ClCompile Include="UIController.cpp" />
     <ClCompile Include="WaveTable.cpp" />
     <ClCompile Include="WaveTableCache.cpp" />
@@ -287,7 +286,6 @@
     <ClInclude Include="MainController.h" />
     <ClInclude Include="MainUI.h" />
     <ClInclude Include="Matrix.h" />
-    <ClInclude Include="Oscillator.h" />
     <ClInclude Include="Binasc.h" />
     <ClInclude Include="ButterworthFilter.h" />
     <ClInclude Include="Constant.h" />
@@ -299,6 +297,7 @@
     <ClInclude Include="MidiMessage.h" />
     <ClInclude Include="MidiPlaybackDevice.h" />
     <ClInclude Include="Options.h" />
+    <ClInclude Include="OscillatorModelUI.h" />
     <ClInclude Include="OscillatorParameters.h" />
     <ClInclude Include="OscillatorUI.h" />
     <ClInclude Include="OutputUI.h" />
@@ -328,7 +327,7 @@
     <ClInclude Include="SynthInformationUI.h" />
     <ClInclude Include="SynthNote.h" />
     <ClInclude Include="SynthNoteMap.h" />
-    <ClInclude Include="SynthSoundMap.h" />
+    <ClInclude Include="SynthNotePool.h" />
     <ClInclude Include="SynthPlaybackDevice.h" />
     <ClInclude Include="UIBase.h" />
     <ClInclude Include="UIController.h" />

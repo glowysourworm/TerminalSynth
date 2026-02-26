@@ -3,6 +3,7 @@
 #ifndef SYNTH_CONFIGURATION_H
 #define SYNTH_CONFIGURATION_H
 
+#include "Envelope.h"
 #include "EqualizerOutput.h"
 #include "OscillatorParameters.h"
 #include "OutputSettings.h"
@@ -25,6 +26,7 @@ public:
 
 	void SetSoundBankSettings(const SoundBankSettings& parameters);
 	void SetOscillator(const OscillatorParameters& value);
+	void SetEnvelope(const Envelope& value);
 	void SetSignalChain(const SignalChainSettings& elements);
 	void SetEqualizerOutput(const EqualizerOutput& value);
 	void SetOutputSettings(const OutputSettings& value, bool updateDevicePortion, bool updateRTPortion);
@@ -50,6 +52,7 @@ public:
 
 	SoundBankSettings* GetSoundBankSettings() const;
 	OscillatorParameters* GetOscillator() const;
+	Envelope* GetEnvelope() const;
 	SignalChainSettings* GetSignalChainRegistry() const;
 	OutputSettings* GetOutputSettings() const;
 	EqualizerOutput* GetEqualizerOutput() const;
@@ -77,6 +80,7 @@ private:
 	float _oversamplingFactor;
 
 	OscillatorParameters* _oscillatorParameters;
+	Envelope* _oscillatorEnvelope;
 	SignalChainSettings* _signalChainRegistry;				// Signal Chain (with registry loaded!)
 
 	// Output

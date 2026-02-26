@@ -47,8 +47,13 @@ public:
 	/// Returns the closest possible wave table for the requested oscillator. If midi note numbers were used, then 
 	/// the table should be one-to-one with the audio stream.
 	/// </summary>
-	/// <returns>Best fit Oscillator* instance - not to be deleted!</returns>
+	/// <returns>Best fit WaveTable* instance - not to be deleted!</returns>
 	WaveTable* Get(const OscillatorParameters& parameters, int midiNumber);
+
+	/// <summary>
+	/// Evicts cache and deletes all allocated memory!
+	/// </summary>
+	void Clear();
 
 private:
 

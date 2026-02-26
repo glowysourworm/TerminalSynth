@@ -3,6 +3,7 @@
 #ifndef SYNTH_NOTE_H
 #define SYNTH_NOTE_H
 
+#include "Envelope.h"
 #include "OscillatorParameters.h"
 #include "PlaybackFrame.h"
 #include "WaveTable.h"
@@ -19,7 +20,7 @@ public:
 	/// <param name="waveTable">WaveTable* sound source. THIS SHOULD NOT BE DELETED! (~WaveTableCache)</param>
 	/// <param name="midiNumber">Midi number for this note</param>
 	/// <param name="samplingRate">Sampling rate for this note</param>
-	SynthNote(const OscillatorParameters& parameters, WaveTable* waveTable, unsigned int midiNumber);
+	SynthNote(const OscillatorParameters& parameters, const Envelope& envelope, WaveTable* waveTable, unsigned int midiNumber);
 	~SynthNote();
 
 	unsigned int GetMidiNumber() const;
@@ -34,6 +35,7 @@ public:
 private:
 
 	OscillatorParameters* _parameters;
+	Envelope* _envelope;
 	WaveTable* _waveTable;
 
 	unsigned int _midiNumber;

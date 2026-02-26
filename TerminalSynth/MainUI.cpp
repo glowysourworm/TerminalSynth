@@ -3,6 +3,7 @@
 #include "CheckListUI.h"
 #include "EqualizerOutput.h"
 #include "MainUI.h"
+#include "OscillatorModelUI.h"
 #include "OscillatorParameters.h"
 #include "OscillatorUI.h"
 #include "OutputUI.h"
@@ -63,8 +64,10 @@ void MainUI::Initialize(const SynthSettings& configuration)
 	std::vector<std::string> pluginList;
 	configuration.GetSignalChainRegistry()->GetRegistryList(pluginList);
 
+	OscillatorModelUI oscillatorModel(*configuration.GetOscillator(), *configuration.GetEnvelope());
+
 	_synthInformationUI->Initialize(*configuration.GetOutputSettings());
-	_oscillatorUI->Initialize(*configuration.GetOscillator());
+	_oscillatorUI->Initialize(oscillatorModel);
 	_outputUI->Initialize(configuration);
 	_signalChainUI->Initialize(*configuration.GetSignalChainRegistry());
 	_airwinPluginListUI->Initialize(pluginList);
@@ -169,12 +172,13 @@ void MainUI::UpdateComponent(bool clearDirty)
 void MainUI::FromUI(SynthSettings& configuration, bool clearDirty)
 {
 	SignalChainSettings signalChain;
-	OscillatorParameters parameters(*configuration.GetOscillator());
+	OscillatorModelUI oscillatorModel(*configuration.GetOscillator(), *configuration.GetEnvelope());
 	EqualizerOutput output;
 
 	// Oscillator
-	_oscillatorUI->FromUI(parameters, clearDirty);
-	configuration.SetOscillator(parameters);
+	_oscillatorUI->FromUI(oscillatorModel, clearDirty);
+	configuration.SetOscillator(*oscillatorModel.GetParameters());
+	configuration.SetEnvelope(*oscillatorModel.GetEnvelope());
 
 	// Signal Chain
 	_signalChainUI->FromUI(signalChain, clearDirty);

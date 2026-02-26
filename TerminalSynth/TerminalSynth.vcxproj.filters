@@ -88,6 +88,9 @@
     <Filter Include="Source Files\Utility">
       <UniqueIdentifier>{dfeed5b4-e94c-46e6-960f-ee5a28e58c39}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\ModelUI">
+      <UniqueIdentifier>{34098a0a-6bb6-41ea-95ae-637a5dc75c1e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp">
@@ -156,13 +159,10 @@
     <ClCompile Include="SignalFactory.cpp">
       <Filter>Source Files\Signal</Filter>
     </ClCompile>
-    <ClCompile Include="SynthSoundMap.cpp">
+    <ClCompile Include="SynthNotePool.cpp">
       <Filter>Source Files\Synth</Filter>
     </ClCompile>
     <ClCompile Include="WaveTable.cpp">
-      <Filter>Source Files\Signal</Filter>
-    </ClCompile>
-    <ClCompile Include="Oscillator.cpp">
       <Filter>Source Files\Signal</Filter>
     </ClCompile>
     <ClCompile Include="SignalChain.cpp">
@@ -275,9 +275,6 @@
     <ClInclude Include="MainController.h">
       <Filter>Header Files\Controller</Filter>
     </ClInclude>
-    <ClInclude Include="Oscillator.h">
-      <Filter>Header Files\Signal</Filter>
-    </ClInclude>
     <ClInclude Include="OutputUI.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
@@ -293,7 +290,7 @@
     <ClInclude Include="SignalBase.h">
       <Filter>Header Files\Signal</Filter>
     </ClInclude>
-    <ClInclude Include="SynthSoundMap.h">
+    <ClInclude Include="SynthNotePool.h">
       <Filter>Header Files\Synth</Filter>
     </ClInclude>
     <ClInclude Include="MainUI.h">
@@ -397,6 +394,9 @@
     </ClInclude>
     <ClInclude Include="SynthNoteCache.h">
       <Filter>Header Files\Synth</Filter>
+    </ClInclude>
+    <ClInclude Include="OscillatorModelUI.h">
+      <Filter>Header Files\ModelUI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

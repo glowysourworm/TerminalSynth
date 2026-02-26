@@ -7,8 +7,8 @@
 #include "PlaybackFrame.h"
 #include "SignalChain.h"
 #include "SoundRegistry.h"
+#include "SynthNotePool.h"
 #include "SynthSettings.h"
-#include "SynthSoundMap.h"
 
 // Class to define static piano notes and store their names / frequencies w.r.t. the SDL keyboard
 // defined inputs.
@@ -34,10 +34,17 @@ public:
 	/// </summary>
 	bool GetSample(PlaybackFrame* frame, double absoluteTime, const SynthSettings* configuration);
 
+	/// <summary>
+	/// Gets rid of outdated cache. This should be done after the user has stopped playback for a short
+	/// period of time; but may be checked in real time; and will not process without the proper conditions
+	/// from the note pool.
+	/// </summary>
+	void PruneNotePool();
+
 private:
 
 	// Synth Notes by Midi Number
-	SynthSoundMap* _pianoNotes;
+	SynthNotePool* _pianoNotes;
 
 	// Post-processing effects	
 	SignalChain* _postProcessing;

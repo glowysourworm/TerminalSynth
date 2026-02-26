@@ -1,73 +1,85 @@
 #include "Constant.h"
+#include "Envelope.h"
 #include "OscillatorParameters.h"
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SynthNote.h"
 #include "SynthNoteCache.h"
+#include "SynthNotePool.h"
 #include "SynthSettings.h"
-#include "SynthSoundMap.h"
 #include "WaveTable.h"
 #include "WaveTableCache.h"
+#include <exception>
 #include <map>
 #include <string>
 #include <utility>
 #include <vector>
 
-SynthSoundMap::SynthSoundMap(const SynthSettings* configuration, const OutputSettings* settings, int capacity)
+SynthNotePool::SynthNotePool(const SynthSettings* configuration, const OutputSettings* settings, int capacity)
 {
 	_capacity = capacity;
 	_systemSamplingRate = settings->GetSamplingRate();
 	_engagedNotes = new std::map<int, SynthNote*>();
-	_disengagedNotes = new std::vector<SynthNote*>();
+	_disengagedNotes = new std::map<SynthNote*, SynthNote*>();
 	_waveTableCache = new WaveTableCache();
 	_synthNoteCache = new SynthNoteCache();
+	_envelope = new Envelope(*configuration->GetEnvelope());
 	_oscillatorParameters = new OscillatorParameters(*configuration->GetOscillator());
+	_hasStaleParameters = false;
 
 	// Initialize (CHECK SOUND BANKS!) (NO LOGGING!)
 	_waveTableCache->Initialize(configuration, settings);
 }
 
-SynthSoundMap::~SynthSoundMap()
+SynthNotePool::~SynthNotePool()
 {
-	for (auto iter = _engagedNotes->begin(); iter != _engagedNotes->end(); ++iter)
-	{
-		delete iter->second;
-	}
-	for (int index = 0; index < _disengagedNotes->size(); index++)
-	{
-		delete _disengagedNotes->at(index);
-	}
 	delete _engagedNotes;
 	delete _disengagedNotes;
 	delete _waveTableCache;
 	delete _synthNoteCache;
+	delete _envelope;
 	delete _oscillatorParameters;
 }
 
-void SynthSoundMap::Update(const OscillatorParameters& parameters, unsigned int samplingRate)
+void SynthNotePool::Update(const OscillatorParameters& parameters, const Envelope& envelope, unsigned int samplingRate)
 {
 	_systemSamplingRate = samplingRate;
 	_oscillatorParameters->Update(parameters);
+	_envelope->Set(envelope);
+
+	_hasStaleParameters = true;
 }
 
-bool SynthSoundMap::SetNote(int midiNumber, bool pressed, double absoluteTime) const
+bool SynthNotePool::CanEvictCache() const
+{
+	return _engagedNotes->size() == 0 && _disengagedNotes->size() == 0;
+}
+
+void SynthNotePool::EvictOutdatedCache()
+{
+	if (!this->CanEvictCache())
+		throw new std::exception("Trying to evict synth note pool before notes have finished ringing!");
+
+	if (!_hasStaleParameters)
+		return;
+
+	// ~SynthNote (does not delete WaveTable*)
+	_synthNoteCache->Clear();
+
+	// Reset flag
+	_hasStaleParameters = false;
+
+	// The WaveTable* instances are cached based on the OscillatorParameters + MIDI#. So, they aren't
+	// affected by changes to the configuration parameters. 
+}
+
+bool SynthNotePool::SetNote(int midiNumber, bool pressed, double absoluteTime) const
 {
 	if (pressed)
 	{
 		// Already Engaged
 		if (_engagedNotes->contains(midiNumber))
 			return true;
-
-		// BLOCKING RE-ENGAGED NOTES:  The WaveTable* has to be shared across instances, so this
-		//							   is a "blocking feature" for now.. We have to be able to 
-		//							   have a state-less design for the wave table (state-less, but
-		//							   single-threaded)
-		//
-		for (int index = 0; index < _disengagedNotes->size(); index++)
-		{
-			if (_disengagedNotes->at(index)->GetMidiNumber() == midiNumber)
-				return true;
-		}
 
 		// Engage
 		if (_engagedNotes->size() < _capacity)
@@ -84,7 +96,19 @@ bool SynthSoundMap::SetNote(int midiNumber, bool pressed, double absoluteTime) c
 			// Check the cache for the note
 			if (_synthNoteCache->Has(parameters))
 			{
-				note = _synthNoteCache->Get(parameters);
+				// Not in Dis-Engaged note pool
+				if (!_disengagedNotes->contains(_synthNoteCache->Get(parameters)))
+					note = _synthNoteCache->Get(parameters);
+
+				// Dis-Engaged (still ringing): Create new (multiple instances will exist in the cache for the midi number)
+				else
+				{
+					// Cache handles memory for WaveTable*
+					WaveTable* waveTable = _waveTableCache->Get(parameters, midiNumber);
+
+					// Synth note cache will handle these
+					note = _synthNoteCache->Add(parameters, *_envelope, waveTable, midiNumber);
+				}
 			}
 			else
 			{
@@ -92,7 +116,7 @@ bool SynthSoundMap::SetNote(int midiNumber, bool pressed, double absoluteTime) c
 				WaveTable* waveTable = _waveTableCache->Get(parameters, midiNumber);
 
 				// Synth note cache will handle these
-				note = _synthNoteCache->Add(parameters, waveTable, midiNumber);
+				note = _synthNoteCache->Add(parameters, *_envelope, waveTable, midiNumber);
 			}
 
 			note->Engage(absoluteTime);
@@ -122,14 +146,14 @@ bool SynthSoundMap::SetNote(int midiNumber, bool pressed, double absoluteTime) c
 			_engagedNotes->erase(midiNumber);
 
 			// Disengaged
-			_disengagedNotes->push_back(note);
+			_disengagedNotes->insert(std::make_pair(note, note));
 
 			return true;
 		}
 	}
 }
 
-bool SynthSoundMap::SetFrame(PlaybackFrame* frame, double absoluteTime, double gain, double leftRight)
+bool SynthNotePool::SetFrame(PlaybackFrame* frame, double absoluteTime, double gain, double leftRight)
 {
 	// Use local frame to mix the note output
 	PlaybackFrame noteFrame;
@@ -143,18 +167,20 @@ bool SynthSoundMap::SetFrame(PlaybackFrame* frame, double absoluteTime, double g
 	}
 
 	// Disengaged (also prune collection)
-	for (int index = _disengagedNotes->size() - 1; index >= 0; index--)
+	for (auto iter = _disengagedNotes->begin(); iter != _disengagedNotes->end();)
 	{
 		// HasOutput (ringing out of the note)
-		if (_disengagedNotes->at(index)->HasOutput(absoluteTime))
-			_disengagedNotes->at(index)->AddSample(&noteFrame, absoluteTime);
+		if (iter->first->HasOutput(absoluteTime))
+		{
+			iter->first->AddSample(&noteFrame, absoluteTime);
+			iter++;
+		}
 
 		// ...Empty
 		else
 		{
-			_disengagedNotes->erase(_disengagedNotes->begin() + index);
+			iter = _disengagedNotes->erase(iter);
 		}
-			
 	}
 
 	// MIXING THIS RIGHT AWAY FOR NOW
@@ -166,12 +192,12 @@ bool SynthSoundMap::SetFrame(PlaybackFrame* frame, double absoluteTime, double g
 	return _engagedNotes->size() > 0 || _disengagedNotes->size() > 0;
 }
 
-void SynthSoundMap::GetSoundBanks(std::vector<std::string>& destination)
+void SynthNotePool::GetSoundBanks(std::vector<std::string>& destination)
 {
 	_waveTableCache->GetSoundBanks(destination);
 }
 
-void SynthSoundMap::GetSounds(const std::string& soundBankName, std::vector<std::string>& destination)
+void SynthNotePool::GetSounds(const std::string& soundBankName, std::vector<std::string>& destination)
 {
 	_waveTableCache->GetSoundNames(soundBankName, destination);
 }

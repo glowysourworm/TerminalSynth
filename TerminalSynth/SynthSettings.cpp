@@ -16,6 +16,7 @@ SynthSettings::SynthSettings(OutputSettings* deviceSettings, const std::string& 
 	_isDirty = false;
 
 	_oscillatorParameters = new OscillatorParameters(OscillatorType::BuiltIn, BuiltInOscillators::Sine, "", "", 440, SIGNAL_LOW, SIGNAL_HIGH, Envelope());
+	_oscillatorEnvelope = new Envelope();
 	_signalChainRegistry = new SignalChainSettings();
 	_outputSettings = deviceSettings;
 	_equalizerOutput = new EqualizerOutput();	
@@ -35,7 +36,6 @@ SynthSettings::SynthSettings(const SynthSettings& copy)
 		delete _keyMap;
 
 	delete _soundBankSettings;
-	delete _oscillatorParameters;
 	delete _signalChainRegistry;
 	delete _outputSettings;
 	delete _equalizerOutput;
@@ -47,8 +47,9 @@ SynthSettings::SynthSettings(const SynthSettings& copy)
 
 	_midiLow = copy.GetMidiLow();
 	_midiHigh = copy.GetMidiHigh();
-
-	_oscillatorParameters = new OscillatorParameters(*copy.GetOscillator());
+	
+	_oscillatorParameters->Update(*copy.GetOscillator());
+	_oscillatorEnvelope->Set(*copy.GetEnvelope());
 	_signalChainRegistry = new SignalChainSettings(*copy.GetSignalChainRegistry());
 
 	_keyMap = new SynthNoteMap(copy.GetNoteMap());
@@ -62,6 +63,7 @@ SynthSettings::~SynthSettings()
 		delete _keyMap;
 
 	delete _oscillatorParameters;
+	delete _oscillatorEnvelope;
 	delete _signalChainRegistry;
 	delete _outputSettings;
 	delete _equalizerOutput;
@@ -83,8 +85,18 @@ void SynthSettings::SetSoundBankSettings(const SoundBankSettings& parameters)
 
 void SynthSettings::SetOscillator(const OscillatorParameters& value)
 {
+	if (*_oscillatorParameters != value)
+		_isDirty = true;
+
 	_oscillatorParameters->Update(value);
-	_isDirty = true;
+}
+
+void SynthSettings::SetEnvelope(const Envelope& value)
+{
+	if (*_oscillatorEnvelope != value)
+		_isDirty = true;
+
+	_oscillatorEnvelope->Set(value);
 }
 
 void SynthSettings::SetSignalChain(const SignalChainSettings& elements)
@@ -139,6 +151,11 @@ SoundBankSettings* SynthSettings::GetSoundBankSettings() const
 OscillatorParameters* SynthSettings::GetOscillator() const
 {
 	return _oscillatorParameters;
+}
+
+Envelope* SynthSettings::GetEnvelope() const
+{
+	return _oscillatorEnvelope;
 }
 
 SignalChainSettings* SynthSettings::GetSignalChainRegistry() const

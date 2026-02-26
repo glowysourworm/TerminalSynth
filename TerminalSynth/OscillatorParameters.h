@@ -32,7 +32,6 @@ public:
 		_frequency = frequency;
 		_signalLow = signalLow;
 		_signalHigh = signalHigh;
-		_envelope = new Envelope(envelope);
 	}
 	OscillatorParameters(const OscillatorParameters& copy)
 	{
@@ -43,17 +42,9 @@ public:
 		_frequency = copy.GetFrequency();
 		_signalLow = copy.GetSignalLow();
 		_signalHigh = copy.GetSignalHigh();
-		_envelope = new Envelope(
-			copy.GetEnvelope()->GetAttack(), 
-			copy.GetEnvelope()->GetDecay(), 
-			copy.GetEnvelope()->GetSustain(), 
-			copy.GetEnvelope()->GetRelease(), 
-			copy.GetEnvelope()->GetAttackPeak(), 
-			copy.GetEnvelope()->GetSustainPeak());
 	}
 	~OscillatorParameters()
 	{
-		delete _envelope;
 		delete _soundBank;
 		delete _soundName;
 	}
@@ -65,7 +56,6 @@ public:
 	std::string GetSoundName() const { return *_soundName; }
 	OscillatorType GetType() const { return _type; }
 	BuiltInOscillators GetBuiltInType() const { return _builtInType; }
-	Envelope* GetEnvelope() const { return _envelope; }
 
 	void SetFrequency(float value) { _frequency = value; }
 	void SetSignalLow(float value) { _signalLow = value; }
@@ -82,7 +72,6 @@ public:
 	}
 	void SetType(OscillatorType value) { _type = value; }
 	void SetBuiltInType(BuiltInOscillators value) { _builtInType = value; }
-	void SetEnvelope(const Envelope& value) { _envelope->Set(value); }
 
 	size_t GetHashCode() const
 	{
@@ -118,7 +107,28 @@ public:
 		_builtInType = source.GetBuiltInType();
 		_soundBank->append(source.GetSoundBank());
 		_soundName->append(source.GetSoundName());
-		_envelope->Set(*source.GetEnvelope());
+	}
+
+	bool operator==(const OscillatorParameters& parameters)
+	{
+		return IsEqual(parameters);
+	}
+	bool operator!=(const OscillatorParameters& parameters)
+	{
+		return !IsEqual(parameters);
+	}
+
+private:
+
+	bool IsEqual(const OscillatorParameters& other)
+	{
+		return other.GetSoundName() == this->GetSoundName() &&
+			other.GetSoundBank() == this->GetSoundBank() &&
+			other.GetFrequency() == this->GetFrequency() &&
+			other.GetSignalLow() == this->GetSignalLow() &&
+			other.GetSignalHigh() == this->GetSignalHigh() &&
+			other.GetType() == this->GetType() &&
+			other.GetBuiltInType() == this->GetBuiltInType();
 	}
 
 private:
@@ -130,7 +140,6 @@ private:
 	float _signalHigh;
 	OscillatorType _type;
 	BuiltInOscillators _builtInType;
-	Envelope* _envelope;
 };
 
 #endif

@@ -4,6 +4,7 @@
 #define WAVE_TABLE_CACHE_KEY_H
 
 #include "OscillatorParameters.h"
+#include "Utility.h"
 #include <string>
 #include <type_traits>
 
@@ -75,9 +76,17 @@ public:
 
 	size_t GetHashCode() override
 	{
-		std::hash<std::string> hash;
+		std::hash<std::string> stringHasher;
+		std::hash<float> floatHasher;
 
-		return hash(*_fileName);
+		size_t hash1 = stringHasher(*_soundBank);
+		size_t hash2 = stringHasher(*_name);
+		size_t hash3 = floatHasher(_desiredFrequency);
+
+		TerminalSynth::HashCombine(hash1, hash2);
+		TerminalSynth::HashCombine(hash1, hash3);
+
+		return hash1;
 	}
 
 	void SetSoundFileData(unsigned int samplingRate, unsigned int numberChannels, unsigned int numberFrames)

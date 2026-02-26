@@ -10,7 +10,6 @@
 #include "WaveTableCache.h"
 #include "WaveTableCacheKey.h"
 #include <exception>
-#include <limits>
 #include <map>
 #include <string>
 #include <utility>
@@ -155,9 +154,11 @@ bool WaveTableCache::CreateWaveTable(WTCacheKey_SoundBank* cacheKey)
 
 		// Calculate number of frames: # Frames * (Sample Rate / System Sampling Rate) * (frequency / fundamental) (USING A FUNDAMENTAL OF C4 = MIDI(60))
 		unsigned int adjustedNumberFrames = numberFrames * (sampleRate / (double)_systemSamplingRate) * (cacheKey->GetDesiredFrequency() / TerminalSynth::GetMidiFrequency(60));
+		float adjustedSamplingRate = sampleRate * (cacheKey->GetDesiredFrequency() / TerminalSynth::GetMidiFrequency(60));
+		//float adjustedSamplingRate = sampleRate;
 
 		// (MEMORY!) ~WaveTableCache
-		WaveTable* waveTable = new WaveTable(WaveTable::Mode::SoundSample, adjustedNumberFrames, sampleRate, _systemSamplingRate);
+		WaveTable* waveTable = new WaveTable(WaveTable::Mode::SoundSample, adjustedNumberFrames, adjustedSamplingRate, _systemSamplingRate);
 
 		waveTable->CreateSamplesByFrame(WaveTable::WaveTableSampleGenerateFrameCallback([&frames, &adjustedNumberFrames, &numberFrames]
 		(int frameIndex, float& leftSample, float& rightSample)
@@ -280,6 +281,24 @@ WaveTable* WaveTableCache::Get(const OscillatorParameters& parameters, int midiN
 	return result;
 }
 
+void WaveTableCache::Clear()
+{
+	// Just clear the cached WaveTable* instances, not the lists
+	//
+
+	for (auto iter = _cacheSoundBank->begin(); iter != _cacheSoundBank->end(); ++iter)
+	{
+		delete iter->second;
+	}
+	for (auto iter = _cacheOscillator->begin(); iter != _cacheOscillator->end(); ++iter)
+	{
+		delete iter->second;
+	}
+
+	_cacheSoundBank->clear();
+	_cacheOscillator->clear();
+}
+
 WaveTable* WaveTableCache::Get(const std::string& soundBankName, const std::string& soundName, float desiredFrequency)
 {
 	WTCacheKey_SoundBank* cacheKey = nullptr;
@@ -292,6 +311,7 @@ WaveTable* WaveTableCache::Get(const std::string& soundBankName, const std::stri
 			_soundBankList->at(index)->GetDesiredFrequency() == desiredFrequency)
 		{
 			cacheKey = _soundBankList->at(index);
+			break;
 		}
 	}
 

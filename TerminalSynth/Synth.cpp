@@ -4,7 +4,7 @@
 #include "SoundRegistry.h"
 #include "Synth.h"
 #include "SynthSettings.h"
-#include "SynthSoundMap.h"
+#include "SynthNotePool.h"
 
 Synth::Synth(const SynthSettings* configuration, unsigned int numberOfChannels, unsigned int samplingRate)
 {
@@ -21,14 +21,14 @@ Synth::~Synth()
 
 void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
 {
-	_pianoNotes = new SynthSoundMap(configuration, parameters, 10);
+	_pianoNotes = new SynthNotePool(configuration, parameters, 10);
 	_postProcessing->Initialize(effectRegistry, configuration->GetSignalChainRegistry(), parameters);
 }
 
 void Synth::Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
 	_postProcessing->Update(effectRegistry, configuration->GetSignalChainRegistry());
-	_pianoNotes->Update(*configuration->GetOscillator(), _samplingRate);
+	_pianoNotes->Update(*configuration->GetOscillator(), *configuration->GetEnvelope(), _samplingRate);
 }
 
 void Synth::Set(int midiNumber, bool pressed, double absoluteTime, const SynthSettings* configuration)
@@ -61,4 +61,10 @@ bool Synth::GetSample(PlaybackFrame* frame, double absoluteTime, const SynthSett
 	//	_delay->GetSample(frame, absoluteTime);
 
 	return hasOutput;
+}
+
+void Synth::PruneNotePool()
+{
+	if (_pianoNotes->CanEvictCache())
+		_pianoNotes->EvictOutdatedCache();
 }

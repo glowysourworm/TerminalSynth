@@ -137,6 +137,12 @@ bool SynthPlaybackDevice<TSignal>::SetForPlayback(unsigned int numberOfFrames, d
 		pressedKeys |= isPressed;
 	}
 
+	if (!pressedKeys)
+	{
+		// Check outdated synth note cache (prune for configuration changes)
+		_synth->PruneNotePool();
+	}
+
 	return pressedKeys;
 }
 
