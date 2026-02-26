@@ -6,9 +6,11 @@
 #include <cmath>
 #include <exception>
 
-WaveTable::WaveTable(unsigned int frameLength, unsigned int samplingRate, unsigned int systemSamplingRate)
+WaveTable::WaveTable(Mode mode, unsigned int frameLength, unsigned int samplingRate, unsigned int systemSamplingRate)
 	: WaveBase(samplingRate)
 {
+	_mode = mode;
+
 	_samplingRate = samplingRate;
 	_systemSamplingRate = systemSamplingRate;
 	_frameLength = frameLength;
@@ -18,8 +20,6 @@ WaveTable::WaveTable(unsigned int frameLength, unsigned int samplingRate, unsign
 	_splineAInverse = new Matrix<double>(3, 3);
 	_splineB = new Vector<double>(3);
 	_splineK = new Vector<double>(3);
-
-	_lastPeriodTime = 0;
 }
 
 WaveTable::~WaveTable()
@@ -38,7 +38,7 @@ void WaveTable::CreateSamplesByTime(WaveTableSampleGenerateSecondCallback callba
 	{
 		float left = 0;
 		float right = 0;
-		float sampleTime = (index / (float)_samplingRate) /* (_samplingRate / (float)_systemSamplingRate)*/;				// Frame Length is scaled
+		float sampleTime = (index / (float)_samplingRate);		// Frame length and sampling rate are both in the scaled domain
 		callback(sampleTime, left, right);
 
 		_frames[index].SetFrame(left, right);
@@ -60,11 +60,29 @@ void WaveTable::CreateSamplesByFrame(WaveTableSampleGenerateFrameCallback callba
 
 bool WaveTable::HasOutput(float absoluteTime) const
 {
-	return true;
+	switch (_mode)
+	{
+	case WaveTable::Mode::Periodic:
+		return true;
+	case WaveTable::Mode::SoundSample:
+		return (absoluteTime - _zeroTime) < (_frameLength / (double)_samplingRate);			// Checks for more samples
+	default:
+		throw new std::exception("Unhandled wave table mode:  WaveTable.cpp");
+	}
+}
+
+void WaveTable::Clear()
+{
+	WaveBase::Clear();
+
+	_zeroTime = 0;
 }
 
 void WaveTable::SetFrameImpl(PlaybackFrame* frame, double absoluteTime)
 {
+	if (_zeroTime == 0)
+		_zeroTime = absoluteTime;
+
 	float left = GetLinearSpline(absoluteTime, true);
 	float right = GetLinearSpline(absoluteTime, false);
 
@@ -73,8 +91,11 @@ void WaveTable::SetFrameImpl(PlaybackFrame* frame, double absoluteTime)
 
 float WaveTable::GetLinearSpline(double absoluteTime, bool channelLeft)
 {
+	// The zero time is called by the SynthNote* when it is engaged
+	double sampleTime = absoluteTime - _zeroTime;
+
 	// First, take our oversampled array, and get the necessary points to match it to the spline
-	int bigIndex = absoluteTime * _systemSamplingRate * (_samplingRate / (float)_systemSamplingRate);			// Expanded to Frame Length (which is oversampled)
+	int bigIndex = sampleTime * _systemSamplingRate * (_samplingRate / (float)_systemSamplingRate);			// Expanded to Frame Length (which is oversampled)
 
 	// Oversampled frame domain
 	int frame0Index = bigIndex % _frameLength;
@@ -109,7 +130,7 @@ float WaveTable::GetLinearSpline(double absoluteTime, bool channelLeft)
 	double b = y0 - (m * x0);
 
 	// We need to get the closest wave time (in system time coordinates).
-	double waveTime = fmod(absoluteTime, _frameLength / (double)_samplingRate);
+	double waveTime = fmod(sampleTime, _frameLength / (double)_samplingRate);
 
 	return (m * waveTime) + b;
 }

@@ -257,6 +257,7 @@
     <ClCompile Include="Options.cpp" />
     <ClCompile Include="PlaybackClock.cpp" />
     <ClCompile Include="RtAudioController.cpp" />
+    <ClCompile Include="SoundFileReader.cpp" />
     <ClCompile Include="StopWatch.cpp" />
     <ClCompile Include="Synth.cpp" />
     <ClCompile Include="program.cpp" />
@@ -313,6 +314,7 @@
     <ClInclude Include="SignalBase.h" />
     <ClInclude Include="SignalParameter.h" />
     <ClInclude Include="SoundBankSettings.h" />
+    <ClInclude Include="SoundFileReader.h" />
     <ClInclude Include="SoundRegistry.h" />
     <ClInclude Include="SignalSettings.h" />
     <ClInclude Include="SliderUI.h" />
@@ -328,6 +330,7 @@
     <ClInclude Include="SynthPlaybackDevice.h" />
     <ClInclude Include="UIBase.h" />
     <ClInclude Include="UIController.h" />
+    <ClInclude Include="Utility.h" />
     <ClInclude Include="ValueCapture.h" />
     <ClInclude Include="Vector.h" />
     <ClInclude Include="WaveBase.h" />

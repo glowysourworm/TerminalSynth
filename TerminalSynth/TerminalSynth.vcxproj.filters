@@ -82,6 +82,12 @@
     <Filter Include="Header Files\Math">
       <UniqueIdentifier>{634f9de3-e760-4189-9368-7cd99b9760c1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Utility">
+      <UniqueIdentifier>{94867d4d-1880-435b-9d02-b1f23942d8d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utility">
+      <UniqueIdentifier>{dfeed5b4-e94c-46e6-960f-ee5a28e58c39}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp">
@@ -179,6 +185,9 @@
     </ClCompile>
     <ClCompile Include="WaveTableCache.cpp">
       <Filter>Source Files\Signal</Filter>
+    </ClCompile>
+    <ClCompile Include="SoundFileReader.cpp">
+      <Filter>Source Files\Utility</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -376,6 +385,12 @@
     </ClInclude>
     <ClInclude Include="WaveBase.h">
       <Filter>Header Files\Signal</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SoundFileReader.h">
+      <Filter>Header Files\Utility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

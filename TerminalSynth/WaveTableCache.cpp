@@ -4,6 +4,7 @@
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalFactory.h"
+#include "SoundFileReader.h"
 #include "SynthSettings.h"
 #include "WaveTable.h"
 #include "WaveTableCache.h"
@@ -11,7 +12,6 @@
 #include <exception>
 #include <limits>
 #include <map>
-#include <sndfile.h>
 #include <string>
 #include <utility>
 #include <vector>
@@ -73,18 +73,28 @@ bool WaveTableCache::Initialize_SoundBanks(const SynthSettings* synthSettings, c
 	{
 		std::vector<std::string> soundBanks = synthSettings->GetSoundBankSettings()->GetSoundBanks();
 
+		// Sound Bank(s)
 		for (int index = 0; index < soundBanks.size(); index++)
 		{
 			std::vector<std::string> soundNames = synthSettings->GetSoundBankSettings()->GetSoundNames(soundBanks[index]);
 
+			// Sound Name(s)
 			for (int nameIndex = 0; nameIndex < soundNames.size(); nameIndex++)
 			{
-				std::string soundFileName = synthSettings->GetSoundBankSettings()->GetSoundFileName(soundBanks[index], soundNames[nameIndex]);
+				// MIDI Frequencies
+				//
+				for (int midiNumber = MIDI_PIANO_LOW_NUMBER; midiNumber <= MIDI_PIANO_HIGH_NUMBER; midiNumber++)
+				{
+					std::string soundFileName = synthSettings->GetSoundBankSettings()->GetSoundFileName(soundBanks[index], soundNames[nameIndex]);
 
-				// (MEMORY!) ~WaveTableCache
-				WTCacheKey_SoundBank* cacheKey = new WTCacheKey_SoundBank(soundBanks[index], soundNames[nameIndex], soundFileName);
+					// This will be over / undersampled at this "fundamental" frequency to create the sample table
+					float frequency = TerminalSynth::GetMidiFrequency(midiNumber);	
 
-				_soundBankList->push_back(cacheKey);
+					// (MEMORY!) ~WaveTableCache
+					WTCacheKey_SoundBank* cacheKey = new WTCacheKey_SoundBank(frequency, soundBanks[index], soundNames[nameIndex], soundFileName);
+
+					_soundBankList->push_back(cacheKey);
+				}
 			}
 		}
 	}
@@ -128,99 +138,46 @@ bool WaveTableCache::CreateWaveTable(WTCacheKey_SoundBank* cacheKey)
 {
 	try
 	{
-		// libsndfile:  Small tutorial https://digitalsoundandmusic.com/5-3-3-reading-and-writing-formatted-audio-files-in-c/
-		//
-		SNDFILE* sndFile;
-		SF_INFO sfinfo;
+		SoundFileReader reader(cacheKey->GetFileName());
 
-		if ((sndFile = sf_open(cacheKey->GetFileName().c_str(), SFM_READ, &sfinfo)) == NULL)
+		if (!reader.Open())
 			return false;
 
+		int numberFrames = reader.GetNumberFrames();
+		int numberChannels = reader.GetNumberChannels();
+		int sampleRate = reader.GetSampleRate();
+
+		// (MEMORY!) Delete locally below
+		PlaybackFrame* frames = reader.Read();
+
 		// Store sound information
-		cacheKey->SetSoundFileData(sfinfo.samplerate, sfinfo.channels, sfinfo.frames);
+		cacheKey->SetSoundFileData(sampleRate, numberChannels, numberFrames);
+
+		// Calculate number of frames: # Frames * (Sample Rate / System Sampling Rate) * (frequency / fundamental) (USING A FUNDAMENTAL OF C4 = MIDI(60))
+		unsigned int adjustedNumberFrames = numberFrames * (sampleRate / (double)_systemSamplingRate) * (cacheKey->GetDesiredFrequency() / TerminalSynth::GetMidiFrequency(60));
 
 		// (MEMORY!) ~WaveTableCache
-		WaveTable* waveTable = new WaveTable(sfinfo.frames, sfinfo.samplerate, _systemSamplingRate);
+		WaveTable* waveTable = new WaveTable(WaveTable::Mode::SoundSample, adjustedNumberFrames, sampleRate, _systemSamplingRate);
 
-		waveTable->CreateSamplesByFrame(WaveTable::WaveTableSampleGenerateFrameCallback([&sfinfo, &sndFile](int frameIndex, float& leftSample, float& rightSample)
+		waveTable->CreateSamplesByFrame(WaveTable::WaveTableSampleGenerateFrameCallback([&frames, &adjustedNumberFrames, &numberFrames]
+		(int frameIndex, float& leftSample, float& rightSample)
 		{
-			// Format:  File Type | Data Type
+			// Calculate frame index:  Adjusted number was used based on the above parameters. We need to figure out from where
+			//						   in the file frames it should draw samples.
 			//
-			if ((sfinfo.format == (SF_FORMAT_WAV  | SF_FORMAT_DOUBLE) ||
-				 sfinfo.format == (SF_FORMAT_AIFF | SF_FORMAT_DOUBLE)))
-			{
-				// MONO
-				if (sfinfo.channels == 1)
-				{
-					double buffer[1];
-					sf_read_double(sndFile, buffer, 1);
-					leftSample = buffer[0];
-					rightSample = buffer[0];
-				}
+			int fileFrameIndex = (int)(frameIndex * (numberFrames / (double)adjustedNumberFrames));
 
-				// STEREO
-				else if (sfinfo.channels == 2)
-				{
-					double buffer[2];
-					sf_read_double(sndFile, buffer, 2);
-					leftSample = buffer[0];
-					rightSample = buffer[1];
-				}
-				else
-					throw new std::exception("Unhandled libsndfile format type:  WaveTableCache.cpp");
-			}
-			else if ((sfinfo.format == (SF_FORMAT_WAV | SF_FORMAT_FLOAT) ||
-					  sfinfo.format == (SF_FORMAT_AIFF | SF_FORMAT_FLOAT)))
-			{
-				// MONO
-				if (sfinfo.channels == 1)
-				{
-					float buffer[1];
-					sf_read_float(sndFile, buffer, 1);
-					leftSample = buffer[0];
-					rightSample = buffer[0];
-				}
+			if (fileFrameIndex > numberFrames)
+				throw new std::exception("Outside the bounds of the sound bank file");
 
-				// STEREO
-				else if (sfinfo.channels == 2)
-				{
-					float buffer[2];
-					sf_read_float(sndFile, buffer, 2);
-					leftSample = buffer[0];
-					rightSample = buffer[1];
-				}
-				else
-					throw new std::exception("Unhandled libsndfile format type:  WaveTableCache.cpp");
-			}
-			else if ((sfinfo.format == (SF_FORMAT_WAV | SF_FORMAT_PCM_16) ||
-					  sfinfo.format == (SF_FORMAT_AIFF | SF_FORMAT_PCM_16)))
-			{
-				// MONO
-				if (sfinfo.channels == 1)
-				{
-					short buffer[1];
-					sf_readf_short(sndFile, buffer, 1);
-					leftSample = buffer[0] / (float)std::numeric_limits<short>::max();
-					rightSample = buffer[0] / (float)std::numeric_limits<short>::max();
-				}
-
-				// STEREO
-				else if (sfinfo.channels == 2)
-				{
-					short buffer[2];
-					sf_readf_short(sndFile, buffer, 2);
-					leftSample = buffer[0] / (float)std::numeric_limits<short>::max();;
-					rightSample = buffer[1] / (float)std::numeric_limits<short>::max();;
-				}
-				else
-					throw new std::exception("Unhandled libsndfile format type:  WaveTableCache.cpp");
-			}
-			else
-				throw new std::exception("Unhandled libsndfile format type:  WaveTableCache.cpp");
+			leftSample = frames[fileFrameIndex].GetLeft();
+			rightSample = frames[fileFrameIndex].GetRight();
 		}));
 
 		// Set Cache
 		_cacheSoundBank->insert(std::make_pair(cacheKey->GetHashCode(), waveTable));
+
+		delete[] frames;
 	}
 	catch (std::exception ex)
 	{
@@ -235,7 +192,10 @@ bool WaveTableCache::CreateWaveTable(WTCacheKey_Oscillator* cacheKey)
 	try
 	{
 		// (MEMORY!) ~WaveTableCache
-		WaveTable* waveTable = new WaveTable(cacheKey->GetNumberOfFrames(), cacheKey->GetSampleRate(), _systemSamplingRate);
+		WaveTable* waveTable = new WaveTable(WaveTable::Mode::Periodic, 
+											 cacheKey->GetNumberOfFrames(), 
+										     cacheKey->GetSampleRate(), 
+											 _systemSamplingRate);
 		SignalFactory* signalFactory = _signalFactory;
 		OscillatorParameters parameters = cacheKey->GetParameters();
 		PlaybackFrame frame;
@@ -315,7 +275,7 @@ WaveTable* WaveTableCache::Get(const OscillatorParameters& parameters, int midiN
 
 	WaveTable* result = _cacheOscillator->at(cacheKey->GetHashCode());
 
-	// Set for frequency
+	// Set for frequency:  Not required for oscillator-based pre-built wave tables. Just for sound banks...
 
 	return result;
 }
@@ -328,7 +288,8 @@ WaveTable* WaveTableCache::Get(const std::string& soundBankName, const std::stri
 	{
 		// This should match the correct file
 		if (_soundBankList->at(index)->GetSoundBank() == soundBankName &&
-			_soundBankList->at(index)->GetName() == soundName)
+			_soundBankList->at(index)->GetName() == soundName &&
+			_soundBankList->at(index)->GetDesiredFrequency() == desiredFrequency)
 		{
 			cacheKey = _soundBankList->at(index);
 		}

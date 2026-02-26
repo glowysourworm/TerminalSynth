@@ -13,6 +13,20 @@ class WaveTable : public WaveBase
 {
 public:
 
+	enum class Mode
+	{
+		/// <summary>
+		/// The wave table will hold a single period of the oscillator; and repeat it.
+		/// </summary>
+		Periodic,
+
+		/// <summary>
+		/// The wave table will hold a sound sample that is not likely a single period of the
+		/// periodic wave form. It should be treated as such; and triggered a single time.
+		/// </summary>
+		SoundSample
+	};
+
 	/// <summary>
 	/// Delegate to create L/R channel samples for the wave table. The sampleTime [0, period] will go until the period
 	/// has been reached. The WaveTable's responsibility is to provide time points for its oversampled range. Each sample
@@ -27,7 +41,7 @@ public:
 	/// </summary>
 	using WaveTableSampleGenerateFrameCallback = std::function<void(int frameIndex, float& leftSample, float& rightSample)>;
 
-	WaveTable(unsigned int frameLength, unsigned int samplingRate, unsigned int systemSamplingRate);
+	WaveTable(Mode mode, unsigned int frameLength, unsigned int samplingRate, unsigned int systemSamplingRate);
 	~WaveTable() override;
 
 	/// <summary>
@@ -41,6 +55,7 @@ public:
 	void CreateSamplesByFrame(WaveTableSampleGenerateFrameCallback callback);
 
 	bool HasOutput(float absoluteTime) const override;
+	void Clear() override;
 
 protected:
 
@@ -54,11 +69,13 @@ private:
 
 private:
 
+	Mode _mode;
+
 	unsigned int _samplingRate;					// These two sampling rates may differ depending on how the table was built.
 	unsigned int _systemSamplingRate;			// The ratio of the two will show the scale factor for providing accurate samples.
 	PlaybackFrame* _frames;
 	unsigned int _frameLength;
-	double _lastPeriodTime;
+	double _zeroTime;
 
 	// A-Matrix from our cubic spline interpolation
 	Matrix<double>* _splineA;

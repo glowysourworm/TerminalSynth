@@ -77,6 +77,7 @@ bool RtAudioController::Initialize(const AudioCallbackDelegate& callback)
 
 		RtAudioController::Instance = new RtAudio(RtAudio::Api::WINDOWS_WASAPI, &RtAudioController::ErrorCallback);
 		RtAudioController::Callback = new AudioCallbackDelegate(callback);
+		RtAudioController::LastErrorText = new std::string("");
 
 		// Initialized
 		RtAudioController::Initialized = true;
@@ -113,13 +114,15 @@ bool RtAudioController::Dispose()
 
 		if (RtAudioController::Instance->isStreamOpen())
 			RtAudioController::Instance->closeStream();
-		
+
 		// RESET 
 		delete RtAudioController::Instance;
 		delete RtAudioController::Callback;
+		delete RtAudioController::LastErrorText;
 
 		RtAudioController::Instance = nullptr;
 		RtAudioController::Callback = nullptr;
+		RtAudioController::LastErrorText = nullptr;
 
 		// Must Re-Initialize!
 		RtAudioController::Initialized = false;

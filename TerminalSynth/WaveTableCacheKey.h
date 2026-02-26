@@ -54,12 +54,13 @@ class WTCacheKey_SoundBank : public WaveTableCacheKey
 {
 public:
 
-	WTCacheKey_SoundBank(const std::string& soundBank, const std::string& name, const std::string& fileName)
+	WTCacheKey_SoundBank(float desiredFrequency, const std::string& soundBank, const std::string& name, const std::string& fileName)
 	{
 		_soundBank = new std::string(soundBank);
 		_name = new std::string(name);
 		_fileName = new std::string(fileName);
 
+		_desiredFrequency = desiredFrequency;
 		_sampleRate = 0;
 		_numberChannels = 0;
 		_numberFrames = 0;
@@ -90,6 +91,7 @@ public:
 	std::string GetSoundBank() const { return *_soundBank; }
 	std::string GetFileName() const { return *_fileName; }
 
+	float GetDesiredFrequency() const { return _desiredFrequency; }
 	unsigned int GetSampleRate() const { return _sampleRate; }
 	unsigned int GetNumberOfChannels() const { return _numberChannels; }
 	unsigned int GetNumberOfFrames() const { return _numberFrames; }
@@ -99,6 +101,7 @@ private:
 	std::string* _name;
 	std::string* _fileName;
 
+	float _desiredFrequency;
 	unsigned int _sampleRate;
 	unsigned int _numberChannels;
 	unsigned int _numberFrames;

@@ -47,11 +47,12 @@ void SynthNote::AddSample(PlaybackFrame* frame, float absoluteTime)
 
 bool SynthNote::HasOutput(float absoluteTime)
 {
-	return _parameters->GetEnvelope()->HasOutput(absoluteTime);
+	return _parameters->GetEnvelope()->HasOutput(absoluteTime) && _waveTable->HasOutput(absoluteTime);
 }
 
 void SynthNote::Engage(float absoluteTime)
 {
+	_waveTable->Clear();
 	_parameters->GetEnvelope()->Engage(absoluteTime);
 }
 
