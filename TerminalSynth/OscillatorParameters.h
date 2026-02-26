@@ -5,7 +5,9 @@
 
 #include "Constant.h"
 #include "Envelope.h"
+#include "Utility.h"
 #include <string>
+#include <type_traits>
 
 class OscillatorParameters
 {
@@ -81,6 +83,28 @@ public:
 	void SetType(OscillatorType value) { _type = value; }
 	void SetBuiltInType(BuiltInOscillators value) { _builtInType = value; }
 	void SetEnvelope(const Envelope& value) { _envelope->Set(value); }
+
+	size_t GetHashCode() const
+	{
+		std::hash<int> intHasher;
+		std::hash<float> floatHasher;
+		std::hash<std::string> stringHasher;
+
+		// Just these data are involved in uniqueness
+		size_t hash1 = intHasher((int)_type);
+		size_t hash2 = intHasher((int)_builtInType);
+		size_t hash3 = stringHasher(*_soundBank);
+		size_t hash4 = stringHasher(*_soundName);
+		size_t hash5 = floatHasher(_frequency);
+
+		// Result -> seed (first parameter)
+		TerminalSynth::HashCombine(hash1, hash2);
+		TerminalSynth::HashCombine(hash1, hash3);
+		TerminalSynth::HashCombine(hash1, hash4);
+		TerminalSynth::HashCombine(hash1, hash5);
+
+		return hash1;
+	}
 
 	void Update(const OscillatorParameters& source)
 	{

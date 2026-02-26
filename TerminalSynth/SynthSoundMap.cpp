@@ -3,6 +3,7 @@
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SynthNote.h"
+#include "SynthNoteCache.h"
 #include "SynthSettings.h"
 #include "SynthSoundMap.h"
 #include "WaveTable.h"
@@ -12,15 +13,18 @@
 #include <utility>
 #include <vector>
 
-SynthSoundMap::SynthSoundMap(const SynthSettings* configuration, const OutputSettings* parameters, int capacity)
+SynthSoundMap::SynthSoundMap(const SynthSettings* configuration, const OutputSettings* settings, int capacity)
 {
 	_capacity = capacity;
+	_systemSamplingRate = settings->GetSamplingRate();
 	_engagedNotes = new std::map<int, SynthNote*>();
 	_disengagedNotes = new std::vector<SynthNote*>();
 	_waveTableCache = new WaveTableCache();
+	_synthNoteCache = new SynthNoteCache();
+	_oscillatorParameters = new OscillatorParameters(*configuration->GetOscillator());
 
 	// Initialize (CHECK SOUND BANKS!) (NO LOGGING!)
-	_waveTableCache->Initialize(configuration, parameters);
+	_waveTableCache->Initialize(configuration, settings);
 }
 
 SynthSoundMap::~SynthSoundMap()
@@ -36,9 +40,17 @@ SynthSoundMap::~SynthSoundMap()
 	delete _engagedNotes;
 	delete _disengagedNotes;
 	delete _waveTableCache;
+	delete _synthNoteCache;
+	delete _oscillatorParameters;
 }
 
-bool SynthSoundMap::SetNote(int midiNumber, bool pressed, double absoluteTime, const SynthSettings* configuration, unsigned int samplingRate) const
+void SynthSoundMap::Update(const OscillatorParameters& parameters, unsigned int samplingRate)
+{
+	_systemSamplingRate = samplingRate;
+	_oscillatorParameters->Update(parameters);
+}
+
+bool SynthSoundMap::SetNote(int midiNumber, bool pressed, double absoluteTime) const
 {
 	if (pressed)
 	{
@@ -46,29 +58,42 @@ bool SynthSoundMap::SetNote(int midiNumber, bool pressed, double absoluteTime, c
 		if (_engagedNotes->contains(midiNumber))
 			return true;
 
+		// BLOCKING RE-ENGAGED NOTES:  The WaveTable* has to be shared across instances, so this
+		//							   is a "blocking feature" for now.. We have to be able to 
+		//							   have a state-less design for the wave table (state-less, but
+		//							   single-threaded)
+		//
+		for (int index = 0; index < _disengagedNotes->size(); index++)
+		{
+			if (_disengagedNotes->at(index)->GetMidiNumber() == midiNumber)
+				return true;
+		}
+
 		// Engage
-		else if (_engagedNotes->size() < _capacity)
+		if (_engagedNotes->size() < _capacity)
 		{
 			// Calculate frequency from MIDI number
 			float frequency = TerminalSynth::GetMidiFrequency(midiNumber);
 
-			// Oscillator Parameters
-			OscillatorParameters currentParameters = *configuration->GetOscillator();
-			OscillatorParameters parameters(
-				currentParameters.GetType(),
-				currentParameters.GetBuiltInType(),
-				currentParameters.GetSoundBank(),
-				currentParameters.GetSoundName(),
-				frequency,
-				currentParameters.GetSignalLow(),
-				currentParameters.GetSignalHigh(),
-				*currentParameters.GetEnvelope());
+			// Oscillator Parameters (copy, and set next frequency)
+			OscillatorParameters parameters = *_oscillatorParameters;
+			parameters.SetFrequency(frequency);
 
-			// Cache handles memory for WaveTable*
-			WaveTable* waveTable =  _waveTableCache->Get(parameters, midiNumber);
+			SynthNote* note = nullptr;
 
-			// (MEMORY!) Delete notes when they're removed from the dis-engaged list
-			SynthNote* note = new SynthNote(parameters, waveTable, midiNumber);
+			// Check the cache for the note
+			if (_synthNoteCache->Has(parameters))
+			{
+				note = _synthNoteCache->Get(parameters);
+			}
+			else
+			{
+				// Cache handles memory for WaveTable*
+				WaveTable* waveTable = _waveTableCache->Get(parameters, midiNumber);
+
+				// Synth note cache will handle these
+				note = _synthNoteCache->Add(parameters, waveTable, midiNumber);
+			}
 
 			note->Engage(absoluteTime);
 
@@ -112,7 +137,9 @@ bool SynthSoundMap::SetFrame(PlaybackFrame* frame, double absoluteTime, double g
 	// Engaged
 	for (auto iter = _engagedNotes->begin(); iter != _engagedNotes->end(); ++iter)
 	{
-		iter->second->AddSample(&noteFrame, absoluteTime);
+		// HasOutput() -> Add / Mix Sample
+		if (iter->second->HasOutput(absoluteTime))
+			iter->second->AddSample(&noteFrame, absoluteTime);
 	}
 
 	// Disengaged (also prune collection)
@@ -125,9 +152,6 @@ bool SynthSoundMap::SetFrame(PlaybackFrame* frame, double absoluteTime, double g
 		// ...Empty
 		else
 		{
-			// (MEMORY!) These are completed notes (Oscillator*, SynthNote*)
-			delete _disengagedNotes->at(index);
-
 			_disengagedNotes->erase(_disengagedNotes->begin() + index);
 		}
 			

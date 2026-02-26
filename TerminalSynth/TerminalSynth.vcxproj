@@ -261,6 +261,7 @@
     <ClCompile Include="StopWatch.cpp" />
     <ClCompile Include="Synth.cpp" />
     <ClCompile Include="program.cpp" />
+    <ClCompile Include="SynthNoteCache.cpp" />
     <ClCompile Include="SynthSettings.cpp" />
     <ClCompile Include="SynthEffect.cpp" />
     <ClCompile Include="SynthNote.cpp" />
@@ -321,6 +322,7 @@
     <ClInclude Include="SoundSourceUI.h" />
     <ClInclude Include="StopWatch.h" />
     <ClInclude Include="Synth.h" />
+    <ClInclude Include="SynthNoteCache.h" />
     <ClInclude Include="SynthSettings.h" />
     <ClInclude Include="SynthEffect.h" />
     <ClInclude Include="SynthInformationUI.h" />

@@ -28,11 +28,12 @@ void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings*
 void Synth::Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
 	_postProcessing->Update(effectRegistry, configuration->GetSignalChainRegistry());
+	_pianoNotes->Update(*configuration->GetOscillator(), _samplingRate);
 }
 
 void Synth::Set(int midiNumber, bool pressed, double absoluteTime, const SynthSettings* configuration)
 {
-	_pianoNotes->SetNote(midiNumber, pressed, absoluteTime, configuration, _samplingRate);
+	_pianoNotes->SetNote(midiNumber, pressed, absoluteTime);
 }
 bool Synth::GetSample(PlaybackFrame* frame, double absoluteTime, const SynthSettings* configuration)
 {

@@ -78,7 +78,7 @@ public:
 	/// Function to clear the signal base of all of its internal buffers, and signal history. Any parameters
 	/// or signal settings should NOT be cleared or reset to default. This is for any of the signal buffers.
 	/// </summary>
-	virtual void Clear()
+	virtual void Clear(double absoluteTime)
 	{
 		_leftAccumulator->Reset();
 		_rightAccumulator->Reset();

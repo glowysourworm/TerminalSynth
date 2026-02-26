@@ -55,7 +55,7 @@ public:
 	void CreateSamplesByFrame(WaveTableSampleGenerateFrameCallback callback);
 
 	bool HasOutput(float absoluteTime) const override;
-	void Clear() override;
+	void Clear(double absoluteTime) override;
 
 protected:
 

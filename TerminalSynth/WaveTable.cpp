@@ -71,18 +71,15 @@ bool WaveTable::HasOutput(float absoluteTime) const
 	}
 }
 
-void WaveTable::Clear()
+void WaveTable::Clear(double absoluteTime)
 {
-	WaveBase::Clear();
+	WaveBase::Clear(absoluteTime);
 
-	_zeroTime = 0;
+	_zeroTime = absoluteTime;
 }
 
 void WaveTable::SetFrameImpl(PlaybackFrame* frame, double absoluteTime)
 {
-	if (_zeroTime == 0)
-		_zeroTime = absoluteTime;
-
 	float left = GetLinearSpline(absoluteTime, true);
 	float right = GetLinearSpline(absoluteTime, false);
 

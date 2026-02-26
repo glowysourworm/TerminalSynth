@@ -3,9 +3,11 @@
 #ifndef SYNTH_NOTE_QUEUE_H
 #define SYNTH_NOTE_QUEUE_H
 
+#include "OscillatorParameters.h"
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SynthNote.h"
+#include "SynthNoteCache.h"
 #include "SynthSettings.h"
 #include "WaveTableCache.h"
 #include <map>
@@ -19,6 +21,9 @@ public:
 	SynthSoundMap(const SynthSettings* configuration, const OutputSettings* parameters, int capacity);
 	~SynthSoundMap();
 
+	// Update Configuration
+	void Update(const OscillatorParameters& parameters, unsigned int samplingRate);
+
 	/// <summary>
 	/// Sets midi note to either engaged / disengaged. Returns true if there are enough voice slots
 	/// to add the next note, false otherwise.
@@ -27,7 +32,7 @@ public:
 	/// <param name="pressed">Engaged / Disengaged</param>
 	/// <param name="absoluteTime">Current stream time</param>
 	/// <returns>True if the note was engaged properly. Disengaged notes will be kept until the output has ceased.</returns>
-	bool SetNote(int midiNumber, bool pressed, double absoluteTime, const SynthSettings* configuration, unsigned int samplingRate) const;
+	bool SetNote(int midiNumber, bool pressed, double absoluteTime) const;
 
 	/// <summary>
 	/// Synthesizes a full output at the specified stream time. Returns true if there was output this call.
@@ -50,6 +55,8 @@ public:
 private:
 
 	int _capacity;
+	unsigned int _systemSamplingRate; 
+	OscillatorParameters* _oscillatorParameters;
 
 	// Capacity-sized map, will hold notes up to the user capacity (should be 10, for 10 active voices)
 	std::map<int, SynthNote*>* _engagedNotes;
@@ -59,6 +66,9 @@ private:
 
 	// Wave Table Cache:  This will lazy load WaveTable* instances for sound banks and oscillators
 	WaveTableCache* _waveTableCache;
+
+	// Synth Note Cache:  This will also lazy load SynthNote* instances using OscillatorParameters&
+	SynthNoteCache* _synthNoteCache;
 
 };
 

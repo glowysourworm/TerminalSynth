@@ -189,6 +189,9 @@
     <ClCompile Include="SoundFileReader.cpp">
       <Filter>Source Files\Utility</Filter>
     </ClCompile>
+    <ClCompile Include="SynthNoteCache.cpp">
+      <Filter>Source Files\Synth</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WindowsKeyCodes.h">
@@ -391,6 +394,9 @@
     </ClInclude>
     <ClInclude Include="SoundFileReader.h">
       <Filter>Header Files\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthNoteCache.h">
+      <Filter>Header Files\Synth</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -52,7 +52,7 @@ bool SynthNote::HasOutput(float absoluteTime)
 
 void SynthNote::Engage(float absoluteTime)
 {
-	_waveTable->Clear();
+	_waveTable->Clear(absoluteTime);
 	_parameters->GetEnvelope()->Engage(absoluteTime);
 }
 
