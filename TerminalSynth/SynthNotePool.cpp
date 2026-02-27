@@ -23,8 +23,8 @@ SynthNotePool::SynthNotePool(const SynthSettings* configuration, const OutputSet
 	_disengagedNotes = new std::map<SynthNote*, SynthNote*>();
 	_waveTableCache = new WaveTableCache();
 	_synthNoteCache = new SynthNoteCache();
-	_envelope = new Envelope(*configuration->GetEnvelope());
-	_oscillatorParameters = new OscillatorParameters(*configuration->GetOscillator());
+	_envelope = new Envelope(*configuration->GetSignalChainRegistry()->GetOscillatorEnvelope());
+	_oscillatorParameters = new OscillatorParameters(*configuration->GetSignalChainRegistry()->GetOscillatorParameters());
 	_hasStaleParameters = false;
 
 	// Initialize (CHECK SOUND BANKS!) (NO LOGGING!)

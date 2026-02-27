@@ -1,118 +1,119 @@
 #pragma once
 
-#ifndef OSCILLATOR_UI_H
-#define OSCILLATOR_UI_H
+#ifndef SOUND_SOURCE_UI_H
+#define SOUND_SOURCE_UI_H
 
-#include "Envelope.h"
-#include "OscillatorModelUI.h"
+#include "Constant.h"
 #include "OscillatorParameters.h"
-#include "SliderUI.h"
 #include "SoundBankSettings.h"
-#include "SoundSourceUI.h"
 #include "UIBase.h"
+#include "ValueCapture.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
-#include <ftxui/dom/elements.hpp>
+#include <ftxui/component/event.hpp>
 #include <ftxui/screen/color.hpp>
 #include <string>
+#include <vector>
 
-class OscillatorUI : public UIBase<OscillatorModelUI>
+class OscillatorUI : public UIBase<OscillatorParameters>
 {
 public:
-	OscillatorUI(const SoundBankSettings* soundBankSettings, const std::string& name, const std::string& label, const ftxui::Color& labelColor);
+	OscillatorUI(const SoundBankSettings* soundBankSettings, const ftxui::Color& labelColor);
 	~OscillatorUI();
 
-	void Initialize(const OscillatorModelUI& model) override;
+	void Initialize(const OscillatorParameters& parameters) override;
 	ftxui::Component GetComponent() override;
 	void UpdateComponent(bool clearDirty) override;
 
-	void ToUI(const OscillatorModelUI& source) override;
-	void FromUI(OscillatorModelUI& destination, bool clearDirty) override;
-
-	bool GetDirty() const override;
+	void ToUI(const OscillatorParameters& source) override;
+	void FromUI(OscillatorParameters& destination, bool clearDirty) override;
 
 private:
 
 	ftxui::Component _component;
 
-	// Sound Source UI
-	SoundSourceUI* _soundSourceUI;
+	const SoundBankSettings* _soundBankSettings;
 
-	// Slider UI's
-	SliderUI* _attack;
-	SliderUI* _decay;
-	SliderUI* _release;
-	SliderUI* _attackPeak;
-	SliderUI* _sustainPeak;
+	// Oscillator Selected Index
+	ValueCapture<int>* _soundSourceChoiceIndex;
+	ValueCapture<int>* _oscillatorSelectedIndex;
+	ValueCapture<int>* _soundBankSelectedIndex;
+	ValueCapture<int>* _soundNameSelectedIndex;
+
+	// Oscillator Choices
+	std::vector<std::string>* _soundSourceChoices;
+	std::vector<std::string>* _oscillatorItems;
+	std::vector<std::string>* _soundBankItems;
+	std::vector<std::string>* _soundNameItems;
 };
 
-OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const std::string& name, const std::string& label, const ftxui::Color& labelColor)
-	: UIBase(name, label, labelColor)
+OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const ftxui::Color& labelColor)
+	: UIBase("OscillatorUI", "Sound Source", labelColor)
 {
-	_soundSourceUI = new SoundSourceUI(soundBankSettings, labelColor);
+	_soundBankSettings = soundBankSettings;
 
-	_attack = new SliderUI(0.1f, 0.01f, 1.0f, 0.01f, "Attack", "Attack   (s) {:.2f}", ftxui::Color::White);
-	_decay = new SliderUI(0.1f, 0.01f, 2.0f, 0.01f, "Decay", "Decay    (s) {:.2f}", ftxui::Color::White);
-	_release = new SliderUI(0.3f, 0.01f, 3.0f, 0.01f, "Release", "Release  (s) {:.2f}", ftxui::Color::White);
-	_attackPeak = new SliderUI(0.9f, 0.01f, 1.0f, 0.01f, "Limit", "Limit        {:.2f}", ftxui::Color::White);
-	_sustainPeak = new SliderUI(0.65f, 0.01f, 1.0f, 0.01f, "Sustain", "Sustain      {:.2f}", ftxui::Color::White);
+	std::vector<std::string> soundBanks = _soundBankSettings->GetSoundBanks();
+	std::string initialSoundBank = soundBanks.size() > 0 ? soundBanks[0] : "";
+	std::vector<std::string> soundNames = initialSoundBank.size() > 0 ? _soundBankSettings->GetSoundNames(initialSoundBank) : std::vector<std::string>();
+
+	_soundSourceChoices = new std::vector<std::string>({
+		"Oscillators",
+		"Sample Banks"
+	});
+	_oscillatorItems = new std::vector<std::string>({
+		"Sine",
+		"Square",
+		"Triangle",
+		"Sawtooth",
+		"SynthesizedStringPluck"
+	});
+	_soundBankItems = new std::vector<std::string>(soundBanks);
+	_soundNameItems = new std::vector<std::string>(soundNames);
+
+	_oscillatorSelectedIndex = new ValueCapture<int>(0);
+	_soundSourceChoiceIndex = new ValueCapture<int>(0);
+	_soundBankSelectedIndex = new ValueCapture<int>(0);
+	_soundNameSelectedIndex = new ValueCapture<int>(0);
 }
+
 OscillatorUI::~OscillatorUI()
 {
 	UIBase::~UIBase();
 
-	delete _soundSourceUI;
-	delete _attack;
-	delete _decay;
-	delete _release;
-	delete _attackPeak;
-	delete _sustainPeak;
+	delete _soundBankItems;
+	delete _soundNameItems;
+	delete _soundSourceChoices;
+	delete _oscillatorItems;
+
+	delete _soundSourceChoiceIndex;
+	delete _soundBankSelectedIndex;
+	delete _soundNameSelectedIndex;
+	delete _oscillatorSelectedIndex;
 }
 
-void OscillatorUI::Initialize(const OscillatorModelUI& model)
+void OscillatorUI::Initialize(const OscillatorParameters& parameters)
 {
-	UIBase::Initialize(model);
+	auto soundSourceChoiceUI = ftxui::Dropdown(_soundSourceChoices, _soundSourceChoiceIndex->GetRef());
+	auto oscillatorItemsUI = ftxui::Dropdown(_oscillatorItems, _oscillatorSelectedIndex->GetRef());
+	auto soundBankItemsUI = ftxui::Dropdown(_soundBankItems, _soundBankSelectedIndex->GetRef());
+	auto soundNameItemsUI = ftxui::Dropdown(_soundNameItems, _soundNameSelectedIndex->GetRef());
 
-	Envelope envelope = *model.GetEnvelope();
-	OscillatorParameters parameters = *model.GetParameters();
+	_component = ftxui::Container::Vertical({
+			soundSourceChoiceUI,
+			oscillatorItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 0; }),
+			soundBankItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 1; }),
+			soundNameItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 1; }),
+		}) | ftxui::CatchEvent([&] (ftxui::Event event) {
 
-	_soundSourceUI->Initialize(parameters);
-	_attack->Initialize(envelope.GetAttack());
-	_decay->Initialize(envelope.GetDecay());
-	_release->Initialize(envelope.GetRelease());
-	_attackPeak->Initialize(envelope.GetAttackPeak());
-	_sustainPeak->Initialize(envelope.GetSustainPeak());
 
-	auto envelopeUI = ftxui::Container::Vertical(
-	{
-		ftxui::Renderer([&] { return ftxui::text("Envelope") | ftxui::color(this->GetLabelColor()); }),
-		ftxui::Renderer([&] { return ftxui::separator(); }),
 
-		_attack->GetComponent(),
-		_decay->GetComponent(),
-		_release->GetComponent(),
+			// Passthrough
+			if (event.is_mouse())
+				return false;
 
-		ftxui::Renderer([&] { return ftxui::separator(); }),
-
-		_attackPeak->GetComponent(),
-		_sustainPeak->GetComponent()
-	});
-
-	auto oscillatorUI = ftxui::Container::Vertical(
-	{
-		ftxui::Renderer([&] { return ftxui::text(this->GetLabel()) | ftxui::color(this->GetLabelColor()); }),
-		ftxui::Renderer([&] { return ftxui::separator(); }),
-
-		_soundSourceUI->GetComponent() | ftxui::flex_grow
-	});
-
-	_component = ftxui::Container::Horizontal({
-
-		oscillatorUI | ftxui::flex_grow,
-		ftxui::Renderer([&] { return ftxui::separator(); }),
-		envelopeUI | ftxui::flex_grow
-
-	}) | ftxui::flex_grow;
+			// Cancel
+			return true;
+		});
 }
 
 ftxui::Component OscillatorUI::GetComponent()
@@ -122,50 +123,96 @@ ftxui::Component OscillatorUI::GetComponent()
 
 void OscillatorUI::UpdateComponent(bool clearDirty)
 {
-	_soundSourceUI->UpdateComponent(clearDirty);
-	_attack->UpdateComponent(clearDirty);
-	_decay->UpdateComponent(clearDirty);
-	_release->UpdateComponent(clearDirty);
-	_attackPeak->UpdateComponent(clearDirty);
-	_sustainPeak->UpdateComponent(clearDirty);
+	if (this->GetDirty())
+	{
+		if (_soundBankSelectedIndex->HasChanged())
+		{
+			std::string soundBank = _soundBankItems->at(_soundBankSelectedIndex->GetValue());
+
+			// Update Sound Names
+			std::vector<std::string> soundNames = _soundBankSettings->GetSoundNames(soundBank);
+
+			_soundNameItems->clear();
+
+			for (int index = 0; index < soundNames.size(); index++)
+			{
+				_soundNameItems->push_back(soundNames[index]);
+			}
+		}
+	}
+	
+	// Is Dirty
+	if (_soundSourceChoiceIndex->HasChanged() ||
+		_oscillatorSelectedIndex->HasChanged() ||
+		_soundBankSelectedIndex->HasChanged() ||
+		_soundNameSelectedIndex->HasChanged())
+	{
+		this->SetDirty();
+	}		
+	else if (clearDirty)
+	{
+		_soundSourceChoiceIndex->Clear();
+		_oscillatorSelectedIndex->Clear();
+		_soundBankSelectedIndex->Clear();
+		_soundNameSelectedIndex->Clear();
+		this->ClearDirty();
+	}
+}
+
+void OscillatorUI::ToUI(const OscillatorParameters& source)
+{
+	_soundSourceChoiceIndex->SetValue((int)source.GetType());
+	_oscillatorSelectedIndex->SetValue((int)source.GetBuiltInType());
+
+	_soundBankSelectedIndex->SetValue(0);
+	_soundNameSelectedIndex->SetValue(0);
+
+	std::string soundBank = source.GetSoundBank();
+	std::string soundName = source.GetSoundName();
+
+	if (soundBank == "")
+		return;
+
+	for (int index = 0; index < _soundBankItems->size(); index++)
+	{
+		if (_soundBankItems->at(index) == soundBank)
+		{
+			_soundBankSelectedIndex->SetValue(index);
+			break;
+		}
+	}
+
+	std::vector<std::string> soundNames = _soundBankSettings->GetSoundNames(soundBank);
+
+	for (int index = 0; index < soundNames.size(); index++)
+	{
+		if (soundNames.at(index) == soundName)
+		{
+			_soundNameSelectedIndex->SetValue(index);
+			break;
+		}
+	}
+}
+
+void OscillatorUI::FromUI(OscillatorParameters& destination, bool clearDirty)
+{
+	destination.SetType((OscillatorType)_soundSourceChoiceIndex->GetValue());
+	destination.SetBuiltInType((BuiltInOscillators)_oscillatorSelectedIndex->GetValue());
+
+	if (_soundBankItems->size() > 0)
+		destination.SetSoundBank(_soundBankItems->at(_soundBankSelectedIndex->GetValue()));
+
+	if (_soundNameItems->size() > 0)
+		destination.SetSoundName(_soundNameItems->at(_soundNameSelectedIndex->GetValue()));
 
 	if (clearDirty)
+	{
+		_soundSourceChoiceIndex->Clear();
+		_oscillatorSelectedIndex->Clear();
+		_soundBankSelectedIndex->Clear();
+		_soundNameSelectedIndex->Clear();
 		this->ClearDirty();
+	}		
 }
 
-
-void OscillatorUI::ToUI(const OscillatorModelUI& source)
-{
-
-}
-
-void OscillatorUI::FromUI(OscillatorModelUI& destination, bool clearDirty)
-{
-	float attack, decay, release, attackPeak, sustainPeak;
-	OscillatorParameters parameters = *destination.GetParameters();
-
-	_soundSourceUI->FromUI(parameters, clearDirty);
-	_attack->FromUI(attack, clearDirty);
-	_decay->FromUI(decay, clearDirty);
-	_release->FromUI(release, clearDirty);
-	_attackPeak->FromUI(attackPeak, clearDirty);
-	_sustainPeak->FromUI(sustainPeak, clearDirty);
-
-	destination.GetEnvelope()->Set(attack, decay, 0, release, attackPeak, sustainPeak);
-	destination.GetParameters()->Update(parameters);
-
-	if (clearDirty)
-		this->ClearDirty();
-}
-
-inline bool OscillatorUI::GetDirty() const
-{
-	return _soundSourceUI->GetDirty() ||
-		   _attack->GetDirty() ||
-		   _decay->GetDirty() ||
-		   _release->GetDirty() ||
-		   _attackPeak->GetDirty() ||
-		   _sustainPeak->GetDirty();
-}
-
-#endif
+#endif	

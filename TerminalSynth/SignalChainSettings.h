@@ -3,6 +3,8 @@
 #ifndef SIGNAL_CHAIN_SETTINGS_H
 #define SIGNAL_CHAIN_SETTINGS_H
 
+#include "Envelope.h"
+#include "OscillatorParameters.h"
 #include "SignalSettings.h"
 #include <exception>
 #include <string>
@@ -16,11 +18,14 @@ public:
 	{
 		_completeList = new std::vector<SignalSettings*>();
 		_signalChain = new std::vector<SignalSettings*>();
+		_oscillatorParameters = new OscillatorParameters();
+		_oscillatorEnvelope = new Envelope();
 	}
 	SignalChainSettings(const SignalChainSettings& copy)
 	{
 		_completeList = new std::vector<SignalSettings*>();
 		_signalChain = new std::vector<SignalSettings*>();
+		_oscillatorParameters = new OscillatorParameters(*copy.GetOscillatorParameters());
 
 		for (int index = 0; index < copy.GetRegistryCount(); index++)
 		{
@@ -44,6 +49,8 @@ public:
 
 		delete _signalChain;
 		delete _completeList;
+		delete _oscillatorParameters;
+		delete _oscillatorEnvelope;
 	}
 
 	void Initialize(const std::vector<SignalSettings>& signalChainRegistry)
@@ -54,6 +61,8 @@ public:
 		}
 	}
 
+	OscillatorParameters* GetOscillatorParameters() const { return _oscillatorParameters; }
+	Envelope* GetOscillatorEnvelope() const { return _oscillatorEnvelope; }
 	int GetCount() const { return _signalChain->size(); }
 	int GetRegistryCount() const { return _completeList->size(); }
 
@@ -121,6 +130,12 @@ public:
 	}
 
 private:
+
+	// Oscillator
+	OscillatorParameters* _oscillatorParameters; 
+
+	// Envelope
+	Envelope* _oscillatorEnvelope;
 
 	// Effect Registry:  There was a circular reference coupling SignalBase* to SynthSettings*. So, this list is just 
 	//					 loose strings for having a lookup. This is the complete list of SignalSettings*.

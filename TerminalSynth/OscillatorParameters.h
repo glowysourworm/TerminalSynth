@@ -13,6 +13,17 @@ class OscillatorParameters
 {
 public:
 
+	OscillatorParameters()
+	{
+		_type = OscillatorType::BuiltIn;
+		_builtInType = BuiltInOscillators::Sine;
+		_soundBank = new std::string("");
+		_soundName = new std::string("");
+		_frequency = TerminalSynth::GetMidiFrequency(60);
+		_signalLow = SIGNAL_LOW;
+		_signalHigh = SIGNAL_HIGH;
+	}
+
 	/// <summary>
 	/// Constructs an oscillator with built in source
 	/// </summary>

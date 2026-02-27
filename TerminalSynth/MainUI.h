@@ -3,17 +3,13 @@
 #ifndef MAIN_UI_H
 #define MAIN_UI_H
 
-#include "CheckListUI.h"
-#include "OscillatorUI.h"
 #include "OutputUI.h"
 #include "SignalChainSettings.h"
-#include "SignalChainUI.h"
-#include "SoundBankSettings.h"
 #include "SynthInformationUI.h"
 #include "SynthSettings.h"
+#include "SynthTabUI.h"
 #include "UIBase.h"
 #include <ftxui/component/component_base.hpp>
-#include <ftxui/screen/color.hpp>
 #include <string>
 #include <vector>
 
@@ -21,7 +17,7 @@ class MainUI : public UIBase<SynthSettings>
 {
 public:
 
-	MainUI(const SoundBankSettings* soundBankSettings, const std::string& title, const ftxui::Color& titleColor);
+	MainUI(const SynthSettings& configuration);
 	~MainUI();
 
 	void Initialize(const SynthSettings& initialValue) override;
@@ -48,9 +44,6 @@ private:
 	ftxui::Component _tabControl;							// Shared Pointer (std::shared_pointer)
 	ftxui::Component _tabControlMenu;
 
-	// Synth Tab
-	ftxui::Component _synthTab;
-
 	// Output Tab
 	ftxui::Component _outputTab;
 
@@ -64,12 +57,10 @@ private:
 
 	SynthInformationUI* _synthInformationUI;
 	
-	// Input
-	OscillatorUI* _oscillatorUI;
-	SignalChainUI* _signalChainUI;
-	CheckListUI* _airwinPluginListUI;
+	// Synth Tab
+	SynthTabUI* _synthTabUI;
 	
-	// Output
+	// Output Tab
 	OutputUI* _outputUI;
 
 };

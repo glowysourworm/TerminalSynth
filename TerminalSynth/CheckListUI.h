@@ -14,7 +14,9 @@
 #include <ftxui/dom/direction.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 class CheckListUI : public UIBase<std::vector<std::string>>
@@ -33,21 +35,23 @@ public:
 
 	bool GetDirty() const override;
 
+	bool IsSelected(const std::string& name) const;
+
 private:
 
 	ftxui::Component _component;
-	ftxui::Component _list;
+	ftxui::Component _listComponent;
 
 	bool* _isMouseOver;
 	float* _scrollY;
 	float _scrollDeltaY;
 
-	std::vector<CheckboxUI*>* _checkBoxes;
+	std::map<std::string, CheckboxUI*>* _checkBoxes;
 };
 
 CheckListUI::CheckListUI(const ftxui::Color& labelColor) : UIBase("", "", labelColor)
 {
-	_checkBoxes = new std::vector<CheckboxUI*>();
+	_checkBoxes = new std::map<std::string, CheckboxUI*>();
 	_scrollY = new float(0);
 	_scrollDeltaY = 0.005f;
 	_isMouseOver = new bool(false);
@@ -57,9 +61,9 @@ CheckListUI::~CheckListUI()
 {
 	UIBase::~UIBase();
 
-	for (int index = 0; index < _checkBoxes->size(); index++)
+	for (auto iter = _checkBoxes->begin(); iter != _checkBoxes->end(); ++iter)
 	{
-		delete _checkBoxes->at(index);
+		delete iter->second;
 	}
 
 	delete _checkBoxes;
@@ -71,7 +75,7 @@ void CheckListUI::Initialize(const std::vector<std::string>& initialValue)
 {
 	UIBase::Initialize(initialValue);
 
-	_list = ftxui::Container::Vertical({});
+	_listComponent = ftxui::Container::Vertical({});
 
 	// Store the value in our UI component
 	for (int index = 0; index < initialValue.size(); index++)
@@ -81,8 +85,8 @@ void CheckListUI::Initialize(const std::vector<std::string>& initialValue)
 
 		checkboxUI->Initialize(false);
 
-		_checkBoxes->push_back(checkboxUI);
-		_list->Add(checkboxUI->GetComponent());
+		_checkBoxes->insert(std::make_pair(initialValue[index], checkboxUI));
+		_listComponent->Add(checkboxUI->GetComponent());
 	}
 
 	// Slider bound to the position of the list
@@ -101,17 +105,23 @@ void CheckListUI::Initialize(const std::vector<std::string>& initialValue)
 	//
 	auto scrollBarY = ftxui::Slider(sliderOptions);
 
-	_component = ftxui::Container::Horizontal({
+	_component = ftxui::Container::Vertical(
+	{
+		ftxui::Renderer([&] { return ftxui::text("Airwindows (airwindows@github.com)"); }),
+		ftxui::Renderer([&] { return ftxui::separator(); }),
 
-		// Must render the list to add the focused relative position offset
-		ftxui::Renderer(_list, [&] {
-			return _list->Render() | ftxui::focusPositionRelative(0, *_scrollY) | ftxui::frame;
-		}),
+		ftxui::Container::Horizontal({
 
-		scrollBarY
+			// Must render the list to add the focused relative position offset
+			ftxui::Renderer(_listComponent, [&] {
+				return _listComponent->Render() | ftxui::focusPositionRelative(0, *_scrollY) | ftxui::yframe;
+			}) | ftxui::flex_grow,
 
-		}) | ftxui::CatchEvent([&](ftxui::Event event) {
+			scrollBarY | ftxui::yframe | ftxui::align_right
+		})		
 
+		}) | ftxui::CatchEvent([&](ftxui::Event event) 
+		{
 			if (event.mouse().button == ftxui::Mouse::Button::WheelUp && *_isMouseOver)
 			{
 				// Set Mouse Wheel (clipped [0,1])
@@ -130,7 +140,7 @@ void CheckListUI::Initialize(const std::vector<std::string>& initialValue)
 		// Cancel keyboard events
 		return true;
 
-	}) | ftxui::Hoverable(_isMouseOver);
+	}) | ftxui::Hoverable(_isMouseOver) | ftxui::border;
 }
 
 ftxui::Component CheckListUI::GetComponent()
@@ -142,9 +152,9 @@ void CheckListUI::UpdateComponent(bool clearDirty)
 {
 	if (clearDirty)
 	{
-		for (int index = 0; index < _checkBoxes->size(); index++)
+		for (auto iter = _checkBoxes->begin(); iter != _checkBoxes->end(); ++iter)
 		{
-			_checkBoxes->at(index)->UpdateComponent(clearDirty);
+			iter->second->UpdateComponent(clearDirty);
 		}
 	}
 }
@@ -153,12 +163,19 @@ bool CheckListUI::GetDirty() const
 {
 	bool dirty = false;
 
-	for (int index = 0; index < _checkBoxes->size() && !dirty; index++)
+	for (auto iter = _checkBoxes->begin(); iter != _checkBoxes->end(); ++iter)
 	{
-		dirty |= _checkBoxes->at(index)->GetDirty();
+		dirty |= iter->second->GetDirty();
 	}
 
 	return dirty;
+}
+
+inline bool CheckListUI::IsSelected(const std::string& name) const
+{
+	bool result = false;
+	_checkBoxes->at(name)->FromUI(result, false);
+	return result;
 }
 
 void CheckListUI::ToUI(const std::vector<std::string>& entireList)
@@ -168,13 +185,13 @@ void CheckListUI::ToUI(const std::vector<std::string>& entireList)
 
 void CheckListUI::FromUI(std::vector<std::string>& selectedList, bool clearDirty)
 {
-	for (int index = 0; index < _checkBoxes->size(); index++)
+	for (auto iter = _checkBoxes->begin(); iter != _checkBoxes->end(); ++iter)
 	{
 		bool checked = false;
-		_checkBoxes->at(index)->FromUI(checked, clearDirty);
+		iter->second->FromUI(checked, clearDirty);
 
 		if (checked)
-			selectedList.push_back(_checkBoxes->at(index)->GetName());
+			selectedList.push_back(iter->first);
 	}
 
 	if (clearDirty)

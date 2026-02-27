@@ -1,18 +1,11 @@
 #pragma once
 
-#include "CheckListUI.h"
-#include "EqualizerOutput.h"
 #include "MainUI.h"
-#include "OscillatorModelUI.h"
-#include "OscillatorParameters.h"
-#include "OscillatorUI.h"
 #include "OutputUI.h"
 #include "SignalChainSettings.h"
-#include "SignalChainUI.h"
-#include "SignalSettings.h"
-#include "SoundBankSettings.h"
 #include "SynthInformationUI.h"
 #include "SynthSettings.h"
+#include "SynthTabUI.h"
 #include "UIBase.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
@@ -23,7 +16,7 @@
 #include <string>
 #include <vector>
 
-MainUI::MainUI(const SoundBankSettings* soundBankSettings, const std::string& title, const ftxui::Color& titleColor) : UIBase(title, title, titleColor)
+MainUI::MainUI(const SynthSettings& configuration) : UIBase("Terminal Synth", "Terminal Synth", ftxui::Color::White)
 {
 	// Tab Headers
 	_tabHeaders = new std::vector<std::string>({
@@ -32,10 +25,9 @@ MainUI::MainUI(const SoundBankSettings* soundBankSettings, const std::string& ti
 		"Midi"
 	});
 
-	_airwinPluginListUI = new CheckListUI(ftxui::Color::White);
 	_synthInformationUI = new SynthInformationUI("Terminal Synth", ftxui::Color::GreenYellow);
-	_oscillatorUI = new OscillatorUI(soundBankSettings, "Oscillator", "Oscillator", ftxui::Color::Blue);
 	_outputUI = new OutputUI("Output", ftxui::Color::Green);
+	_synthTabUI = new SynthTabUI(configuration, *configuration.GetSignalChainRegistry());
 
 	_scrollY = new float(0);
 	_tabIndex = new int(0);
@@ -43,13 +35,11 @@ MainUI::MainUI(const SoundBankSettings* soundBankSettings, const std::string& ti
 
 MainUI::~MainUI()
 {
-	delete _airwinPluginListUI;
+	delete _synthTabUI;
 	delete _tabHeaders;
 	delete _scrollY;
 	delete _tabIndex;
-	delete _signalChainUI;
 	delete _synthInformationUI;
-	delete _oscillatorUI;
 	delete _outputUI;
 }
 
@@ -57,33 +47,17 @@ void MainUI::Initialize(const SynthSettings& configuration)
 {
 	UIBase::Initialize(configuration);
 
+	_synthInformationUI->Initialize(*configuration.GetOutputSettings());
+	_outputUI->Initialize(configuration);
+	_synthTabUI->Initialize(*configuration.GetSignalChainRegistry());
+
 	_signalChainSettings = configuration.GetSignalChainRegistry();
-	_signalChainUI = new SignalChainUI(*_signalChainSettings);
 
 	// Airwin Registry List
 	std::vector<std::string> pluginList;
 	configuration.GetSignalChainRegistry()->GetRegistryList(pluginList);
 
-	OscillatorModelUI oscillatorModel(*configuration.GetOscillator(), *configuration.GetEnvelope());
-
-	_synthInformationUI->Initialize(*configuration.GetOutputSettings());
-	_oscillatorUI->Initialize(oscillatorModel);
-	_outputUI->Initialize(configuration);
-	_signalChainUI->Initialize(*configuration.GetSignalChainRegistry());
-	_airwinPluginListUI->Initialize(pluginList);
-
 	auto midiSettings = ftxui::Container::Horizontal({
-
-	});
-
-	_synthTab = ftxui::Container::Horizontal({
-
-		_airwinPluginListUI->GetComponent(),
-
-		ftxui::Container::Vertical({
-			_oscillatorUI->GetComponent() | ftxui::flex_grow | ftxui::border,
-			_signalChainUI->GetComponent() | ftxui::flex_grow
-		}) | ftxui::flex_grow
 
 	});
 
@@ -93,7 +67,7 @@ void MainUI::Initialize(const SynthSettings& configuration)
 		_synthInformationUI->GetComponent() | ftxui::flex_grow,
 		_outputUI->GetComponent() | ftxui::flex_grow,
 
-		});
+	});
 
 	// Primary UI
 	_tabControlMenu = ftxui::Menu(_tabHeaders, _tabIndex, ftxui::MenuOption::HorizontalAnimated());
@@ -101,10 +75,10 @@ void MainUI::Initialize(const SynthSettings& configuration)
 	_tabControl = ftxui::Container::Tab({
 
 		_outputTab | ftxui::flex_grow,
-		_synthTab | ftxui::flex_grow,
+		_synthTabUI->GetComponent() | ftxui::flex_grow,
 		midiSettings | ftxui::flex_grow,
 
-		}, _tabIndex) | ftxui::flex_grow;
+	}, _tabIndex) | ftxui::flex_grow;
 
 	_mainControl = ftxui::Container::Vertical({
 		_tabControlMenu,
@@ -137,29 +111,7 @@ void MainUI::UpdateComponent(bool clearDirty)
 	// Synth Tab
 	else if (*_tabIndex == 1)
 	{
-		if (_airwinPluginListUI->GetDirty())
-		{
-			// Re-Populate Signal Chain
-			std::vector<std::string> selectedList;
-			
-			_airwinPluginListUI->FromUI(selectedList, clearDirty);
-			
-			// Create a new signal chain
-			SignalChainSettings signalChain;
-			for (int index = 0; index < selectedList.size(); index++)
-			{
-				SignalSettings settings = _signalChainSettings->GetFromRegistry(selectedList[index]);
-				signalChain.SignalAdd(settings);
-			}
-
-			_signalChainUI->ToUI(signalChain);
-		}
-
-		// Performance:  Better to send a delegate to the CheckboxUI for the checked event
-		//
-		_airwinPluginListUI->UpdateComponent(clearDirty);
-		_oscillatorUI->UpdateComponent(clearDirty);
-		_signalChainUI->UpdateComponent(clearDirty);
+		_synthTabUI->UpdateComponent(clearDirty);
 	}
 
 	// MIDI Tab
@@ -172,16 +124,9 @@ void MainUI::UpdateComponent(bool clearDirty)
 void MainUI::FromUI(SynthSettings& configuration, bool clearDirty)
 {
 	SignalChainSettings signalChain;
-	OscillatorModelUI oscillatorModel(*configuration.GetOscillator(), *configuration.GetEnvelope());
-	EqualizerOutput output;
-
-	// Oscillator
-	_oscillatorUI->FromUI(oscillatorModel, clearDirty);
-	configuration.SetOscillator(*oscillatorModel.GetParameters());
-	configuration.SetEnvelope(*oscillatorModel.GetEnvelope());
 
 	// Signal Chain
-	_signalChainUI->FromUI(signalChain, clearDirty);
+	_synthTabUI->FromUI(signalChain, clearDirty);
 	configuration.SetSignalChain(signalChain);
 
 	// Output
@@ -202,8 +147,6 @@ void MainUI::ToUI(const SynthSettings& configuration)
 
 bool MainUI::GetDirty() const
 {
-	return _oscillatorUI->GetDirty() ||
-		   _airwinPluginListUI->GetDirty() ||
-		   _signalChainUI->GetDirty() ||
+	return _synthTabUI->GetDirty() ||
 		   _outputUI->GetDirty();
 }

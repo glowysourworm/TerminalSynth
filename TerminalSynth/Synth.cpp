@@ -28,7 +28,8 @@ void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings*
 void Synth::Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
 	_postProcessing->Update(effectRegistry, configuration->GetSignalChainRegistry());
-	_pianoNotes->Update(*configuration->GetOscillator(), *configuration->GetEnvelope(), _samplingRate);
+	_pianoNotes->Update(*configuration->GetSignalChainRegistry()->GetOscillatorParameters(), 
+						*configuration->GetSignalChainRegistry()->GetOscillatorEnvelope(), _samplingRate);
 }
 
 void Synth::Set(int midiNumber, bool pressed, double absoluteTime, const SynthSettings* configuration)

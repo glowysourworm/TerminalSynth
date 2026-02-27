@@ -248,9 +248,6 @@
     <ClInclude Include="PlaybackClock.h">
       <Filter>Header Files\Playback</Filter>
     </ClInclude>
-    <ClInclude Include="OscillatorUI.h">
-      <Filter>Header Files\UI</Filter>
-    </ClInclude>
     <ClInclude Include="UIBase.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
@@ -308,7 +305,7 @@
     <ClInclude Include="SignalChain.h">
       <Filter>Header Files\Signal</Filter>
     </ClInclude>
-    <ClInclude Include="SignalChainUI.h">
+    <ClInclude Include="SynthTabUI.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
     <ClInclude Include="CheckListUI.h">
@@ -356,7 +353,7 @@
     <ClInclude Include="SoundBankSettings.h">
       <Filter>Header Files\Model</Filter>
     </ClInclude>
-    <ClInclude Include="SoundSourceUI.h">
+    <ClInclude Include="OscillatorUI.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
     <ClInclude Include="Accumulator.h">
@@ -395,8 +392,17 @@
     <ClInclude Include="SynthNoteCache.h">
       <Filter>Header Files\Synth</Filter>
     </ClInclude>
-    <ClInclude Include="OscillatorModelUI.h">
+    <ClInclude Include="SignalUI.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="SignalModelUI.h">
       <Filter>Header Files\ModelUI</Filter>
+    </ClInclude>
+    <ClInclude Include="EnvelopeUI.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ActiveEditorUI.h">
+      <Filter>Header Files\UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

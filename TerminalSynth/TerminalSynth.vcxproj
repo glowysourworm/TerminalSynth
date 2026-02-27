@@ -272,6 +272,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Accumulator.h" />
+    <ClInclude Include="ActiveEditorUI.h" />
     <ClInclude Include="AirwindowsEffect.h" />
     <ClInclude Include="AtomicLock.h" />
     <ClInclude Include="BiQuadFilter.h" />
@@ -281,6 +282,7 @@
     <ClInclude Include="AudioController.h" />
     <ClInclude Include="BaseController.h" />
     <ClInclude Include="CheckboxUI.h" />
+    <ClInclude Include="EnvelopeUI.h" />
     <ClInclude Include="EqualizerOutput.h" />
     <ClInclude Include="IntervalTimer.h" />
     <ClInclude Include="MainController.h" />
@@ -297,9 +299,7 @@
     <ClInclude Include="MidiMessage.h" />
     <ClInclude Include="MidiPlaybackDevice.h" />
     <ClInclude Include="Options.h" />
-    <ClInclude Include="OscillatorModelUI.h" />
     <ClInclude Include="OscillatorParameters.h" />
-    <ClInclude Include="OscillatorUI.h" />
     <ClInclude Include="OutputUI.h" />
     <ClInclude Include="PlaybackClock.h" />
     <ClInclude Include="PlaybackDevice.h" />
@@ -309,16 +309,18 @@
     <ClInclude Include="RtAudioController.h" />
     <ClInclude Include="SignalChain.h" />
     <ClInclude Include="SignalChainSettings.h" />
-    <ClInclude Include="SignalChainUI.h" />
+    <ClInclude Include="SynthTabUI.h" />
     <ClInclude Include="SignalFactory.h" />
     <ClInclude Include="SignalBase.h" />
+    <ClInclude Include="SignalModelUI.h" />
     <ClInclude Include="SignalParameter.h" />
+    <ClInclude Include="SignalUI.h" />
     <ClInclude Include="SoundBankSettings.h" />
     <ClInclude Include="SoundFileReader.h" />
     <ClInclude Include="SoundRegistry.h" />
     <ClInclude Include="SignalSettings.h" />
     <ClInclude Include="SliderUI.h" />
-    <ClInclude Include="SoundSourceUI.h" />
+    <ClInclude Include="OscillatorUI.h" />
     <ClInclude Include="StopWatch.h" />
     <ClInclude Include="Synth.h" />
     <ClInclude Include="SynthNoteCache.h" />
