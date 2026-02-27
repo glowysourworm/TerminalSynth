@@ -22,18 +22,18 @@ public:
 		_high = SIGNAL_HIGH;
 		_numberOfChannels = 0;
 		_samplingRate = 0;
-		_settings = new SignalSettings(name, false);
+		_settings = new SignalSettings(name, "", "", false);
 		_leftAccumulator = nullptr;
 		_rightAccumulator = nullptr;
 	};
-	SignalBase(const std::string& name, float low, float high)
+	SignalBase(const std::string& name, const std::string& category, const std::string& infoText, float low, float high)
 	{
 		_name = new std::string(name);
 		_low = low;
 		_high = high;
 		_numberOfChannels = 0;
 		_samplingRate = 0;
-		_settings = new SignalSettings(name, false);
+		_settings = new SignalSettings(name, category, infoText, false);
 		_leftAccumulator = nullptr;
 		_rightAccumulator = nullptr;
 	}

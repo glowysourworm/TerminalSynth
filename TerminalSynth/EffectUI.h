@@ -18,7 +18,11 @@ class EffectUI : public UIBase<SignalSettings>
 {
 public:
 
-	EffectUI(const std::string& name, const std::string& label, const ftxui::Color& labelColor);
+	EffectUI(const std::string& name, 
+			 const std::string& category, 
+			 const std::string& infoText, 
+			 const std::string& label, 
+			 const ftxui::Color& labelColor);
 	~EffectUI();
 
 	void Initialize(const SignalSettings& effect) override;
@@ -38,23 +42,36 @@ private:
 
 	ftxui::Component _component;
 
+	std::string* _category;
+	std::string* _infoText;
+
 	std::vector<SliderUI*>* _parameterUIs;
 };
 
-EffectUI::EffectUI(const std::string& name, const std::string& label, const ftxui::Color& labelColor)
+EffectUI::EffectUI(const std::string& name,
+					const std::string& category,
+					const std::string& infoText,
+					const std::string& label,
+					const ftxui::Color& labelColor)
 	: UIBase(name, label, labelColor)
 {
 	_parameterUIs = new std::vector<SliderUI*>();
+	_category = new std::string(category);
+	_infoText = new std::string(infoText);
 }
 
 EffectUI::~EffectUI()
 {
+	UIBase::~UIBase();
+
 	for (int index = 0; index < _parameterUIs->size(); index++)
 	{
 		delete _parameterUIs->at(index);
 	}
 
 	delete _parameterUIs;
+	delete _category;
+	delete _infoText;
 }
 
 void EffectUI::Initialize(const SignalSettings& parameters)
@@ -104,6 +121,13 @@ void EffectUI::Initialize(const SignalSettings& parameters)
 	{
 		_component->Add(_parameterUIs->at(index)->GetComponent());
 	}
+
+	_component->Add(ftxui::Renderer([&] {
+		return ftxui::separator();
+	}));
+	_component->Add(ftxui::Renderer([&] {
+		return ftxui::paragraph(*_infoText);
+	}));
 }
 
 ftxui::Component EffectUI::GetComponent()
@@ -139,6 +163,10 @@ void EffectUI::ToUI(const SignalSettings& source)
 
 void EffectUI::FromUI(SignalSettings& destination, bool clearDirty)
 {
+	// Name (const), Category, Info Text
+	destination.SetCategory(*_category);
+	destination.SetInfoText(*_infoText);
+
 	for (int index = 0; index < _parameterUIs->size(); index++)
 	{
 		// NEED ANOTHER STRING PARAMETER

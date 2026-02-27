@@ -33,7 +33,6 @@ MainUI::MainUI(const SoundBankSettings* soundBankSettings, const std::string& ti
 	});
 
 	_airwinPluginListUI = new CheckListUI(ftxui::Color::White);
-	_signalChainUI = new SignalChainUI();
 	_synthInformationUI = new SynthInformationUI("Terminal Synth", ftxui::Color::GreenYellow);
 	_oscillatorUI = new OscillatorUI(soundBankSettings, "Oscillator", "Oscillator", ftxui::Color::Blue);
 	_outputUI = new OutputUI("Output", ftxui::Color::Green);
@@ -59,6 +58,7 @@ void MainUI::Initialize(const SynthSettings& configuration)
 	UIBase::Initialize(configuration);
 
 	_signalChainSettings = configuration.GetSignalChainRegistry();
+	_signalChainUI = new SignalChainUI(*_signalChainSettings);
 
 	// Airwin Registry List
 	std::vector<std::string> pluginList;

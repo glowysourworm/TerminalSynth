@@ -13,12 +13,13 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <vector>
 
 class SignalChainUI : public UIBase<SignalChainSettings>
 {
 public:
 
-	SignalChainUI();
+	SignalChainUI(const SignalChainSettings& settings);
 	~SignalChainUI();
 
 	void Initialize(const SignalChainSettings& initialValue) override;
@@ -37,11 +38,45 @@ private:
 	// Mapped by pointer value (may be ok to use the name)
 	std::map<std::string, EffectUI*>* _effectUIs;
 
+	// Category Name, Effect Name(s)
+	std::map<std::string, std::vector<std::string>*>* _categoryLists;
+
+	// Enabled flag for effects
+	std::map<std::string, bool>* _effectsEnabled;
+
 };
 
-SignalChainUI::SignalChainUI() : UIBase("No Title", "No Title", ftxui::Color::White)
+SignalChainUI::SignalChainUI(const SignalChainSettings& settings) : UIBase("No Title", "No Title", ftxui::Color::White)
 {
 	_effectUIs = new std::map<std::string, EffectUI*>();
+	_categoryLists = new std::map<std::string, std::vector<std::string>*>();
+	_effectsEnabled = new std::map<std::string, bool>();
+
+	// Effect Registry
+	for (int index = 0; index < settings.GetRegistryCount(); index++)
+	{
+		auto element = settings.GetFromRegistry(index);
+
+		// MEMORY! (see ~SignalChainUI)
+		EffectUI* effectUI = new EffectUI(element.GetName(), element.GetCategory(), element.GetInfoText(), element.GetName(), ftxui::Color::White);
+
+		effectUI->Initialize(element);
+
+		_effectUIs->insert(std::make_pair(element.GetName(), effectUI));
+
+		// Category
+		if (!_categoryLists->contains(element.GetCategory()))
+		{
+			// (MEMORY!) ~SignalChainUI
+			_categoryLists->insert(std::make_pair(element.GetCategory(), new std::vector<std::string>()));
+		}
+
+		_categoryLists->at(element.GetCategory())->push_back(element.GetName());
+		_effectsEnabled->insert(std::make_pair(element.GetName(), false));
+	}
+
+	// -> ToUI (display the current signal chain)
+	this->ToUI(settings);
 }
 SignalChainUI::~SignalChainUI()
 {
@@ -50,8 +85,14 @@ SignalChainUI::~SignalChainUI()
 	{
 		delete iter->second;
 	}
+	for (auto iter = _categoryLists->begin(); iter != _categoryLists->end(); ++iter)
+	{
+		delete iter->second;
+	}
 
 	delete _effectUIs;
+	delete _categoryLists;
+	delete _effectsEnabled;
 }
 
 void SignalChainUI::Initialize(const SignalChainSettings& initialValue)
@@ -74,20 +115,22 @@ ftxui::Component SignalChainUI::GetComponent()
 
 void SignalChainUI::UpdateComponent(bool clearDirty)
 {
-	// Effects Included (currently)
-	for (auto iter = _effectUIs->begin(); iter != _effectUIs->end(); ++iter)
-	{
-		iter->second->UpdateComponent(clearDirty);
-	}	
-
-	// TODO: Prevent extra work in RT loop here...
 	_component->DetachAllChildren();
 
-	for (auto iter = _effectUIs->begin(); iter != _effectUIs->end(); ++iter)
+	// Effects Enabled
+	for (auto iter = _effectsEnabled->begin(); iter != _effectsEnabled->end(); ++iter)
 	{
-		_component->Add(iter->second->GetComponent());
-	}
+		// Show UI
+		if (iter->second)
+		{
+			// -> UpdateComponent()
+			_effectUIs->at(iter->first)->UpdateComponent(clearDirty);
 
+			// Add to component stack
+			_component->Add(_effectUIs->at(iter->first)->GetComponent());
+		}
+			
+	}
 
 	if (clearDirty)
 		this->ClearDirty();
@@ -95,48 +138,31 @@ void SignalChainUI::UpdateComponent(bool clearDirty)
 
 void SignalChainUI::ToUI(const SignalChainSettings& source)
 {
-	// Add
-	for (int index = 0; index < source.GetCount(); index++)
+	// Effects Enabled
+	for (auto iter = _effectsEnabled->begin(); iter != _effectsEnabled->end(); ++iter)
 	{
-		auto element = source.Get(index);
-
-		if (_effectUIs->contains(element.GetName()))
-			continue;
-
-		// MEMORY! (see ~SignalChainUI)
-		EffectUI* effectUI = new EffectUI(element.GetName(), element.GetName(), ftxui::Color::White);
-
-		effectUI->Initialize(element);
-
-		_effectUIs->insert(std::make_pair(element.GetName(), effectUI));
-	}
-
-	// Remove
-	for (auto iter = _effectUIs->begin(); iter != _effectUIs->end();)
-	{
-		if (!source.SignalContains(iter->first))
-		{
-			// (MEMORY!) ~EffectUI*
-			delete iter->second;
-
-			iter = _effectUIs->erase(iter);
-		}
-		else
-			++iter;
+		// Set for UpdateComponent() pass
+		iter->second = source.SignalContains(iter->first);
 	}
 }
 
 void SignalChainUI::FromUI(SignalChainSettings& destination, bool clearDirty)
 {
 	// Effects Included (currently)
-	for (auto iter = _effectUIs->begin(); iter != _effectUIs->end(); ++iter)
+	for (auto iter = _effectsEnabled->begin(); iter != _effectsEnabled->end(); ++iter)
 	{
-		// Copy settings from the UI
-		SignalSettings settings(iter->first, true);
-		iter->second->FromUI(settings, clearDirty);
+		// Enabled
+		if (iter->second)
+		{
+			auto effect = _effectUIs->at(iter->first);
 
-		// Add settings to the output
-		destination.SignalAdd(settings);
+			// Copy settings from the UI
+			SignalSettings settings(iter->first, "", "", true);
+			effect->FromUI(settings, clearDirty);
+
+			// Add settings to the output
+			destination.SignalAdd(settings);
+		}
 	}
 
 	if (clearDirty)

@@ -8,11 +8,14 @@
 #include <exception>
 #include <string>
 
-AirwindowsEffect::AirwindowsEffect(AudioEffectX* plugin, const std::string& name) : SignalBase(name)
+AirwindowsEffect::AirwindowsEffect(AudioEffectX* plugin, const std::string& name, const std::string& category, const std::string& whatText) : SignalBase(name)
 {
 	//_effect = new kCathedral(0);
 	_input = new float* [2];
 	_output = new float* [2];
+
+	_category = new std::string(category);
+	_whatText = new std::string(whatText);
 
 	// One sample per channel
 	_input[0] = new float[1];			// Left
@@ -52,6 +55,9 @@ AirwindowsEffect::AirwindowsEffect(AudioEffectX* plugin, const std::string& name
 
 AirwindowsEffect::~AirwindowsEffect()
 {
+	delete _category;
+	delete _whatText;
+
 	delete[] _input[0];
 	delete[] _input[1];
 	delete[] _input;
@@ -73,6 +79,16 @@ void AirwindowsEffect::UpdateParameter(int index, float value)
 
 	// Airwindows Plugin Side
 	_effect->setParameter(index, value);
+}
+
+std::string AirwindowsEffect::GetCategory() const
+{
+	return *_category;
+}
+
+std::string AirwindowsEffect::GetWhatText() const
+{
+	return *_whatText;
 }
 
 void AirwindowsEffect::SetFrame(PlaybackFrame* frame, float absoluteTime)

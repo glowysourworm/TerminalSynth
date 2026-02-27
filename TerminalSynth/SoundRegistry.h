@@ -8,7 +8,7 @@
 #include "SignalParameter.h"
 #include "SignalSettings.h"
 #include <AirwinRegistry.h>
-#include <airwin_consolidated_base.h>
+#include <AirwinRegistryEntry.h>
 #include <exception>
 #include <map>
 #include <string>
@@ -81,13 +81,13 @@ bool SoundRegistry::Initialize(float samplingRate)
 	for (int index = 0; index < pluginList.size(); index++)
 	{
 		// Airwin Plugin
-		AudioEffectX* plugin = _airwinEffectRegistry->GetPlugin(pluginList[index])->GetEffect();
+		AirwinRegistryEntry* pluginEntry = _airwinEffectRegistry->GetPlugin(pluginList[index]);
 
 		// -> AirwindowsEffect (wrapper)
-		AirwindowsEffect* effect = new AirwindowsEffect(plugin, pluginList[index]);
+		AirwindowsEffect* effect = new AirwindowsEffect(pluginEntry->GetEffect(), pluginList[index], pluginEntry->GetCategory(), pluginEntry->GetWhatText());
 
 		// -> Signal Chain
-		SignalSettings* parameters = new SignalSettings(pluginList.at(index), true);
+		SignalSettings* parameters = new SignalSettings(pluginList.at(index), effect->GetCategory(), effect->GetWhatText(), true);
 
 		for (int paramIndex = 0; paramIndex < effect->GetParameterCount(); paramIndex++)
 		{

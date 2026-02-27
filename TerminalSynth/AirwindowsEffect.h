@@ -18,7 +18,7 @@ class AirwindowsEffect : public SignalBase
 {
 public:
 
-	AirwindowsEffect(AudioEffectX* plugin, const std::string& name);
+	AirwindowsEffect(AudioEffectX* plugin, const std::string& name, const std::string& category, const std::string& whatText);
 	~AirwindowsEffect();
 
 	void Initialize(const SignalSettings* configuration, const OutputSettings* parameters) override;
@@ -27,9 +27,15 @@ public:
 
 	void UpdateParameter(int index, float value) override;
 
+	std::string GetCategory() const;
+	std::string GetWhatText() const;
+
 private:
 
 	AudioEffectX* _effect;
+
+	std::string* _category;
+	std::string* _whatText;
 
 	float** _input;
 	float** _output;
