@@ -18,6 +18,7 @@
 #include "SignalSettings.h"
 #include "SynthSettings.h"
 #include "UIBase.h"
+#include <exception>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -25,7 +26,6 @@
 #include <map>
 #include <string>
 #include <utility>
-#include <vector>
 
 class SynthTabUI : public UIBase<SignalChainSettings>
 {
@@ -76,10 +76,10 @@ SynthTabUI::SynthTabUI(const SynthSettings& synthSettings, const SignalChainSett
 {
 	_activeEditorUI = new ActiveEditorUI();
 
-	SignalNodeModelUI envelopeModel("Envelope", true, false, false);
-	SignalNodeModelUI oscillatorModel("Oscillator", true, false, false);
+	SignalNodeModelUI envelopeModel("Envelope", true, false, false, false);
+	SignalNodeModelUI oscillatorModel("Oscillator", true, false, false, false);
 
-	_pluginListUI = new ScrollViewerUI<CheckboxModelUI, CheckboxUI>("Airwin Plugins (airwin@github.com)", ftxui::Color::BlueLight);
+	_pluginListUI = new ScrollViewerUI<CheckboxModelUI, CheckboxUI>("Airwin Plugins (airwin@github.com)", ftxui::Color::BlueLight, 0.005);
 	_effectsSignalChainUI = new ScrollViewerUI<SignalNodeModelUI, SignalNodeUI>("Signal Effects", ftxui::Color::GreenYellow);
 
 	_envelopeUI = new EnvelopeUI();
@@ -105,7 +105,7 @@ SynthTabUI::SynthTabUI(const SynthSettings& synthSettings, const SignalChainSett
 		EffectUI* effectUI = new EffectUI(element.GetName(), element.GetCategory(), element.GetInfoText(), ftxui::Color::White);
 
 		// (MEMORY!) ~SynthTabUI
-		SignalNodeModelUI* signalModelUI = new SignalNodeModelUI(element.GetName(), true, true, true);
+		SignalNodeModelUI* signalModelUI = new SignalNodeModelUI(element.GetName(), true, true, true, true);
 
 		// (MEMORY!) ~SynthTabUI
 		CheckboxModelUI* checkboxModelUI = new CheckboxModelUI(element.GetName(), false);
@@ -182,7 +182,7 @@ void SynthTabUI::Initialize(const SignalChainSettings& initialValue)
 		_signalInputContainer | ftxui::border,
 
 		// Signal Effects (ScrollViewerUI)
-		_signalEffectsContainer | ftxui::yflex_grow,
+		_signalEffectsContainer | ftxui::yflex_shrink,
 	});
 
 	// Plugin List | Signal Chain (Vertical) | Effect Editor
@@ -227,11 +227,12 @@ void SynthTabUI::UpdateComponent()
 	// Plugin List (Changes)
 	if (_pluginListUI->GetDirty())
 	{
-		for (int index = 0; index < _pluginListUI->GetUICount(); index++)
+		for (int index = _pluginListUI->GetUICount() - 1; index >= 0; index--)
 		{
 			// -> FromUI
+			std::string modelName = _pluginListUI->GetName(index);
 			CheckboxModelUI model;
-			_pluginListUI->FromUI(index, model);
+			_pluginListUI->FromUI(modelName, model);
 
 			// Has Changed
 			if (model.GetIsChecked() != _pluginModels->at(model.GetName())->GetIsChecked())
@@ -247,88 +248,66 @@ void SynthTabUI::UpdateComponent()
 				// Model Update (we must update our copy)
 				_pluginModels->at(model.GetName())->SetIsChecked(model.GetIsChecked());
 			}
-		}
 
-		_pluginListUI->ClearDirty();
+			// Clear Dirty (Indexed)
+			_pluginListUI->ClearDirty(modelName);
+		}
 	}
 
-	//// Reset Signal Effects Layout (when there has been a change)
-	//if (_pluginListUI->GetDirty() || _effectsSignalChainUI->GetDirty())
-	//{
-	//	std::vector<SignalNodeUI*> signalsIncluded;
-	//	SignalNodeUI::UIAction lastAction = SignalNodeUI::UIAction::None;
-	//	int orderIndex = 0;
+	// Signal Chain (Changes)
+	if (_effectsSignalChainUI->GetDirty())
+	{
+		for (int index = _effectsSignalChainUI->GetUICount() - 1; index >= 0; index--)
+		{
+			std::string modelName = _effectsSignalChainUI->GetName(index);
 
-	//	// SignalUIs
-	//	for (auto iter = _signalUIs->begin(); iter != _signalUIs->end(); ++iter)
-	//	{
-	//		// Enabled
-	//		if (_pluginListUI->IsSelected(iter->first))
-	//		{
-	//			// Add / Remove (reset order)
-	//			if (_pluginListUI->GetDirty())
-	//				iter->second->SetOrder(orderIndex++);
+			// Get UI Component (for the real-time captures)
+			SignalNodeUI* signalNodeUI = _effectsSignalChainUI->GetUI(modelName);
 
-	//			// UI Action
-	//			SignalNodeUI::UIAction action = iter->second->GetUIAction();
+			// UI Action (these could be put into the model classes)
+			bool hasUIAction = signalNodeUI->GetHasUIAction();
+			SignalNodeUI::UIAction action = signalNodeUI->GetUIAction();
 
-	//			// UI Action Pending
-	//			if (iter->second->GetHasUIAction() && lastAction == SignalNodeUI::UIAction::None)
-	//			{
-	//				switch (action)
-	//				{
-	//				case SignalNodeUI::UIAction::Edit:
-	//					_activeEditorUI->SetEffect(_effectUIs->at(iter->first));
-	//					break;
-	//				case SignalNodeUI::UIAction::Remove:
-	//					_pluginListUI->Toggle(iter->first);
-	//					break;
-	//				case SignalNodeUI::UIAction::MoveDown:
-	//					iter->second->SetOrder(iter->second->GetOrder() + 1);
-	//					break;
-	//				case SignalNodeUI::UIAction::MoveUp:
-	//					iter->second->SetOrder(iter->second->GetOrder() - 1);
-	//					break;
-	//				default:
-	//					throw new std::exception("Unhandled UI Action:  SynthTabUI.h");
-	//				}
+			// UI Action Pending
+			if (hasUIAction)
+			{
+				// -> FromUI
+				SignalNodeModelUI signalNodeModelUI;
+				_effectsSignalChainUI->FromUI(modelName, signalNodeModelUI);
 
-	//				lastAction = action;
-	//			}
+				switch (action)
+				{
+				case SignalNodeUI::UIAction::Edit:
+					_activeEditorUI->SetEffect(_effectUIs->at(signalNodeModelUI.GetName()));
+					break;
+				case SignalNodeUI::UIAction::Remove:
+				{
+					// Plugin List (may change)
+					CheckboxModelUI model = *_pluginModels->at(signalNodeModelUI.GetName());
 
-	//			// Re-Order
-	//			else if (lastAction == SignalNodeUI::UIAction::MoveDown)
-	//			{
-	//				iter->second->SetOrder(iter->second->GetOrder() - 1);
-	//				lastAction = SignalNodeUI::UIAction::None;
-	//			}
+					// -> RemoveUI
+					_effectsSignalChainUI->RemoveUI(signalNodeModelUI);
 
-	//			// Re-Order
-	//			else if (lastAction == SignalNodeUI::UIAction::MoveUp)
-	//			{
-	//				iter->second->SetOrder(iter->second->GetOrder() + 1);
-	//				lastAction = SignalNodeUI::UIAction::None;
-	//			}
+					model.SetIsChecked(false);
 
-	//			// -> UpdateComponent()
-	//			_signalUIs->at(iter->first)->UpdateComponent();
+					// Update Plugin List
+					//_pluginListUI->ToUI(model);
+				}					
+				break;
+				case SignalNodeUI::UIAction::MoveDown:
+					//iter->second->SetOrder(iter->second->GetOrder() + 1);
+					break;
+				case SignalNodeUI::UIAction::MoveUp:
+					//iter->second->SetOrder(iter->second->GetOrder() - 1);
+					break;
+				default:
+					throw new std::exception("Unhandled UI Action:  SynthTabUI.h");
+				}
 
-	//			// Include in component stack
-	//			signalsIncluded.push_back(iter->second);
-	//		}
-	//	}
-
-	//	// Sort SignalUI(s)
-	//	std::sort(signalsIncluded.begin(), signalsIncluded.end(), [](SignalNodeUI* signalUI1, SignalNodeUI* signalUI2) {
-	//		return signalUI1->GetOrder() < signalUI2->GetOrder();
-	//	});
-
-	//	// Add to component stack
-	//	for (int index = 0; index < signalsIncluded.size(); index++)
-	//	{
-	//		_signalEffectsList->Add(signalsIncluded[index]->GetComponent());
-	//	}
-	//}
+				//lastAction = action;
+			}
+		}
+	}
 }
 
 void SynthTabUI::ToUI(const SignalChainSettings& source)

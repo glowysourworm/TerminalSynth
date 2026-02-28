@@ -3,9 +3,10 @@
 #ifndef CHECKBOX_MODEL_UI_H
 #define CHECKBOX_MODEL_UI_H
 
+#include "ModelUI.h"
 #include <string>
 
-class CheckboxModelUI
+class CheckboxModelUI : public ModelUI
 {
 public:
 
@@ -29,7 +30,7 @@ public:
 		delete _name;
 	}
 
-	std::string GetName() const { return *_name; }
+	std::string GetName() const override { return *_name; }
 	bool GetIsChecked() const { return _isChecked; }
 
 	void SetIsChecked(bool value)

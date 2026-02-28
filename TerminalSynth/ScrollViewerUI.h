@@ -3,6 +3,7 @@
 #ifndef SCROLL_VIEWER_UI_H
 #define SCROLL_VIEWER_UI_H
 
+#include "ModelUI.h"
 #include "UIBase.h"
 #include <cmath>
 #include <concepts>
@@ -15,28 +16,37 @@
 #include <ftxui/dom/direction.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
+#include <iterator>
+#include <map>
 #include <string>
-#include <vector>
+#include <utility>
+
+/// <summary>
+/// Concept for enforcing a constraint on the UI model classes. They must inherit from
+/// ModelUI.
+/// </summary>
+template<class TModel>
+concept IsUIModel = std::convertible_to<TModel*, ModelUI*>;
 
 /// <summary>
 /// Concept that ensures that the constraint on the component class is to inherit
 /// from UIBase*
 /// </summary>
-template<typename T, typename TValue>
-concept IsUIBase = std::convertible_to<T*, UIBase<TValue>*>;
+template<class T, class TModel>
+concept IsUIBase = std::convertible_to<T*, UIBase<TModel>*>;
 
 /// <summary>
 /// Container class for UIBase components. The template constraint is for the class T, and
-/// class template value TValue, to be properly inherited from UIBase component(s).
+/// class template value TModel, to be properly inherited from UIBase component(s).
 /// </summary>
-/// <typeparam name="TValue">Model value type name</typeparam>
+/// <typeparam name="TModel">Model value type name</typeparam>
 /// <typeparam name="T">UIBase* class (must inherit from UIBase)</typeparam>
-template<typename TValue, IsUIBase<TValue> T>
+template<class TModel, IsUIBase<TModel> T>
 class ScrollViewerUI
 {
 public:
 
-	ScrollViewerUI(const std::string& title, const ftxui::Color& titleColor);
+	ScrollViewerUI(const std::string& title, const ftxui::Color& titleColor, float scrollDeltaY = 0.05);
 	~ScrollViewerUI();
 
 	ftxui::Component GetComponent();
@@ -46,24 +56,27 @@ public:
 	/// calls initialize on the UIBase* instance. If there is an instance (based on == equality)
 	/// already in the ScrollViewerUI, then there will be an exception thrown.
 	/// </summary>
-	void AddUI(const TValue& model);
+	void AddUI(const TModel& model);
 
 	/// <summary>
 	/// Removes current UI instance based on model == equality. If there is no model in the 
 	/// ScrollViewerUI, then an exception is thrown.
 	/// </summary>
-	void RemoveUI(const TValue& model);
+	void RemoveUI(const TModel& model);
 	
 	// UIBase Functions:  There could be another component type which is a container for 
 	//					  more UIBase components.
 	void UpdateComponent();
 
-	void FromUI(int index, TValue& destination);
-	void ToUI(int index, const TValue& source);
+	void FromUI(const std::string& name, TModel& destination);
+	void ToUI(const std::string& name, const TModel& source);
 	int GetUICount() const;
+	std::string GetName(int index) const;
+	T* GetUI(const std::string& name) const;
 
 	bool GetDirty() const;
 	void ClearDirty();
+	void ClearDirty(const std::string& name);
 
 private:
 
@@ -77,18 +90,18 @@ private:
 	float* _scrollY;
 	float _scrollDeltaY;
 
-	std::vector<T*>* _uiComponents;			// T : UIBase
-	std::vector<TValue*>* _uiModels;		// TValue (must have copy constructor!)
+	std::map<std::string, T*>* _uiComponents;			// T : UIBase
+	std::map<std::string, TModel*>* _uiModels;			// TModel (must have copy constructor!)
 };
 
-template<typename TValue, IsUIBase<TValue> T>
-ScrollViewerUI<TValue, T>::ScrollViewerUI(const std::string& title, const ftxui::Color& titleColor)
+template<class TModel, IsUIBase<TModel> T>
+ScrollViewerUI<TModel, T>::ScrollViewerUI(const std::string& title, const ftxui::Color& titleColor, float scrollDeltaY)
 {
 	_scrollY = new float(0);
-	_scrollDeltaY = 0.05f;
+	_scrollDeltaY = scrollDeltaY;
 	_isMouseOver = new bool(false);
-	_uiComponents = new std::vector<T*>();
-	_uiModels = new std::vector<TValue*>();
+	_uiComponents = new std::map<std::string, T*>();
+	_uiModels = new std::map<std::string, TModel*>();
 
 	_title = new std::string(title);
 	_titleColor = new ftxui::Color(titleColor);
@@ -149,16 +162,16 @@ ScrollViewerUI<TValue, T>::ScrollViewerUI(const std::string& title, const ftxui:
 	}) | ftxui::Hoverable(_isMouseOver) | ftxui::border;
 }
 
-template<typename TValue, IsUIBase<TValue> T>
-ScrollViewerUI<TValue, T>::~ScrollViewerUI()
+template<class TModel, IsUIBase<TModel> T>
+ScrollViewerUI<TModel, T>::~ScrollViewerUI()
 {
-	for (int index = 0; index < _uiComponents->size(); index++)
+	for (auto iter = _uiComponents->begin(); iter != _uiComponents->end(); ++iter)
 	{
-		delete _uiComponents->at(index);
+		delete iter->second;
 	}
-	for (int index = 0; index < _uiModels->size(); index++)
+	for (auto iter = _uiModels->begin(); iter != _uiModels->end(); ++iter)
 	{
-		delete _uiModels->at(index);
+		delete iter->second;
 	}
 
 	delete _title;
@@ -169,26 +182,26 @@ ScrollViewerUI<TValue, T>::~ScrollViewerUI()
 	delete _uiModels;
 }
 
-template<typename TValue, IsUIBase<TValue> T>
-ftxui::Component ScrollViewerUI<TValue, T>::GetComponent()
+template<class TModel, IsUIBase<TModel> T>
+ftxui::Component ScrollViewerUI<TModel, T>::GetComponent()
 {
 	return ftxui::Renderer(_component, [&] { 
 		return _component->Render(); 
 	});
 }
 
-template<typename TValue, IsUIBase<TValue> T>
-void ScrollViewerUI<TValue, T>::AddUI(const TValue& model)
+template<class TModel, IsUIBase<TModel> T>
+void ScrollViewerUI<TModel, T>::AddUI(const TModel& model)
 {
 	// Existing Model
-	for (int index = 0; index < _uiModels->size(); index++)
+	if (_uiModels->contains(model.GetName()))
 	{
-		if (model == *_uiModels->at(index))
+		if (model == *_uiModels->at(model.GetName()))
 			throw new std::exception("Existing model matched equality check! Please be sure not to add duplicate model values!");
 	}
 
-	// (MEMORY!) Create TValue* model using copy constructor
-	TValue* uiModel = new TValue(model);
+	// (MEMORY!) Create TModel* model using copy constructor
+	TModel* uiModel = new TModel(model);
 
 	// (MEMORY!) Create UIBase* component
 	T* uiComponent = new T(model);
@@ -197,86 +210,93 @@ void ScrollViewerUI<TValue, T>::AddUI(const TValue& model)
 	uiComponent->Initialize(model);
 
 	// Keep these in the ui tree
-	_uiComponents->push_back(uiComponent);
-	_uiModels->push_back(uiModel);
+	_uiComponents->insert(std::make_pair(model.GetName(), uiComponent));
+	_uiModels->insert(std::make_pair(model.GetName(), uiModel));
 	_listComponent->Add(uiComponent->GetComponent());
 }
-template<typename TValue, IsUIBase<TValue> T>
-void ScrollViewerUI<TValue, T>::RemoveUI(const TValue& model)
+template<class TModel, IsUIBase<TModel> T>
+void ScrollViewerUI<TModel, T>::RemoveUI(const TModel& model)
 {
 	bool existingModel = false;
-	int existingModelIndex = -1;
 
 	// Existing Model?
-	for (int index = 0; index < _uiModels->size() && !existingModel; index++)
-	{
-		if (model == *_uiModels->at(index))
-		{
-			existingModel = true;
-			existingModelIndex = index;
-		}
-	}
-
-	if (!existingModel)
+	if (!_uiModels->contains(model.GetName()))
 		throw new std::exception("Existing model not found via equality check! Please be sure that model has been added!");
 
 	// MEMORY! (~ScrollViewerUI)
-	delete _uiComponents->at(existingModelIndex);
-	delete _uiModels->at(existingModelIndex);
+	delete _uiComponents->at(model.GetName());
+	delete _uiModels->at(model.GetName());
 
 	// Remove
-	_uiComponents->erase(_uiComponents->begin() + existingModelIndex);
-	_uiModels->erase(_uiModels->begin() + existingModelIndex);
+	_uiComponents->erase(model.GetName());
+	_uiModels->erase(model.GetName());
 	
 	// Rebuild List
 	_listComponent->DetachAllChildren();
 
-	for (int index = 0; index < _uiComponents->size(); index++)
+	for (auto iter = _uiComponents->begin(); iter != _uiComponents->end(); ++iter)
 	{
-		_listComponent->Add(_uiComponents->at(index)->GetComponent());
+		_listComponent->Add(iter->second->GetComponent());
 	}
 }
-template<typename TValue, IsUIBase<TValue> T>
-void ScrollViewerUI<TValue, T>::UpdateComponent()
+template<class TModel, IsUIBase<TModel> T>
+void ScrollViewerUI<TModel, T>::UpdateComponent()
 {
-	for (int index = 0; index < _uiComponents->size(); index++)
+	for (auto iter = _uiComponents->begin(); iter != _uiComponents->end(); ++iter)
 	{
-		_uiComponents->at(index)->UpdateComponent();
+		iter->second->UpdateComponent();
 	}
 }
-template<typename TValue, IsUIBase<TValue> T>
-void ScrollViewerUI<TValue, T>::FromUI(int index, TValue& destination)
+template<class TModel, IsUIBase<TModel> T>
+void ScrollViewerUI<TModel, T>::FromUI(const std::string& name, TModel& destination)
 {
-	_uiComponents->at(index)->FromUI(destination);
+	_uiComponents->at(name)->FromUI(destination);
 }
-template<typename TValue, IsUIBase<TValue> T>
-void ScrollViewerUI<TValue, T>::ToUI(int index, const TValue& source)
+template<class TModel, IsUIBase<TModel> T>
+void ScrollViewerUI<TModel, T>::ToUI(const std::string& name, const TModel& source)
 {
-	_uiComponents->at(index)->ToUI(source);
+	_uiComponents->at(name)->ToUI(source);
 }
-template<typename TValue, IsUIBase<TValue> T>
-int ScrollViewerUI<TValue, T>::GetUICount() const
+template<class TModel, IsUIBase<TModel> T>
+int ScrollViewerUI<TModel, T>::GetUICount() const
 {
 	return _uiComponents->size();
 }
-template<typename TValue, IsUIBase<TValue> T>
-bool ScrollViewerUI<TValue, T>::GetDirty() const
+template<class TModel, IsUIBase<TModel> T>
+std::string ScrollViewerUI<TModel, T>::GetName(int index) const
+{
+	auto iter = _uiModels->begin();
+	std::advance(iter, index);
+	return iter->first;
+}
+template<class TModel, IsUIBase<TModel> T>
+T* ScrollViewerUI<TModel, T>::GetUI(const std::string& name) const
+{
+	return _uiComponents->at(name);
+}
+template<class TModel, IsUIBase<TModel> T>
+bool ScrollViewerUI<TModel, T>::GetDirty() const
 {
 	bool isDirty = false;
-	
-	for (int index = 0; index < _uiComponents->size() && !isDirty; index++)
+
+	for (auto iter = _uiComponents->begin(); iter != _uiComponents->end(); ++iter)
 	{
-		isDirty |= _uiComponents->at(index)->GetDirty();
+		isDirty |= iter->second->GetDirty();
 	}
 
 	return isDirty;
 }
-template<typename TValue, IsUIBase<TValue> T>
-void ScrollViewerUI<TValue, T>::ClearDirty()
+template<class TModel, IsUIBase<TModel> T>
+void ScrollViewerUI<TModel, T>::ClearDirty()
 {
-	for (int index = 0; index < _uiComponents->size(); index++)
+	for (auto iter = _uiComponents->begin(); iter != _uiComponents->end(); ++iter)
 	{
-		_uiComponents->at(index)->ClearDirty();
+		iter->second->ClearDirty();
 	}
+}
+template<class TModel, IsUIBase<TModel> T>
+void ScrollViewerUI<TModel, T>::ClearDirty(const std::string& name)
+{
+	_uiComponents->at(name)->ClearDirty();
 }
 #endif

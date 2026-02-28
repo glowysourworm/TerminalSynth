@@ -57,8 +57,8 @@ private:
 	ftxui::Component _component;
 	ftxui::Component _checkBox;
 
-	bool _canEnableDisable;
-	bool _canMoveUpOrDown;
+	bool _canReorder;
+	bool _canRemove;
 	bool _checkboxHover;
 	bool _mainHover;
 
@@ -72,10 +72,10 @@ private:
 
 SignalNodeUI::SignalNodeUI(const SignalNodeModelUI& model)
 {
-	_canEnableDisable = model.GetCanEnable();
-	_canMoveUpOrDown = model.GetCanReorder();
 	_checkboxHover = false;
 	_mainHover = false;
+	_canReorder = model.GetCanReorder();
+	_canRemove = model.GetCanRemove();
 	_enabledValue = new ValueCapture<bool>(model.GetEnabled());
 	_uiAction = new ValueCapture<UIAction>(UIAction::None);
 	_model = new SignalNodeModelUI(model);
@@ -112,17 +112,17 @@ void SignalNodeUI::Initialize(const SignalNodeModelUI& initialValue)
 			// Check that user can modify the enabled flag
 			if (event.is_mouse() && event.mouse().button == ftxui::Mouse::Button::Left && _checkboxHover)
 			{
-				return _canEnableDisable ? false : true;
+				return _model->GetCanEnable() ? false : true;
 			}
 
 			return false;
 
 		}) | ftxui::vcenter | ftxui::hcenter,
 		ftxui::Renderer([&] { return ftxui::text(_model->GetName()) | ftxui::vcenter; }) | ftxui::flex_grow,
-		ftxui::Button(*_arrowUp, [&] { _uiAction->SetValue(UIAction::MoveUp); }) | ftxui::Maybe(&_canMoveUpOrDown),
-		ftxui::Button(*_arrowDown, [&] { _uiAction->SetValue(UIAction::MoveDown); }) | ftxui::Maybe(&_canMoveUpOrDown),
+		ftxui::Button(*_arrowUp, [&] { _uiAction->SetValue(UIAction::MoveUp); }) | ftxui::Maybe(&_canReorder),
+		ftxui::Button(*_arrowDown, [&] { _uiAction->SetValue(UIAction::MoveDown); }) | ftxui::Maybe(&_canReorder),
 		ftxui::Button("Edit", [&] { _uiAction->SetValue(UIAction::Edit); }),
-		ftxui::Button("Remove", [&] { _uiAction->SetValue(UIAction::Remove); }),
+		ftxui::Button("Remove", [&] { _uiAction->SetValue(UIAction::Remove); }) | ftxui::Maybe(&_canRemove),
 
 	}) | ftxui::Hoverable(&_mainHover) | ftxui::xflex_grow;
 }

@@ -298,6 +298,7 @@
     <ClInclude Include="MidiFile.h" />
     <ClInclude Include="MidiMessage.h" />
     <ClInclude Include="MidiPlaybackDevice.h" />
+    <ClInclude Include="ModelUI.h" />
     <ClInclude Include="Options.h" />
     <ClInclude Include="OscillatorParameters.h" />
     <ClInclude Include="OutputUI.h" />
