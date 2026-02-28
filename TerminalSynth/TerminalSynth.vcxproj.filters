@@ -308,9 +308,6 @@
     <ClInclude Include="SynthTabUI.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
-    <ClInclude Include="CheckListUI.h">
-      <Filter>Header Files\UI</Filter>
-    </ClInclude>
     <ClInclude Include="SynthEffect.h">
       <Filter>Header Files\Effect</Filter>
     </ClInclude>
@@ -392,10 +389,10 @@
     <ClInclude Include="SynthNoteCache.h">
       <Filter>Header Files\Synth</Filter>
     </ClInclude>
-    <ClInclude Include="SignalUI.h">
+    <ClInclude Include="SignalNodeUI.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
-    <ClInclude Include="SignalModelUI.h">
+    <ClInclude Include="SignalNodeModelUI.h">
       <Filter>Header Files\ModelUI</Filter>
     </ClInclude>
     <ClInclude Include="EnvelopeUI.h">
@@ -403,6 +400,12 @@
     </ClInclude>
     <ClInclude Include="ActiveEditorUI.h">
       <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ScrollViewerUI.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="CheckboxModelUI.h">
+      <Filter>Header Files\ModelUI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

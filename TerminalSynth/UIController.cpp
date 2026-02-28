@@ -80,7 +80,7 @@ void UIController::FromUI(SynthSettings* configuration)
 	// std::atomic wait loop
 	this->Lock->AcquireLock();
 
-	_mainUI->FromUI(*configuration, true);
+	_mainUI->FromUI(*configuration);
 
 	// std::atomic end loop
 	this->Lock->Release();
@@ -114,7 +114,7 @@ void UIController::ThreadStart()
 		// basically have to either follow their UI inheritance pattern (closely), or
 		// you have to add something to trigger re-rendering!
 		//
-		_mainUI->UpdateComponent(false);
+		_mainUI->UpdateComponent();
 
 		// Use custom event to force one UI update
 		screen.PostEvent(ftxui::Event::Custom);

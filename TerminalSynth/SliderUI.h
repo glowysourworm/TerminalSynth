@@ -8,8 +8,6 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
-#include <ftxui/component/event.hpp>
-#include <ftxui/component/mouse.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
 #include <string>
@@ -30,19 +28,27 @@ public:
 
 	void Initialize(const float& initialValue) override;
 	ftxui::Component GetComponent() override;
-	void UpdateComponent(bool clearDirty) override;
+	void UpdateComponent() override;
 
     void ToUI(const float& source) override;
-    void FromUI(float& destination, bool clearDirty) override;
+    void FromUI(float& destination) override;
 
+    std::string GetName() const;
+
+    bool GetDirty() const override;
+    void ClearDirty() override;
 
 private:
+
+    bool _isDirty;
 
 	float* _value;
 	float* _minValue;
 	float* _maxValue;
 	float* _increment;
 
+    ftxui::Color* _titleColor;
+    std::string* _name;
 	std::string* _label;
 	std::string* _labelFormat;
 
@@ -56,7 +62,7 @@ SliderUI::SliderUI(float initialValue,
     float increment,
     const std::string& name,
     const std::string& labelFormat,
-    const ftxui::Color& titleColor) : UIBase(name, labelFormat, titleColor)
+    const ftxui::Color& titleColor)
 {
     _value = new float(initialValue);
     _minValue = new float(minValue);
@@ -64,6 +70,9 @@ SliderUI::SliderUI(float initialValue,
     _increment = new float(increment);
     _labelFormat = new std::string(labelFormat);
     _label = new std::string();
+    _name = new std::string(name);
+    _titleColor = new ftxui::Color(titleColor);
+    _isDirty = false;
 }
 
 SliderUI::~SliderUI()
@@ -74,19 +83,19 @@ SliderUI::~SliderUI()
     delete _increment;
     delete _labelFormat;
     delete _label;
+    delete _name;
+    delete _titleColor;
 }
 
 void SliderUI::Initialize(const float& initialValue)
 {
-    UIBase::Initialize(initialValue);
-
     auto slider = ftxui::Slider<float>({
         .value = _value,
         .min = _minValue,
         .max = _maxValue,
         .increment = _increment,
-        .color_active = this->GetLabelColor(),
-        .on_change = [&] { this->SetDirty(); }
+        .color_active = *_titleColor,
+        .on_change = [&] { _isDirty = true; }
     });
 
     // Create Component
@@ -101,29 +110,35 @@ ftxui::Component SliderUI::GetComponent()
     return _component;
 }
 
-void SliderUI::UpdateComponent(bool clearDirty)
+void SliderUI::UpdateComponent()
 {
     // Update Label
     auto labelFormat = std::string_view(_labelFormat->c_str());
 
     _label->erase(0, _label->size());
     _label->append(std::vformat(labelFormat, std::make_format_args(*_value)));
-
-    if (clearDirty)
-        this->ClearDirty();
 }
 
-void SliderUI::FromUI(float& destination, bool clearDirty)
+void SliderUI::FromUI(float& destination)
 {
     destination = *_value;
-
-    if (clearDirty)
-        this->ClearDirty();
 }
-
 void SliderUI::ToUI(const float& newValue)
 {
     (*_value) = newValue;
 }
+std::string SliderUI::GetName() const
+{
+    return *_name;
+}
 
+bool SliderUI::GetDirty() const
+{
+    return _isDirty;
+}
+
+void SliderUI::ClearDirty()
+{
+    _isDirty = false;
+}
 #endif

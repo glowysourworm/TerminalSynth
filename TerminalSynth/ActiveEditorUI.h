@@ -8,7 +8,6 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/dom/elements.hpp>
-#include <ftxui/screen/color.hpp>
 
 class ActiveEditorUI : public UIBase<bool>
 {
@@ -19,12 +18,13 @@ public:
 
 	void Initialize(const bool& initialValue) override;
 	ftxui::Component GetComponent() override;
-	void UpdateComponent(bool clearDirty) override;
+	void UpdateComponent() override;
 
 	void ToUI(const bool& source) override;
-	void FromUI(bool& destination, bool clearDirty) override;
+	void FromUI(bool& destination) override;
 
 	bool GetDirty() const override;
+	void ClearDirty() override;
 
 public:
 
@@ -36,7 +36,7 @@ private:
 	EffectUI* _activeEffect;
 };
 
-ActiveEditorUI::ActiveEditorUI() : UIBase("Active Editor", "Active Editor", ftxui::Color::White)
+ActiveEditorUI::ActiveEditorUI()
 {
 	_activeEffect = nullptr;
 }
@@ -61,25 +61,34 @@ ftxui::Component ActiveEditorUI::GetComponent()
 		return _activeEffect->GetComponent();
 }
 
-void ActiveEditorUI::UpdateComponent(bool clearDirty)
+void ActiveEditorUI::UpdateComponent()
 {
+	if (_activeEffect != nullptr)
+		_activeEffect->UpdateComponent();
 }
 
 void ActiveEditorUI::ToUI(const bool& source)
 {
 }
 
-void ActiveEditorUI::FromUI(bool& destination, bool clearDirty)
+void ActiveEditorUI::FromUI(bool& destination)
 {
 }
 
 bool ActiveEditorUI::GetDirty() const
 {
-	return false;
+	return _activeEffect != nullptr ? _activeEffect->GetDirty() : false;
+}
+
+void ActiveEditorUI::ClearDirty()
+{
+	if (_activeEffect != nullptr)
+		_activeEffect->ClearDirty();
 }
 
 void ActiveEditorUI::SetEffect(EffectUI* activeEffect)
 {
+	_activeEffect = activeEffect;
 }
 
 EffectUI* ActiveEditorUI::GetEffect() const

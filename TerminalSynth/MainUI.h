@@ -22,19 +22,20 @@ public:
 
 	void Initialize(const SynthSettings& initialValue) override;
 	ftxui::Component GetComponent() override;
-	void UpdateComponent(bool clearDirty) override;
+	void UpdateComponent() override;
 
 	/// <summary>
 	/// Collects information from the UI using a prepared configuration (pre-locked!)
 	/// </summary>
-	void FromUI(SynthSettings& configuration, bool clearDirty) override;
+	void FromUI(SynthSettings& configuration) override;
 
 	/// <summary>
 	/// Sets the UI from the update parameters (prepared for use by this component)
 	/// </summary>
 	void ToUI(const SynthSettings& configuration) override;
 
-	bool GetDirty() const;
+	bool GetDirty() const override;
+	void ClearDirty() override;
 
 private:
 

@@ -18,15 +18,19 @@
 class OscillatorUI : public UIBase<OscillatorParameters>
 {
 public:
+
 	OscillatorUI(const SoundBankSettings* soundBankSettings, const ftxui::Color& labelColor);
 	~OscillatorUI();
 
 	void Initialize(const OscillatorParameters& parameters) override;
 	ftxui::Component GetComponent() override;
-	void UpdateComponent(bool clearDirty) override;
+	void UpdateComponent() override;
 
 	void ToUI(const OscillatorParameters& source) override;
-	void FromUI(OscillatorParameters& destination, bool clearDirty) override;
+	void FromUI(OscillatorParameters& destination) override;
+
+	bool GetDirty() const override;
+	void ClearDirty() override;
 
 private:
 
@@ -48,7 +52,6 @@ private:
 };
 
 OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const ftxui::Color& labelColor)
-	: UIBase("OscillatorUI", "Sound Source", labelColor)
 {
 	_soundBankSettings = soundBankSettings;
 
@@ -121,41 +124,21 @@ ftxui::Component OscillatorUI::GetComponent()
 	return _component;
 }
 
-void OscillatorUI::UpdateComponent(bool clearDirty)
+void OscillatorUI::UpdateComponent()
 {
-	if (this->GetDirty())
+	if (_soundBankSelectedIndex->HasChanged())
 	{
-		if (_soundBankSelectedIndex->HasChanged())
+		std::string soundBank = _soundBankItems->at(_soundBankSelectedIndex->GetValue());
+
+		// Update Sound Names
+		std::vector<std::string> soundNames = _soundBankSettings->GetSoundNames(soundBank);
+
+		_soundNameItems->clear();
+
+		for (int index = 0; index < soundNames.size(); index++)
 		{
-			std::string soundBank = _soundBankItems->at(_soundBankSelectedIndex->GetValue());
-
-			// Update Sound Names
-			std::vector<std::string> soundNames = _soundBankSettings->GetSoundNames(soundBank);
-
-			_soundNameItems->clear();
-
-			for (int index = 0; index < soundNames.size(); index++)
-			{
-				_soundNameItems->push_back(soundNames[index]);
-			}
+			_soundNameItems->push_back(soundNames[index]);
 		}
-	}
-	
-	// Is Dirty
-	if (_soundSourceChoiceIndex->HasChanged() ||
-		_oscillatorSelectedIndex->HasChanged() ||
-		_soundBankSelectedIndex->HasChanged() ||
-		_soundNameSelectedIndex->HasChanged())
-	{
-		this->SetDirty();
-	}		
-	else if (clearDirty)
-	{
-		_soundSourceChoiceIndex->Clear();
-		_oscillatorSelectedIndex->Clear();
-		_soundBankSelectedIndex->Clear();
-		_soundNameSelectedIndex->Clear();
-		this->ClearDirty();
 	}
 }
 
@@ -194,7 +177,23 @@ void OscillatorUI::ToUI(const OscillatorParameters& source)
 	}
 }
 
-void OscillatorUI::FromUI(OscillatorParameters& destination, bool clearDirty)
+bool OscillatorUI::GetDirty() const
+{
+	return _soundSourceChoiceIndex->HasChanged() ||
+		_oscillatorSelectedIndex->HasChanged() ||
+		_soundBankSelectedIndex->HasChanged() ||
+		_soundNameSelectedIndex->HasChanged();
+}
+
+void OscillatorUI::ClearDirty()
+{
+	_soundSourceChoiceIndex->Clear();
+	_oscillatorSelectedIndex->Clear();
+	_soundBankSelectedIndex->Clear();
+	_soundNameSelectedIndex->Clear();
+}
+
+void OscillatorUI::FromUI(OscillatorParameters& destination)
 {
 	destination.SetType((OscillatorType)_soundSourceChoiceIndex->GetValue());
 	destination.SetBuiltInType((BuiltInOscillators)_oscillatorSelectedIndex->GetValue());
@@ -204,15 +203,6 @@ void OscillatorUI::FromUI(OscillatorParameters& destination, bool clearDirty)
 
 	if (_soundNameItems->size() > 0)
 		destination.SetSoundName(_soundNameItems->at(_soundNameSelectedIndex->GetValue()));
-
-	if (clearDirty)
-	{
-		_soundSourceChoiceIndex->Clear();
-		_oscillatorSelectedIndex->Clear();
-		_soundBankSelectedIndex->Clear();
-		_soundNameSelectedIndex->Clear();
-		this->ClearDirty();
-	}		
 }
 
 #endif	

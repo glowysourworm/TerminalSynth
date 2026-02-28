@@ -4,25 +4,22 @@
 #define SIGNAL_CHAIN_UI_H
 
 #include "ActiveEditorUI.h"
-#include "CheckListUI.h"
+#include "CheckboxModelUI.h"
+#include "CheckboxUI.h"
 #include "EffectUI.h"
 #include "Envelope.h"
 #include "EnvelopeUI.h"
 #include "OscillatorParameters.h"
 #include "OscillatorUI.h"
+#include "ScrollViewerUI.h"
 #include "SignalChainSettings.h"
-#include "SignalModelUI.h"
+#include "SignalNodeModelUI.h"
+#include "SignalNodeUI.h"
 #include "SignalSettings.h"
-#include "SignalUI.h"
 #include "SynthSettings.h"
 #include "UIBase.h"
-#include <cmath>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
-#include <ftxui/component/component_options.hpp>
-#include <ftxui/component/event.hpp>
-#include <ftxui/component/mouse.hpp>
-#include <ftxui/dom/direction.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
 #include <map>
@@ -39,68 +36,61 @@ public:
 
 	void Initialize(const SignalChainSettings& initialValue) override;
 	ftxui::Component GetComponent() override;
-	void UpdateComponent(bool clearDirty) override;
+	void UpdateComponent() override;
 
 	void ToUI(const SignalChainSettings& source) override;
-	void FromUI(SignalChainSettings& destination, bool clearDirty) override;
+	void FromUI(SignalChainSettings& destination) override;
 
 	bool GetDirty() const override;
+	void ClearDirty() override;
 
 private:
 
 	ftxui::Component _component;
+	ftxui::Component _signalInputContainer;
 	ftxui::Component _signalEffectsContainer;
-	ftxui::Component _signalEffectsList;
+	ftxui::Component _signalChainContainer;
 	ftxui::Component _editorContainer;
-
-	float* _signalEffectsListScrollY;
-	bool* _signalEffectsHover;
-	float _scrollDeltaY;
 
 	// Editors
 	OscillatorUI* _oscillatorUI;
-	CheckListUI* _pluginListUI;
 	EnvelopeUI* _envelopeUI;
 	ActiveEditorUI* _activeEditorUI;
 
-	// Static Signal Chain Elements
-	SignalUI* _oscillatorSignalUI;
-	SignalUI* _envelopeSignalUI;
+	// Scroll Viewers
+	ScrollViewerUI<CheckboxModelUI, CheckboxUI>* _pluginListUI;
+	ScrollViewerUI<SignalNodeModelUI, SignalNodeUI>* _effectsSignalChainUI;
 
-	// SignalUI instances by name
-	std::map<std::string, SignalUI*>* _signalUIs;
+	std::map<std::string, SignalNodeModelUI*>* _signalModels;
+	std::map<std::string, CheckboxModelUI*>* _pluginModels;
+
+	// Static Signal Chain Elements
+	SignalNodeUI* _oscillatorSignalUI;
+	SignalNodeUI* _envelopeSignalUI;
 
 	// EffectUI instances by name
 	std::map<std::string, EffectUI*>* _effectUIs;
-
-	// Category Name, Effect Name(s)
-	std::map<std::string, std::vector<std::string>*>* _categoryLists;
 };
 
-SynthTabUI::SynthTabUI(const SynthSettings& synthSettings, const SignalChainSettings& settings) : UIBase("No Title", "No Title", ftxui::Color::GreenYellow)
+SynthTabUI::SynthTabUI(const SynthSettings& synthSettings, const SignalChainSettings& settings)
 {
 	_activeEditorUI = new ActiveEditorUI();
-	_signalEffectsListScrollY = new float(0);
-	_signalEffectsHover = new bool(false);
-	_scrollDeltaY = 0.05;
 
-	SignalModelUI envelopeModel("Envelope", true);
-	SignalModelUI oscillatorModel("Oscillator", true);
+	SignalNodeModelUI envelopeModel("Envelope", true, false, false);
+	SignalNodeModelUI oscillatorModel("Oscillator", true, false, false);
 
-	_pluginListUI = new CheckListUI(ftxui::Color::White);
+	_pluginListUI = new ScrollViewerUI<CheckboxModelUI, CheckboxUI>("Airwin Plugins (airwin@github.com)", ftxui::Color::BlueLight);
+	_effectsSignalChainUI = new ScrollViewerUI<SignalNodeModelUI, SignalNodeUI>("Signal Effects", ftxui::Color::GreenYellow);
+
 	_envelopeUI = new EnvelopeUI();
 	_oscillatorUI = new OscillatorUI(synthSettings.GetSoundBankSettings(), ftxui::Color::White);
-	_envelopeSignalUI = new SignalUI(envelopeModel, false, false);
-	_oscillatorSignalUI = new SignalUI(oscillatorModel, false, false);
-	_signalUIs = new std::map<std::string, SignalUI*>();
+	_envelopeSignalUI = new SignalNodeUI(envelopeModel);
+	_oscillatorSignalUI = new SignalNodeUI(oscillatorModel);
+
+	_signalModels = new std::map<std::string, SignalNodeModelUI*>();
+	_pluginModels = new std::map<std::string, CheckboxModelUI*>();
 	_effectUIs = new std::map<std::string, EffectUI*>();
-	_categoryLists = new std::map<std::string, std::vector<std::string>*>();
 
-	// Initialize some of these child UI's right away
-	std::vector<std::string> pluginList;
-	settings.GetRegistryList(pluginList);
-
-	_pluginListUI->Initialize(pluginList);
 	_oscillatorUI->Initialize(*settings.GetOscillatorParameters());
 	_envelopeUI->Initialize(*settings.GetOscillatorEnvelope());
 	_oscillatorSignalUI->Initialize(oscillatorModel);
@@ -111,31 +101,23 @@ SynthTabUI::SynthTabUI(const SynthSettings& synthSettings, const SignalChainSett
 	{
 		auto element = settings.GetFromRegistry(index);
 
-		// Enabled:  "True" will be the initial setting; but the signal won't be included in the chain
-		//			 until you've selected it.
-		//
-		SignalModelUI signalModel(element.GetName(), true);
+		// (MEMORY!) ~SynthTabUI
+		EffectUI* effectUI = new EffectUI(element.GetName(), element.GetCategory(), element.GetInfoText(), ftxui::Color::White);
 
-		// (MEMORY!) ~SignalChainUI
-		EffectUI* effectUI = new EffectUI(element.GetName(), element.GetCategory(), element.GetInfoText(), element.GetName(), ftxui::Color::White);
+		// (MEMORY!) ~SynthTabUI
+		SignalNodeModelUI* signalModelUI = new SignalNodeModelUI(element.GetName(), true, true, true);
 
-		// (MEMORY!) ~SignalChainUI
-		SignalUI* signalUI = new SignalUI(signalModel, true, true);
+		// (MEMORY!) ~SynthTabUI
+		CheckboxModelUI* checkboxModelUI = new CheckboxModelUI(element.GetName(), false);
+
+		// Plugin List UI
+		_pluginListUI->AddUI(*checkboxModelUI);
 
 		effectUI->Initialize(element);
-		signalUI->Initialize(signalModel);
 
 		_effectUIs->insert(std::make_pair(element.GetName(), effectUI));
-		_signalUIs->insert(std::make_pair(element.GetName(), signalUI));
-
-		// Category
-		if (!_categoryLists->contains(element.GetCategory()))
-		{
-			// (MEMORY!) ~SignalChainUI
-			_categoryLists->insert(std::make_pair(element.GetCategory(), new std::vector<std::string>()));
-		}
-
-		_categoryLists->at(element.GetCategory())->push_back(element.GetName());
+		_signalModels->insert(std::make_pair(element.GetName(), signalModelUI));
+		_pluginModels->insert(std::make_pair(element.GetName(), checkboxModelUI));
 	}
 }
 SynthTabUI::~SynthTabUI()
@@ -145,98 +127,63 @@ SynthTabUI::~SynthTabUI()
 	{
 		delete iter->second;
 	}
-	// MEMORY! (SignalUI*)
-	for (auto iter = _signalUIs->begin(); iter != _signalUIs->end(); ++iter)
+	// MEMORY! (SignalModelUI*)
+	for (auto iter = _signalModels->begin(); iter != _signalModels->end(); ++iter)
 	{
 		delete iter->second;
 	}
 
-	// MEMORY! ~std::vector
-	for (auto iter = _categoryLists->begin(); iter != _categoryLists->end(); ++iter)
+	// MEMORY! (CheckboxModelUI*)
+	for (auto iter = _pluginModels->begin(); iter != _pluginModels->end(); ++iter)
 	{
 		delete iter->second;
 	}
 
-	delete _activeEditorUI;
-	delete _signalEffectsListScrollY;
-	delete _signalEffectsHover;
-	delete _oscillatorUI;
-	delete _pluginListUI;
-	delete _envelopeUI;
+	// Collections
 	delete _effectUIs;
-	delete _signalUIs;
-	delete _categoryLists;
+	delete _signalModels;
+	delete _pluginModels;
+
+	// Editors
+	delete _oscillatorUI;
+	delete _envelopeUI;
+	delete _activeEditorUI;
+
+	// Scroll Viewers
+	delete _pluginListUI;
+	delete _effectsSignalChainUI;
+
+	// Signal Input
+	delete _oscillatorSignalUI;
+	delete _envelopeSignalUI;
 }
 
 void SynthTabUI::Initialize(const SignalChainSettings& initialValue)
 {
-	UIBase::Initialize(initialValue);
+	_signalEffectsContainer = ftxui::Container::Vertical({
 
-	// Slider bound to the position of the list
-	ftxui::SliderOption<float> sliderOptions;
-	sliderOptions.value = _signalEffectsListScrollY;
-	sliderOptions.min = 0.f;
-	sliderOptions.max = 1.f;
-	sliderOptions.increment = 0.1f;
-	sliderOptions.direction = ftxui::Direction::Down;
-	sliderOptions.color_active = ftxui::Color::BlueLight;
-	sliderOptions.color_inactive = ftxui::Color::White;
-	auto scrollBarY = ftxui::Slider(sliderOptions);
+		// Signal Effects (ScrollViewerUI)
+		_effectsSignalChainUI->GetComponent() | ftxui::yflex_shrink
 
-	// Signal Chain Effects
-	_signalEffectsList = ftxui::Container::Vertical({});
-
-	// Signal Chain Effects (Container) (Scroll View)
-	_signalEffectsContainer = ftxui::Container::Horizontal({
-
-		// Must render the list to add the focused relative position offset
-		ftxui::Renderer(_signalEffectsList, [&] {
-			return _signalEffectsList->Render() | ftxui::focusPositionRelative(0, *_signalEffectsListScrollY) | ftxui::yframe;
-		}) | ftxui::xflex_shrink,
-
-		scrollBarY | ftxui::yframe
-
-		}) | ftxui::CatchEvent([&](ftxui::Event event) {
-
-			if (event.mouse().button == ftxui::Mouse::Button::WheelUp && *_signalEffectsHover)
-			{
-				// Set Mouse Wheel (clipped [0,1])
-				*_signalEffectsListScrollY = fminf(fmaxf(*_signalEffectsListScrollY - _scrollDeltaY, 0), 1);
-			}
-			else if (event.mouse().button == ftxui::Mouse::Button::WheelDown && *_signalEffectsHover)
-			{
-				// Set Mouse Wheel (clipped [0,1])
-				*_signalEffectsListScrollY = fminf(fmaxf(*_signalEffectsListScrollY + _scrollDeltaY, 0), 1);
-			}
-
-			// Pass through
-			if (event.is_mouse())
-				return false;
-
-			// Cancel keyboard events
-			return true;
-
-		}) | ftxui::Hoverable(_signalEffectsHover);
-
-	// Signal Chain
-	auto signalChain = ftxui::Container::Vertical({
-		ftxui::Renderer([&] {return ftxui::text("Signal Input") | ftxui::color(this->GetLabelColor()); }),
-		ftxui::Renderer([&] {return ftxui::separator(); }),
-		_oscillatorSignalUI->GetComponent() | ftxui::xflex_grow,
-		_envelopeSignalUI->GetComponent() | ftxui::xflex_grow,
-		ftxui::Renderer([&] {return ftxui::separator(); }),
-		ftxui::Renderer([&] {return ftxui::text("Signal Effects") | ftxui::color(this->GetLabelColor()); }),
-		ftxui::Renderer([&] {return ftxui::separator(); }),
-
-		// Rest of effects
-		_signalEffectsContainer | ftxui::yflex_shrink
 	});
 
-	// Enabled Signal Chain Elements
-	for (int index = 0; index < initialValue.GetCount(); index++)
-	{
-		_signalEffectsContainer->Add(_signalUIs->at(initialValue.Get(index).GetName())->GetComponent() | ftxui::xflex_grow);
-	}
+	// Signal Chain
+	_signalInputContainer = ftxui::Container::Vertical({
+
+		ftxui::Renderer([&] {return ftxui::text("Signal Input") | ftxui::color(ftxui::Color::GreenYellow); }),
+		ftxui::Renderer([&] {return ftxui::separator(); }),
+		_oscillatorSignalUI->GetComponent() | ftxui::xflex_grow,
+		_envelopeSignalUI->GetComponent() | ftxui::xflex_grow
+	});
+
+	_signalChainContainer = ftxui::Container::Vertical({
+
+		// Signal Input
+		_signalInputContainer | ftxui::border,
+
+		// Signal Effects (ScrollViewerUI)
+		_signalEffectsContainer | ftxui::yflex_grow,
+	});
 
 	// Plugin List | Signal Chain (Vertical) | Effect Editor
 	_component = ftxui::Container::Horizontal({
@@ -244,8 +191,7 @@ void SynthTabUI::Initialize(const SignalChainSettings& initialValue)
 		// Airwin Plugin Effects
 		_pluginListUI->GetComponent(),
 
-		// Signal Chain
-		signalChain | ftxui::border,
+		_signalChainContainer | ftxui::yflex_grow,
 
 		// Active Editor
 		_activeEditorUI->GetComponent()
@@ -254,47 +200,135 @@ void SynthTabUI::Initialize(const SignalChainSettings& initialValue)
 
 ftxui::Component SynthTabUI::GetComponent()
 {
+
 	return ftxui::Renderer(_component, [&] {
 		return _component->Render();
 	});
 }
 
-void SynthTabUI::UpdateComponent(bool clearDirty)
+void SynthTabUI::UpdateComponent()
 {
-	_oscillatorUI->UpdateComponent(clearDirty);
-
-	_pluginListUI->UpdateComponent(clearDirty);
-	_envelopeUI->UpdateComponent(clearDirty);
+	_oscillatorUI->UpdateComponent();
+	_envelopeUI->UpdateComponent();
 	
-	if (_activeEditorUI != nullptr)
-		_activeEditorUI->UpdateComponent(clearDirty);
+	// This will contain dummy text if there is no active editor
+	_activeEditorUI->UpdateComponent();
 
 	// Static Signal Chain Elements
-	_oscillatorSignalUI->UpdateComponent(clearDirty);
-	_envelopeSignalUI->UpdateComponent(clearDirty);
+	_oscillatorSignalUI->UpdateComponent();
+	_envelopeSignalUI->UpdateComponent();
 
-	_signalEffectsList->DetachAllChildren();
+	// Scroll Viewers
+	_effectsSignalChainUI->UpdateComponent();
+	_pluginListUI->UpdateComponent();
 
-	// SignalUIs
-	for (auto iter = _signalUIs->begin(); iter != _signalUIs->end(); ++iter)
+	bool signalLayoutDirty = false;
+
+	// Plugin List (Changes)
+	if (_pluginListUI->GetDirty())
 	{
-		// Enabled
-		if (_pluginListUI->IsSelected(iter->first))
+		for (int index = 0; index < _pluginListUI->GetUICount(); index++)
 		{
-			// -> UpdateComponent()
-			_signalUIs->at(iter->first)->UpdateComponent(clearDirty);
+			// -> FromUI
+			CheckboxModelUI model;
+			_pluginListUI->FromUI(index, model);
 
-			// Add to component stack
-			_signalEffectsList->Add(_signalUIs->at(iter->first)->GetComponent());
+			// Has Changed
+			if (model.GetIsChecked() != _pluginModels->at(model.GetName())->GetIsChecked())
+			{
+				// Add
+				if (model.GetIsChecked())
+					_effectsSignalChainUI->AddUI(*_signalModels->at(model.GetName()));
 
-			// Check Active Effect Editor
-			if (_signalUIs->at(iter->first)->GetEditFlag())
-				_activeEditorUI->SetEffect(_effectUIs->at(iter->first));
+				// Remove
+				else
+					_effectsSignalChainUI->RemoveUI(*_signalModels->at(model.GetName()));
+
+				// Model Update (we must update our copy)
+				_pluginModels->at(model.GetName())->SetIsChecked(model.GetIsChecked());
+			}
 		}
+
+		_pluginListUI->ClearDirty();
 	}
 
-	if (clearDirty)
-		this->ClearDirty();
+	//// Reset Signal Effects Layout (when there has been a change)
+	//if (_pluginListUI->GetDirty() || _effectsSignalChainUI->GetDirty())
+	//{
+	//	std::vector<SignalNodeUI*> signalsIncluded;
+	//	SignalNodeUI::UIAction lastAction = SignalNodeUI::UIAction::None;
+	//	int orderIndex = 0;
+
+	//	// SignalUIs
+	//	for (auto iter = _signalUIs->begin(); iter != _signalUIs->end(); ++iter)
+	//	{
+	//		// Enabled
+	//		if (_pluginListUI->IsSelected(iter->first))
+	//		{
+	//			// Add / Remove (reset order)
+	//			if (_pluginListUI->GetDirty())
+	//				iter->second->SetOrder(orderIndex++);
+
+	//			// UI Action
+	//			SignalNodeUI::UIAction action = iter->second->GetUIAction();
+
+	//			// UI Action Pending
+	//			if (iter->second->GetHasUIAction() && lastAction == SignalNodeUI::UIAction::None)
+	//			{
+	//				switch (action)
+	//				{
+	//				case SignalNodeUI::UIAction::Edit:
+	//					_activeEditorUI->SetEffect(_effectUIs->at(iter->first));
+	//					break;
+	//				case SignalNodeUI::UIAction::Remove:
+	//					_pluginListUI->Toggle(iter->first);
+	//					break;
+	//				case SignalNodeUI::UIAction::MoveDown:
+	//					iter->second->SetOrder(iter->second->GetOrder() + 1);
+	//					break;
+	//				case SignalNodeUI::UIAction::MoveUp:
+	//					iter->second->SetOrder(iter->second->GetOrder() - 1);
+	//					break;
+	//				default:
+	//					throw new std::exception("Unhandled UI Action:  SynthTabUI.h");
+	//				}
+
+	//				lastAction = action;
+	//			}
+
+	//			// Re-Order
+	//			else if (lastAction == SignalNodeUI::UIAction::MoveDown)
+	//			{
+	//				iter->second->SetOrder(iter->second->GetOrder() - 1);
+	//				lastAction = SignalNodeUI::UIAction::None;
+	//			}
+
+	//			// Re-Order
+	//			else if (lastAction == SignalNodeUI::UIAction::MoveUp)
+	//			{
+	//				iter->second->SetOrder(iter->second->GetOrder() + 1);
+	//				lastAction = SignalNodeUI::UIAction::None;
+	//			}
+
+	//			// -> UpdateComponent()
+	//			_signalUIs->at(iter->first)->UpdateComponent();
+
+	//			// Include in component stack
+	//			signalsIncluded.push_back(iter->second);
+	//		}
+	//	}
+
+	//	// Sort SignalUI(s)
+	//	std::sort(signalsIncluded.begin(), signalsIncluded.end(), [](SignalNodeUI* signalUI1, SignalNodeUI* signalUI2) {
+	//		return signalUI1->GetOrder() < signalUI2->GetOrder();
+	//	});
+
+	//	// Add to component stack
+	//	for (int index = 0; index < signalsIncluded.size(); index++)
+	//	{
+	//		_signalEffectsList->Add(signalsIncluded[index]->GetComponent());
+	//	}
+	//}
 }
 
 void SynthTabUI::ToUI(const SignalChainSettings& source)
@@ -302,35 +336,38 @@ void SynthTabUI::ToUI(const SignalChainSettings& source)
 	
 }
 
-void SynthTabUI::FromUI(SignalChainSettings& destination, bool clearDirty)
+void SynthTabUI::FromUI(SignalChainSettings& destination)
 {
+	destination.SignalClear();
+
 	// Effects (Enable / Disable)
-	for (auto iter = _signalUIs->begin(); iter != _signalUIs->end(); ++iter)
-	{
-		if (_pluginListUI->IsSelected(iter->first))
-		{
+	//for (auto iter = _effectUIs->begin(); iter != _effectUIs->end(); ++iter)
+	//{
+	//	//// Enabled Status
+	//	//SignalNodeModelUI model("", false, 0);
+	//	//_signalModels->at(iter->first)->FromUI(model);
 
-		}
-	}
+	//	//// Effect Settings
+	//	//SignalSettings effectSettings("", "", "", true);
+	//	//iter->second->FromUI(effectSettings);
 
-	OscillatorParameters oscillatorParameters = *destination.GetOscillatorParameters();
-	Envelope envelope = *destination.GetOscillatorEnvelope();
-	std::vector<std::string> pluginList;
-	bool dummy;
-	SignalModelUI dummySignal("", true);
+	//	//// Enabled (part of the signal chain)
+	//	//if (model.GetEnabled())
+	//	//	destination.SignalAdd(effectSettings);
+	//}
 
-	_oscillatorUI->FromUI(oscillatorParameters, clearDirty);
-	_pluginListUI->FromUI(pluginList, clearDirty);
-	_envelopeUI->FromUI(envelope, clearDirty);
-	_activeEditorUI->FromUI(dummy, clearDirty);
-	_oscillatorSignalUI->FromUI(dummySignal, clearDirty);
-	_envelopeSignalUI->FromUI(dummySignal, clearDirty);
+	//OscillatorParameters oscillatorParameters = *destination.GetOscillatorParameters();
+	//Envelope envelope = *destination.GetOscillatorEnvelope();
+	//std::vector<std::string> pluginList;
+	//bool dummy;
+	//SignalNodeModelUI dummySignal("", true, 0);
 
-	if (clearDirty)
-	{
-		this->ClearDirty();
-	}
-		
+	//_oscillatorUI->FromUI(oscillatorParameters);
+	////_pluginListUI->FromUI(pluginList);
+	//_envelopeUI->FromUI(envelope);
+	//_activeEditorUI->FromUI(dummy);
+	//_oscillatorSignalUI->FromUI(dummySignal);
+	//_envelopeSignalUI->FromUI(dummySignal);
 }
 
 bool SynthTabUI::GetDirty() const
@@ -340,17 +377,20 @@ bool SynthTabUI::GetDirty() const
 	isDirty |= _pluginListUI->GetDirty();
 
 	// Active Effect Editor
-	if (_activeEditorUI != nullptr)
-		isDirty |= _activeEditorUI->GetDirty();
+	isDirty |= _activeEditorUI->GetDirty();
 
 	// Signals Included (currently)
-	for (auto iter = _signalUIs->begin(); iter != _signalUIs->end(); ++iter)
-	{
-		if (iter->second)
-			isDirty = _signalUIs->at(iter->first)->GetDirty();
-	}
+	//for (auto iter = _signalUIs->begin(); iter != _signalUIs->end(); ++iter)
+	//{
+	//	if (iter->second)
+	//		isDirty = _signalUIs->at(iter->first)->GetDirty();
+	//}
 
 	return isDirty;
+}
+
+void SynthTabUI::ClearDirty()
+{
 }
 
 #endif

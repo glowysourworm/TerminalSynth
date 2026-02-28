@@ -21,10 +21,13 @@ public:
 
 	void Initialize(const OutputSettings& settings) override;
 	ftxui::Component GetComponent() override;
-	void UpdateComponent(bool clearDirty) override;
+	void UpdateComponent() override;
 
 	void ToUI(const OutputSettings& source) override;
-	void FromUI(OutputSettings& destination, bool clearDirty) override;
+	void FromUI(OutputSettings& destination) override;
+
+	bool GetDirty() const override { return false; }
+	void ClearDirty() override {}
 
 private:
 
@@ -41,10 +44,12 @@ private:
 	std::string* _averageFrontendTime;
 	std::string* _streamTime;
 	std::string* _streamLatency;
+
+	std::string* _title;
+	ftxui::Color* _titleColor;
 };
 
 SynthInformationUI::SynthInformationUI(const std::string& title, const ftxui::Color& titleColor)
-	: UIBase(title, title, titleColor)
 {
 	_hostApi = new std::string("");
 	_deviceName = new std::string("");
@@ -57,6 +62,9 @@ SynthInformationUI::SynthInformationUI(const std::string& title, const ftxui::Co
 	_averageFrontendTime = new std::string("");
 	_streamTime = new std::string("");
 	_streamLatency = new std::string("");
+
+	_title = new std::string(title);
+	_titleColor = new ftxui::Color(titleColor);
 }
 SynthInformationUI::~SynthInformationUI()
 {
@@ -71,11 +79,12 @@ SynthInformationUI::~SynthInformationUI()
 	delete _averageFrontendTime;
 	delete _streamTime;
 	delete _streamLatency;
+
+	delete _title;
+	delete _titleColor;
 }
 void SynthInformationUI::Initialize(const OutputSettings& settings)
 {
-	UIBase::Initialize(settings);
-
 	// Synth Information
 	auto synthInformation = ftxui::Container::Horizontal({
 
@@ -112,7 +121,7 @@ void SynthInformationUI::Initialize(const OutputSettings& settings)
 		ftxui::Renderer([&]
 		{
 			return ftxui::vbox({
-				ftxui::text(this->GetLabel()) | ftxui::color(this->GetLabelColor()),
+				ftxui::text(*_title) | ftxui::color(*_titleColor),
 				ftxui::separator(),
 			});
 		}),
@@ -134,10 +143,8 @@ ftxui::Component SynthInformationUI::GetComponent()
 {
 	return _component;
 }
-void SynthInformationUI::UpdateComponent(bool clearDirty)
+void SynthInformationUI::UpdateComponent()
 {
-	if (clearDirty)
-		this->ClearDirty();
 }
 void SynthInformationUI::ToUI(const OutputSettings& source)
 {
@@ -171,10 +178,8 @@ void SynthInformationUI::ToUI(const OutputSettings& source)
 	_streamLatency->clear();
 	_streamLatency->append(std::to_string(source.GetStreamLatency()));
 }
-void SynthInformationUI::FromUI(OutputSettings& destination, bool clearDirty)
+void SynthInformationUI::FromUI(OutputSettings& destination)
 {
-	if (clearDirty)
-		this->ClearDirty();
 }
 
 #endif

@@ -6,7 +6,6 @@
 #include "SynthInformationUI.h"
 #include "SynthSettings.h"
 #include "SynthTabUI.h"
-#include "UIBase.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
@@ -16,7 +15,7 @@
 #include <string>
 #include <vector>
 
-MainUI::MainUI(const SynthSettings& configuration) : UIBase("Terminal Synth", "Terminal Synth", ftxui::Color::White)
+MainUI::MainUI(const SynthSettings& configuration)
 {
 	// Tab Headers
 	_tabHeaders = new std::vector<std::string>({
@@ -25,6 +24,7 @@ MainUI::MainUI(const SynthSettings& configuration) : UIBase("Terminal Synth", "T
 		"Midi"
 	});
 
+	_signalChainSettings = configuration.GetSignalChainRegistry();
 	_synthInformationUI = new SynthInformationUI("Terminal Synth", ftxui::Color::GreenYellow);
 	_outputUI = new OutputUI("Output", ftxui::Color::Green);
 	_synthTabUI = new SynthTabUI(configuration, *configuration.GetSignalChainRegistry());
@@ -45,13 +45,9 @@ MainUI::~MainUI()
 
 void MainUI::Initialize(const SynthSettings& configuration)
 {
-	UIBase::Initialize(configuration);
-
 	_synthInformationUI->Initialize(*configuration.GetOutputSettings());
 	_outputUI->Initialize(configuration);
-	_synthTabUI->Initialize(*configuration.GetSignalChainRegistry());
-
-	_signalChainSettings = configuration.GetSignalChainRegistry();
+	_synthTabUI->Initialize(*configuration.GetSignalChainRegistry());	
 
 	// Airwin Registry List
 	std::vector<std::string> pluginList;
@@ -99,19 +95,19 @@ ftxui::Component MainUI::GetComponent()
 	return _mainControl;
 }
 
-void MainUI::UpdateComponent(bool clearDirty)
+void MainUI::UpdateComponent()
 {
 	// Output Tab
 	if (*_tabIndex == 0)
 	{
-		_synthInformationUI->UpdateComponent(clearDirty);
-		_outputUI->UpdateComponent(clearDirty);
+		_synthInformationUI->UpdateComponent();
+		_outputUI->UpdateComponent();
 	}
 
 	// Synth Tab
 	else if (*_tabIndex == 1)
 	{
-		_synthTabUI->UpdateComponent(clearDirty);
+		_synthTabUI->UpdateComponent();
 	}
 
 	// MIDI Tab
@@ -121,19 +117,16 @@ void MainUI::UpdateComponent(bool clearDirty)
 	}
 }
 
-void MainUI::FromUI(SynthSettings& configuration, bool clearDirty)
+void MainUI::FromUI(SynthSettings& configuration)
 {
 	SignalChainSettings signalChain;
 
 	// Signal Chain
-	_synthTabUI->FromUI(signalChain, clearDirty);
+	_synthTabUI->FromUI(signalChain);
 	configuration.SetSignalChain(signalChain);
 
 	// Output
-	_outputUI->FromUI(configuration, clearDirty);
-
-	if (clearDirty)
-		this->ClearDirty();
+	_outputUI->FromUI(configuration);
 }
 
 void MainUI::ToUI(const SynthSettings& configuration)
@@ -149,4 +142,10 @@ bool MainUI::GetDirty() const
 {
 	return _synthTabUI->GetDirty() ||
 		   _outputUI->GetDirty();
+}
+
+void MainUI::ClearDirty()
+{
+	_synthTabUI->ClearDirty();
+	_outputUI->ClearDirty();
 }

@@ -276,7 +276,7 @@
     <ClInclude Include="AirwindowsEffect.h" />
     <ClInclude Include="AtomicLock.h" />
     <ClInclude Include="BiQuadFilter.h" />
-    <ClInclude Include="CheckListUI.h" />
+    <ClInclude Include="CheckboxModelUI.h" />
     <ClInclude Include="CombFilter.h" />
     <ClInclude Include="EffectUI.h" />
     <ClInclude Include="AudioController.h" />
@@ -307,14 +307,15 @@
     <ClInclude Include="OutputSettings.h" />
     <ClInclude Include="PlaybackFrame.h" />
     <ClInclude Include="RtAudioController.h" />
+    <ClInclude Include="ScrollViewerUI.h" />
     <ClInclude Include="SignalChain.h" />
     <ClInclude Include="SignalChainSettings.h" />
     <ClInclude Include="SynthTabUI.h" />
     <ClInclude Include="SignalFactory.h" />
     <ClInclude Include="SignalBase.h" />
-    <ClInclude Include="SignalModelUI.h" />
+    <ClInclude Include="SignalNodeModelUI.h" />
     <ClInclude Include="SignalParameter.h" />
-    <ClInclude Include="SignalUI.h" />
+    <ClInclude Include="SignalNodeUI.h" />
     <ClInclude Include="SoundBankSettings.h" />
     <ClInclude Include="SoundFileReader.h" />
     <ClInclude Include="SoundRegistry.h" />

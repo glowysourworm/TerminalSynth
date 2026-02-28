@@ -21,18 +21,19 @@ public:
 	EffectUI(const std::string& name, 
 			 const std::string& category, 
 			 const std::string& infoText, 
-			 const std::string& label, 
 			 const ftxui::Color& labelColor);
+	EffectUI(const SignalSettings& initialValue);
 	~EffectUI();
 
 	void Initialize(const SignalSettings& effect) override;
 	ftxui::Component GetComponent() override;
-	void UpdateComponent(bool clearDirty) override;
+	void UpdateComponent() override;
 
 	void ToUI(const SignalSettings& source) override;
-	void FromUI(SignalSettings& destination, bool clearDirty) override;
+	void FromUI(SignalSettings& destination) override;
 
 	bool GetDirty() const override;
+	void ClearDirty() override;
 
 private:
 
@@ -44,6 +45,8 @@ private:
 
 	std::string* _category;
 	std::string* _infoText;
+	std::string* _name;
+	ftxui::Color* _labelColor;
 
 	std::vector<SliderUI*>* _parameterUIs;
 };
@@ -51,19 +54,26 @@ private:
 EffectUI::EffectUI(const std::string& name,
 					const std::string& category,
 					const std::string& infoText,
-					const std::string& label,
 					const ftxui::Color& labelColor)
-	: UIBase(name, label, labelColor)
 {
 	_parameterUIs = new std::vector<SliderUI*>();
 	_category = new std::string(category);
 	_infoText = new std::string(infoText);
+	_labelColor = new ftxui::Color(labelColor);
+	_name = new std::string(name);
+}
+
+EffectUI::EffectUI(const SignalSettings& initialValue)
+{
+	_parameterUIs = new std::vector<SliderUI*>();
+	_category = new std::string(initialValue.GetCategory());
+	_infoText = new std::string(initialValue.GetInfoText());
+	_labelColor = new ftxui::Color(ftxui::Color::White);
+	_name = new std::string(initialValue.GetName());
 }
 
 EffectUI::~EffectUI()
 {
-	UIBase::~UIBase();
-
 	for (int index = 0; index < _parameterUIs->size(); index++)
 	{
 		delete _parameterUIs->at(index);
@@ -72,12 +82,12 @@ EffectUI::~EffectUI()
 	delete _parameterUIs;
 	delete _category;
 	delete _infoText;
+	delete _name;
+	delete _labelColor;
 }
 
 void EffectUI::Initialize(const SignalSettings& parameters)
 {
-	UIBase::Initialize(parameters);
-
 	int maxLabelLength = -1;
 
 	// Parameters (measure)
@@ -104,7 +114,7 @@ void EffectUI::Initialize(const SignalSettings& parameters)
 		float minValue = parameters.GetParameterMin(index);
 		float maxValue = parameters.GetParameterMax(index);
 
-		SliderUI* sliderUI = new SliderUI(initialValue, minValue, maxValue, (maxValue - minValue) / 100.0f, labelStr, labelFormat, this->GetLabelColor());
+		SliderUI* sliderUI = new SliderUI(initialValue, minValue, maxValue, (maxValue - minValue) / 100.0f, labelStr, labelFormat, *_labelColor);
 
 		sliderUI->Initialize(initialValue);
 
@@ -112,7 +122,7 @@ void EffectUI::Initialize(const SignalSettings& parameters)
 	}
 
 	_component = ftxui::Container::Vertical({
-		ftxui::Renderer([&] { return ftxui::text(this->GetLabel()) | ftxui::color(this->GetLabelColor()); }),
+		ftxui::Renderer([&] { return ftxui::text(*_name) | ftxui::color(*_labelColor); }),
 		ftxui::Renderer([&] { return ftxui::separator(); })
 	});
 
@@ -137,11 +147,11 @@ ftxui::Component EffectUI::GetComponent()
 	});
 }
 
-void EffectUI::UpdateComponent(bool clearDirty)
+void EffectUI::UpdateComponent()
 {
 	for (int index = 0; index < _parameterUIs->size(); index++)
 	{
-		_parameterUIs->at(index)->UpdateComponent(clearDirty);
+		_parameterUIs->at(index)->UpdateComponent();
 	}
 }
 
@@ -157,11 +167,19 @@ bool EffectUI::GetDirty() const
 	return isDirty;
 }
 
+void EffectUI::ClearDirty()
+{
+	for (int index = 0; index < _parameterUIs->size(); index++)
+	{
+		_parameterUIs->at(index)->ClearDirty();
+	}
+}
+
 void EffectUI::ToUI(const SignalSettings& source)
 {
 }
 
-void EffectUI::FromUI(SignalSettings& destination, bool clearDirty)
+void EffectUI::FromUI(SignalSettings& destination)
 {
 	// Name (const), Category, Info Text
 	destination.SetCategory(*_category);
@@ -175,16 +193,13 @@ void EffectUI::FromUI(SignalSettings& destination, bool clearDirty)
 		float setting = 0;
 
 		// Get UI Setting
-		_parameterUIs->at(index)->FromUI(setting, clearDirty);
+		_parameterUIs->at(index)->FromUI(setting);
 		
 		parameter.SetValue(setting);
 
 		// -> (set by index)
 		destination.AddParameter(parameter);
 	}
-
-	if (clearDirty)
-		this->ClearDirty();
 }
 
 void EffectUI::GetWhiteSpace(std::string& whiteSpace, int length)

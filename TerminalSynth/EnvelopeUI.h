@@ -16,16 +16,18 @@ class EnvelopeUI : public UIBase<Envelope>
 public:
 
 	EnvelopeUI();
+	EnvelopeUI(const Envelope& initialValue);
 	~EnvelopeUI();
 
 	void Initialize(const Envelope& envelope) override;
 	ftxui::Component GetComponent() override;
-	void UpdateComponent(bool clearDirty) override;
+	void UpdateComponent() override;
 
-	void FromUI(Envelope& destination, bool clearDirty) override;
+	void FromUI(Envelope& destination) override;
 	void ToUI(const Envelope& source) override;
 
 	bool GetDirty() const override;
+	void ClearDirty() override;
 
 private:
 
@@ -39,7 +41,7 @@ private:
 	SliderUI* _sustainPeak;
 };
 
-EnvelopeUI::EnvelopeUI() : UIBase("Envelope", "Envelope", ftxui::Color::White)
+EnvelopeUI::EnvelopeUI()
 {
 	_attack = new SliderUI(0.1f, 0.01f, 1.0f, 0.01f, "Attack", "Attack   (s) {:.2f}", ftxui::Color::White);
 	_decay = new SliderUI(0.1f, 0.01f, 2.0f, 0.01f, "Decay", "Decay    (s) {:.2f}", ftxui::Color::White);
@@ -69,7 +71,7 @@ void EnvelopeUI::Initialize(const Envelope& envelope)
 
 	_component = ftxui::Container::Vertical(
 	{
-		ftxui::Renderer([&] { return ftxui::text("Envelope") | ftxui::color(this->GetLabelColor()); }),
+		ftxui::Renderer([&] { return ftxui::text("Envelope"); }),
 		ftxui::Renderer([&] { return ftxui::separator(); }),
 
 		_attack->GetComponent(),
@@ -88,34 +90,26 @@ ftxui::Component EnvelopeUI::GetComponent()
 	return _component;
 }
 
-void EnvelopeUI::UpdateComponent(bool clearDirty)
+void EnvelopeUI::UpdateComponent()
 {
-	_attack->UpdateComponent(clearDirty);
-	_decay->UpdateComponent(clearDirty);
-	_release->UpdateComponent(clearDirty);
-	_attackPeak->UpdateComponent(clearDirty);
-	_sustainPeak->UpdateComponent(clearDirty);
-
-	if (clearDirty)
-	{
-		this->ClearDirty();
-	}
+	_attack->UpdateComponent();
+	_decay->UpdateComponent();
+	_release->UpdateComponent();
+	_attackPeak->UpdateComponent();
+	_sustainPeak->UpdateComponent();
 }
 
-void EnvelopeUI::FromUI(Envelope& destination, bool clearDirty)
+void EnvelopeUI::FromUI(Envelope& destination)
 {
 	float attack, decay, release, attackPeak, sustainPeak;
 
-	_attack->FromUI(attack, clearDirty);
-	_decay->FromUI(decay, clearDirty);
-	_release->FromUI(release, clearDirty);
-	_attackPeak->FromUI(attackPeak, clearDirty);
-	_sustainPeak->FromUI(sustainPeak, clearDirty);
+	_attack->FromUI(attack);
+	_decay->FromUI(decay);
+	_release->FromUI(release);
+	_attackPeak->FromUI(attackPeak);
+	_sustainPeak->FromUI(sustainPeak);
 
 	destination.Set(attack, decay, 0, release, attackPeak, sustainPeak);
-
-	if (clearDirty)
-		this->ClearDirty();
 }
 
 void EnvelopeUI::ToUI(const Envelope& source)
@@ -129,6 +123,15 @@ bool EnvelopeUI::GetDirty() const
 		   _release->GetDirty() ||
 		   _attackPeak->GetDirty() ||
 		   _sustainPeak->GetDirty();
+}
+
+void EnvelopeUI::ClearDirty()
+{
+	_attack->ClearDirty();
+	_decay->ClearDirty();
+	_release->ClearDirty();
+	_attackPeak->ClearDirty();
+	_sustainPeak->ClearDirty();
 }
 
 #endif
