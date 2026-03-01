@@ -46,6 +46,8 @@ public:
 
 private:
 
+	bool _isDirty;
+
 	ftxui::Component _component;
 	ftxui::Component _signalInputContainer;
 	ftxui::Component _signalEffectsContainer;
@@ -74,10 +76,11 @@ private:
 
 SynthTabUI::SynthTabUI(const SynthSettings& synthSettings, const SignalChainSettings& settings)
 {
+	_isDirty = false;
 	_activeEditorUI = new ActiveEditorUI();
 
-	SignalNodeModelUI envelopeModel("Envelope", true, false, false, false);
-	SignalNodeModelUI oscillatorModel("Oscillator", true, false, false, false);
+	SignalNodeModelUI envelopeModel("Envelope", true, false, false, false, 0);
+	SignalNodeModelUI oscillatorModel("Oscillator", true, false, false, false, 0);
 
 	_pluginListUI = new ScrollViewerUI<CheckboxModelUI, CheckboxUI>("Airwin Plugins (airwin@github.com)", ftxui::Color::BlueLight, 0.005);
 	_effectsSignalChainUI = new ScrollViewerUI<SignalNodeModelUI, SignalNodeUI>("Signal Effects", ftxui::Color::GreenYellow);
@@ -105,10 +108,10 @@ SynthTabUI::SynthTabUI(const SynthSettings& synthSettings, const SignalChainSett
 		EffectUI* effectUI = new EffectUI(element.GetName(), element.GetCategory(), element.GetInfoText(), ftxui::Color::White);
 
 		// (MEMORY!) ~SynthTabUI
-		SignalNodeModelUI* signalModelUI = new SignalNodeModelUI(element.GetName(), true, true, true, true);
+		SignalNodeModelUI* signalModelUI = new SignalNodeModelUI(element.GetName(), true, true, true, true, index);
 
 		// (MEMORY!) ~SynthTabUI
-		CheckboxModelUI* checkboxModelUI = new CheckboxModelUI(element.GetName(), false);
+		CheckboxModelUI* checkboxModelUI = new CheckboxModelUI(element.GetName(), false, index);
 
 		// Plugin List UI
 		_pluginListUI->AddUI(*checkboxModelUI);
@@ -160,6 +163,8 @@ SynthTabUI::~SynthTabUI()
 
 void SynthTabUI::Initialize(const SignalChainSettings& initialValue)
 {
+	_editorContainer = ftxui::Container::Vertical({});
+
 	_signalEffectsContainer = ftxui::Container::Vertical({
 
 		// Signal Effects (ScrollViewerUI)
@@ -194,13 +199,12 @@ void SynthTabUI::Initialize(const SignalChainSettings& initialValue)
 		_signalChainContainer | ftxui::yflex_grow,
 
 		// Active Editor
-		_activeEditorUI->GetComponent()
+		_editorContainer
 	});
 }
 
 ftxui::Component SynthTabUI::GetComponent()
 {
-
 	return ftxui::Renderer(_component, [&] {
 		return _component->Render();
 	});
@@ -222,7 +226,17 @@ void SynthTabUI::UpdateComponent()
 	_effectsSignalChainUI->UpdateComponent();
 	_pluginListUI->UpdateComponent();
 
-	bool signalLayoutDirty = false;
+	// Envelope / Oscillator Signal Nodes
+	if (_oscillatorSignalUI->GetDirty())
+	{
+		_editorContainer->DetachAllChildren();
+		_editorContainer->Add(_oscillatorUI->GetComponent());
+	}
+	if (_envelopeSignalUI->GetDirty())
+	{
+		_editorContainer->DetachAllChildren();
+		_editorContainer->Add(_envelopeUI->GetComponent());
+	}
 
 	// Plugin List (Changes)
 	if (_pluginListUI->GetDirty())
@@ -247,11 +261,18 @@ void SynthTabUI::UpdateComponent()
 
 				// Model Update (we must update our copy)
 				_pluginModels->at(model.GetName())->SetIsChecked(model.GetIsChecked());
-			}
 
-			// Clear Dirty (Indexed)
-			_pluginListUI->ClearDirty(modelName);
+				// Check Active Editor
+				if (_activeEditorUI->GetEffect() == _effectUIs->at(modelName) && !model.GetIsChecked())
+				{
+					_activeEditorUI->SetEffect(nullptr);
+					_editorContainer->DetachAllChildren();
+				}
+			}
 		}
+
+		// Notify Parent (this may not be cleared for several 100 iterations)
+		_isDirty = true;
 	}
 
 	// Signal Chain (Changes)
@@ -279,35 +300,57 @@ void SynthTabUI::UpdateComponent()
 				{
 				case SignalNodeUI::UIAction::Edit:
 					_activeEditorUI->SetEffect(_effectUIs->at(signalNodeModelUI.GetName()));
+					_editorContainer->DetachAllChildren();
+					_editorContainer->Add(_activeEditorUI->GetComponent());
 					break;
 				case SignalNodeUI::UIAction::Remove:
 				{
 					// Plugin List (may change)
-					CheckboxModelUI model = *_pluginModels->at(signalNodeModelUI.GetName());
+					CheckboxModelUI* model = _pluginModels->at(signalNodeModelUI.GetName());
 
 					// -> RemoveUI
 					_effectsSignalChainUI->RemoveUI(signalNodeModelUI);
 
-					model.SetIsChecked(false);
+					model->SetIsChecked(false);
 
 					// Update Plugin List
-					//_pluginListUI->ToUI(model);
+					_pluginListUI->ToUI(model->GetName(), *model);
+
+					// Check Active Editor
+					if (_activeEditorUI->GetEffect() == _effectUIs->at(modelName))
+					{
+						_activeEditorUI->SetEffect(nullptr);
+						_editorContainer->DetachAllChildren();
+					}
 				}					
 				break;
+
+				// These are tricky to do in real time. We need to make sure to handle one thing
+				// at a time in this loop. Come back when the rest is finished.
 				case SignalNodeUI::UIAction::MoveDown:
-					//iter->second->SetOrder(iter->second->GetOrder() + 1);
+					//_effectsSignalChainUI->MoveDown(modelName);
+					_effectsSignalChainUI->ClearDirty(modelName);
 					break;
 				case SignalNodeUI::UIAction::MoveUp:
-					//iter->second->SetOrder(iter->second->GetOrder() - 1);
+					//_effectsSignalChainUI->MoveUp(modelName);
+					_effectsSignalChainUI->ClearDirty(modelName);
 					break;
 				default:
 					throw new std::exception("Unhandled UI Action:  SynthTabUI.h");
 				}
-
-				//lastAction = action;
 			}
 		}
+
+		// Notify Parent (this may not be cleared for several 100 iterations)
+		_isDirty = true;
 	}
+
+	// Signal Node UI's (Dirty Flag seems two-purposed. We might need two flags, one for needs update)
+	_oscillatorSignalUI->ClearDirty();
+	_envelopeSignalUI->ClearDirty();
+
+	_pluginListUI->ClearDirty();
+	_effectsSignalChainUI->ClearDirty();
 }
 
 void SynthTabUI::ToUI(const SignalChainSettings& source)
@@ -320,56 +363,80 @@ void SynthTabUI::FromUI(SignalChainSettings& destination)
 	destination.SignalClear();
 
 	// Effects (Enable / Disable)
-	//for (auto iter = _effectUIs->begin(); iter != _effectUIs->end(); ++iter)
-	//{
-	//	//// Enabled Status
-	//	//SignalNodeModelUI model("", false, 0);
-	//	//_signalModels->at(iter->first)->FromUI(model);
+	// 
+	for (int index = 0; index < _effectsSignalChainUI->GetUICount(); index++)
+	{
+		// Effect Name
+		std::string modelName = _effectsSignalChainUI->GetName(index);
 
-	//	//// Effect Settings
-	//	//SignalSettings effectSettings("", "", "", true);
-	//	//iter->second->FromUI(effectSettings);
+		// Model (local)
+		SignalNodeModelUI* model = _signalModels->at(modelName);
 
-	//	//// Enabled (part of the signal chain)
-	//	//if (model.GetEnabled())
-	//	//	destination.SignalAdd(effectSettings);
-	//}
+		// -> FromUI
+		_effectsSignalChainUI->FromUI(modelName, *model);
 
-	//OscillatorParameters oscillatorParameters = *destination.GetOscillatorParameters();
-	//Envelope envelope = *destination.GetOscillatorEnvelope();
-	//std::vector<std::string> pluginList;
-	//bool dummy;
-	//SignalNodeModelUI dummySignal("", true, 0);
+		if (model->GetEnabled())
+		{
+			// Effect Settings
+			SignalSettings settings;
+			_effectUIs->at(modelName)->FromUI(settings);
 
-	//_oscillatorUI->FromUI(oscillatorParameters);
-	////_pluginListUI->FromUI(pluginList);
-	//_envelopeUI->FromUI(envelope);
-	//_activeEditorUI->FromUI(dummy);
-	//_oscillatorSignalUI->FromUI(dummySignal);
-	//_envelopeSignalUI->FromUI(dummySignal);
+			// Add to signal
+			destination.SignalAdd(settings);
+		}
+	}
+
+	// Signal Input (settings)
+	OscillatorParameters oscillatorParameters = *destination.GetOscillatorParameters();
+	Envelope envelope = *destination.GetOscillatorEnvelope();
+
+	_oscillatorUI->FromUI(oscillatorParameters);
+	_envelopeUI->FromUI(envelope);
+
+	destination.UpdateOscillatorParameters(oscillatorParameters);
+	destination.UpdateOscillatorEnvelope(envelope);
 }
 
 bool SynthTabUI::GetDirty() const
 {
-	bool isDirty = false;
+	// This is left over from our UpdateComponent() function - which should have
+	// a much higher frequency than the ToUI / FromUI functions. This is controlled
+	// by the UIController.
+	//
+	bool isDirty = _isDirty;
 
+	// Plugin List
 	isDirty |= _pluginListUI->GetDirty();
+
+	// Signal Nodes (enabled / disabled)
+	isDirty |= _effectsSignalChainUI->GetDirty();
+	isDirty |= _oscillatorSignalUI->GetDirty();
+	isDirty |= _envelopeSignalUI->GetDirty();
 
 	// Active Effect Editor
 	isDirty |= _activeEditorUI->GetDirty();
-
-	// Signals Included (currently)
-	//for (auto iter = _signalUIs->begin(); iter != _signalUIs->end(); ++iter)
-	//{
-	//	if (iter->second)
-	//		isDirty = _signalUIs->at(iter->first)->GetDirty();
-	//}
+	
+	// Signal Input Editors
+	isDirty |= _oscillatorUI->GetDirty();
+	isDirty |= _envelopeUI->GetDirty();
 
 	return isDirty;
 }
 
 void SynthTabUI::ClearDirty()
 {
+	// Plugin List (enabled / disabled)
+	_pluginListUI->ClearDirty();
+
+	// Signal Nodes (enabled / disabled)
+	_effectsSignalChainUI->ClearDirty();
+	_oscillatorSignalUI->ClearDirty();
+	_envelopeSignalUI->ClearDirty();
+
+	// Effects (settings)
+	_activeEditorUI->ClearDirty();
+	_oscillatorUI->ClearDirty();
+	_envelopeUI->ClearDirty();
 }
 
 #endif

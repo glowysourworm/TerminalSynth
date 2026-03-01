@@ -136,7 +136,12 @@ ftxui::Component SignalNodeUI::GetComponent()
 
 void SignalNodeUI::UpdateComponent()
 {
-
+	// Mouse Leave
+	if (!_mainHover)
+	{
+		_uiAction->SetValue(UIAction::None);
+		_uiAction->Clear();
+	}
 }
 
 void SignalNodeUI::ToUI(const SignalNodeModelUI& source)

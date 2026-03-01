@@ -66,6 +66,15 @@ public:
 	int GetCount() const { return _signalChain->size(); }
 	int GetRegistryCount() const { return _completeList->size(); }
 
+	void UpdateOscillatorParameters(const OscillatorParameters& parameters)
+	{
+		_oscillatorParameters->Update(parameters);
+	}
+	void UpdateOscillatorEnvelope(const Envelope& envelope)
+	{
+		_oscillatorEnvelope->Set(envelope);
+	}
+
 	/// <summary>
 	/// Add entry to signal chain, not the registry
 	/// </summary>

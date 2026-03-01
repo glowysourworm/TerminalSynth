@@ -17,14 +17,16 @@ public:
 		_canEnable = false;
 		_canReorder = false;
 		_canRemove = false;
+		_order = 0;
 	}
-	SignalNodeModelUI(const std::string& name, bool enabled, bool canEnable, bool canReorder, bool canRemove)
+	SignalNodeModelUI(const std::string& name, bool enabled, bool canEnable, bool canReorder, bool canRemove, int order)
 	{
 		_name = new std::string(name);
 		_enabled = enabled;
 		_canEnable = canEnable;
 		_canReorder = canReorder;
 		_canRemove = canRemove;
+		_order = order;
 	}
 	SignalNodeModelUI(const SignalNodeModelUI& model)
 	{
@@ -33,6 +35,7 @@ public:
 		_canEnable = model.GetCanEnable();
 		_canReorder = model.GetCanReorder();
 		_canRemove = model.GetCanRemove();
+		_order = model.GetOrder();
 	}
 	~SignalNodeModelUI()
 	{
@@ -44,11 +47,13 @@ public:
 	bool GetCanEnable() const { return _canEnable; }
 	bool GetCanReorder() const { return _canReorder; }
 	bool GetCanRemove() const { return _canRemove; }
+	int GetOrder() const { return _order; }
 
 	void SetEnabled(bool value) { _enabled = value; }
 	void SetCanEnable(bool value) { _canEnable = value; }
 	void SetCanReorder(bool value) { _canReorder = value; }
 	void SetCanRemove(bool value) { _canRemove = value; }
+	void SetOrder(int value) { _order = value; }
 
 	void Update(const SignalNodeModelUI& model)
 	{
@@ -58,6 +63,7 @@ public:
 		_canEnable = model.GetCanEnable();
 		_canReorder = model.GetCanReorder();
 		_canRemove = model.GetCanRemove();
+		_order = model.GetOrder();
 	}
 
 	bool operator==(const SignalNodeModelUI& model) const { return IsEqual(model); }
@@ -71,7 +77,8 @@ private:
 			model.GetEnabled() == _enabled &&
 			model.GetCanEnable() == _canEnable &&
 			model.GetCanReorder() == _canReorder &&
-			model.GetCanRemove() == _canRemove;
+			model.GetCanRemove() == _canRemove &&
+			model.GetOrder() == _order;
 	}
 
 private:
@@ -81,6 +88,7 @@ private:
 	bool _canEnable;
 	bool _canReorder;
 	bool _canRemove;
+	int _order;
 };
 
 #endif

@@ -182,6 +182,7 @@ void EffectUI::ToUI(const SignalSettings& source)
 void EffectUI::FromUI(SignalSettings& destination)
 {
 	// Name (const), Category, Info Text
+	destination.SetName(*_name);
 	destination.SetCategory(*_category);
 	destination.SetInfoText(*_infoText);
 

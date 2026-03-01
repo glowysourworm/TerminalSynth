@@ -13,6 +13,7 @@ public:
 	~ModelUI() {}
 
 	virtual std::string GetName() const = 0;
+	virtual int GetOrder() const = 0;
 };
 
 #endif

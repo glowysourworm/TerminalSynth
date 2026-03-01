@@ -12,6 +12,14 @@ class SignalSettings
 {
 public:
 
+	SignalSettings()
+	{
+		_parameters = new std::vector<SignalParameter*>();
+		_name = new std::string("");
+		_category = new std::string("");
+		_infoText = new std::string("");
+		_isAirwinEffect = false;
+	}
 	SignalSettings(const std::string& name, const std::string& category, const std::string& infoText, bool isAirwinEffect)
 	{
 		_parameters = new std::vector<SignalParameter*>();
@@ -75,6 +83,11 @@ public:
 	{
 		_category->clear();
 		_category->append(value);
+	}
+	void SetName(const std::string& value)
+	{
+		_name->clear();
+		_name->append(value);
 	}
 
 	void Update(const SignalSettings& parameters)

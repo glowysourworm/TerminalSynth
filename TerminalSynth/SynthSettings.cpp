@@ -77,14 +77,20 @@ void SynthSettings::SetSoundBankSettings(const SoundBankSettings& parameters)
 	_soundBankSettings = new SoundBankSettings(parameters);
 }
 
-void SynthSettings::SetSignalChain(const SignalChainSettings& elements)
+void SynthSettings::SetSignalChain(const SignalChainSettings& settings)
 {
 	_signalChainRegistry->SignalClear();
 
-	for (int index = 0; index < elements.GetCount(); index++)
+	// Signal Input
+	_signalChainRegistry->UpdateOscillatorParameters(*settings.GetOscillatorParameters());
+	_signalChainRegistry->UpdateOscillatorEnvelope(*settings.GetOscillatorEnvelope());
+
+	// Signal Chain
+	for (int index = 0; index < settings.GetCount(); index++)
 	{
-		_signalChainRegistry->SignalAdd(elements.Get(index));
+		_signalChainRegistry->SignalAdd(settings.Get(index));
 	}
+
 	_isDirty = true;
 }
 void SynthSettings::SetEqualizerOutput(const EqualizerOutput& value)
