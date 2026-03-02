@@ -36,12 +36,21 @@ public:
 
 	void SetValue(float newValue) { _value = newValue; }
 
-	bool Update(const SignalParameter& parameter)
+	bool Update(const SignalParameter& parameter, bool overwrite)
 	{
-		if (parameter.GetName() != *_name)
+		if (parameter.GetName() != *_name && !overwrite)
 			throw new std::exception("Trying to update SignalParameter* with mismatching names");
 
 		bool isDirty = _value != parameter.GetValue();
+
+		// Complete Overwrite
+		if (overwrite && *_name != parameter.GetName())
+		{
+			_name->clear();
+			_name->append(parameter.GetName());
+
+			isDirty = true;
+		}		
 
 		_value = parameter.GetValue();
 

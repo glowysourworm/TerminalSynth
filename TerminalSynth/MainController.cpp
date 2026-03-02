@@ -12,7 +12,6 @@
 #include "UIController.h"
 #include <chrono>
 #include <functional>
-#include <string>
 #include <thread>
 #include <vector>
 
@@ -51,21 +50,12 @@ bool MainController::Initialize(SynthSettings* configuration, OutputSettings* pa
 	// RT AUDIO -> Open Stream (SynthSettings*)(PlaybackParameteres*) (INITIALIZE!)
 	success &= RtAudioController::OpenStream((void*)_userData);
 
-	// Airwindows Plugins:  Require sampling rate!
-	success &= effectRegistry->Initialize(parameters->GetSamplingRate());
-
 	// Synth Settings Effect Registry:  This will separate out the SignalBase* (which will not be present in the SynthSettings*) (linking issue)
 	//
 	std::vector<SignalSettings> registryList;
 
-	for (int index = 0; index < effectRegistry->GetCount(); index++)
-	{
-		std::string name = effectRegistry->GetName(index);
-		SignalSettings settings;
-		effectRegistry->GetEntry(name, settings);
-		
-		registryList.push_back(settings);
-	}
+	// Airwindows Plugins:  Require sampling rate!
+	success &= effectRegistry->Initialize(parameters->GetSamplingRate(), registryList);
 
 	// -> Initialize(..) (completes the configuration's registry)
 	configuration->GetSoundSettings()->Initialize(registryList);

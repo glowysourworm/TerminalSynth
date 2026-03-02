@@ -24,7 +24,7 @@ public:
 	void Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters);
 
 	// Update Configuration
-	void Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration);
+	void Update(SoundRegistry* effectRegistry, const SynthSettings* configuration);
 
 	// Sets midi notes on / off
 	void Set(int midiNumber, bool pressed, double absoluteTime, const SynthSettings* configuration);

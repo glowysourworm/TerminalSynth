@@ -27,7 +27,13 @@ public:
 	}
 	~SignalChainSettings()
 	{
-		this->Clear();
+		//MEMORY! ~SignalSettings
+		for (int index = 0; index < _chain->size(); index++)
+		{
+			delete _chain->at(index);
+		}
+
+		_chain->clear();
 
 		delete _chain;
 	}
@@ -45,6 +51,16 @@ public:
 	SignalSettings Get(int index) const
 	{
 		return *_chain->at(index);
+	}
+	SignalSettings Get(const std::string& name) const
+	{
+		for (int index = 0; index < _chain->size(); index++)
+		{
+			if (_chain->at(index)->GetName() == name)
+				return *_chain->at(index);
+		}
+
+		throw new std::exception("Signal chain settings not found:  SignalChainSettings.h");
 	}
 	void GetList(std::vector<std::string>& destination) const
 	{
@@ -74,41 +90,43 @@ public:
 		if (settings.GetCount() != _chain->size() && !overwrite)
 			throw new std::exception("Trying to update SignalChainSettings* with mismatching parameter sets");
 
-		// Must rebuild the chain
-		if (settings.GetCount() != _chain->size())
-		{
-			// MEMORY!
-			this->Clear();
-
-			// Rebuild
-			for (int index = 0; index < settings.GetCount(); index++)
-			{
-				// MEMORY! Clear(), ~SignalChainSettings
-				_chain->push_back(new SignalSettings(settings.Get(index)));
-			}
-
-			// Go ahead and return (isDirty) since we're done updating
-			return true;
-		}
-
 		bool isDirty = false;
 
-		for (int index = 0; index < _chain->size(); index++)
+		// Update
+		for (int index = 0; index < settings.GetCount(); index++)
 		{
-			isDirty |= _chain->at(index)->Update(settings.Get(index));
+			// Update (larger in size)
+			if (index >= _chain->size())
+			{
+				_chain->push_back(new SignalSettings(settings.Get(index)));			// MEMORY!
+				isDirty = true;
+			}
+
+			// Update (entries not aligned or matched)
+			else if (_chain->at(index)->GetName() != settings.Get(index).GetName())
+			{
+				if (!overwrite)
+					throw new std::exception("Trying to overwrite protected parameter:  SignalChainSettings.h");
+
+				isDirty |= _chain->at(index)->Update(settings.Get(index), overwrite);
+			}
+
+			// Update
+			else
+				isDirty |= _chain->at(index)->Update(settings.Get(index), false);
+		}
+
+		// Remove (excess elements)
+		for (int index = _chain->size() - 1; index >= settings.GetCount(); index--)
+		{
+			delete _chain->at(index);		// MEMORY! ~SignalSettings
+
+			_chain->pop_back();
+
+			isDirty = true;
 		}
 
 		return isDirty;
-	}
-	void Clear()
-	{
-		//MEMORY! ~SignalSettings
-		for (int index = 0; index < _chain->size(); index++)
-		{
-			delete _chain->at(index);
-		}
-
-		_chain->clear();
 	}
 
 private:

@@ -92,19 +92,71 @@ public:
 		_name->append(value);
 	}
 
-	bool Update(const SignalSettings& parameters)
+	bool Update(const SignalSettings& parameters, bool overwrite)
 	{
-		if (parameters.GetName() != *_name)
+		if (parameters.GetName() != *_name && !overwrite)
 			throw new std::exception("Trying to update SignalParameters* with mismatching names");
 
-		if (parameters.GetParameterCount() != _parameters->size())
+		if (parameters.GetParameterCount() != _parameters->size() && !overwrite)
 			throw new std::exception("Trying to update SignalParameters* with mismatching parameter sets");
 
 		bool isDirty = false;
 
+		if (parameters.GetName() != *_name && overwrite)
+		{
+			_name->clear();
+			_name->append(parameters.GetName());
+
+			isDirty = true;
+		}
+
+		isDirty |= *_name != parameters.GetName();
+		isDirty |= *_category != parameters.GetCategory();
+		isDirty |= *_infoText != parameters.GetInfoText();
+		isDirty |= _isAirwinEffect != parameters.GetIsAirwinEffect();
+
+		_name->clear();
+		_category->clear();
+		_infoText->clear();
+
+		_name->append(parameters.GetName());
+		_category->append(parameters.GetCategory());
+		_infoText->append(parameters.GetInfoText());
+		
+		_isAirwinEffect = parameters.GetIsAirwinEffect();
+
+		// Update
 		for (int index = 0; index < parameters.GetParameterCount(); index++)
 		{
-			isDirty |= _parameters->at(index)->Update(parameters.GetParameter(index));
+			// Update (larger in size)
+			if (index >= _parameters->size())
+			{
+				_parameters->push_back(new SignalParameter(parameters.GetParameter(index)));			// MEMORY!
+				isDirty = true;
+			}
+
+			// Update (entries not aligned or matched)
+			else if (_parameters->at(index)->GetName() != parameters.GetParameter(index).GetName())
+			{
+				if (!overwrite)
+					throw new std::exception("Trying to overwrite protected parameter:  SignalSettings.h");
+
+				isDirty |= _parameters->at(index)->Update(parameters.GetParameter(index), overwrite);
+			}
+
+			// Update
+			else
+				isDirty |= _parameters->at(index)->Update(parameters.GetParameter(index), false);
+		}
+
+		// Remove (excess elements)
+		for (int index = _parameters->size() - 1; index >= parameters.GetParameterCount(); index--)
+		{
+			delete _parameters->at(index);		// MEMORY! ~SignalParameter
+
+			_parameters->pop_back();
+
+			isDirty = true;
 		}
 
 		return isDirty;

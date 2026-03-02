@@ -363,8 +363,8 @@ void SynthTabUI::ToUI(const SoundSettings& source)
 
 void SynthTabUI::FromUI(SoundSettings& destination)
 {
-	// Clear Existing
-	destination.GetSignalChain()->Clear();
+	// OPTIMIZE!
+	SignalChainSettings signalChainSettings;
 
 	// Effects (Enable / Disable)
 	// 
@@ -379,16 +379,20 @@ void SynthTabUI::FromUI(SoundSettings& destination)
 		// -> FromUI
 		_effectsSignalChainUI->FromUI(modelName, *model);
 
+		// Effect Settings
+		SignalSettings settings;
+
 		if (model->GetEnabled())
 		{
-			// Effect Settings
-			SignalSettings settings;
 			_effectUIs->at(modelName)->FromUI(settings);
-
-			// Add to signal
-			destination.GetSignalChain()->Add(settings);
 		}
+
+		// Add to signal
+		signalChainSettings.Add(settings);
 	}
+
+	// OPTIMIZE!
+	destination.GetSignalChain()->Update(signalChainSettings, true);
 
 	// Signal Input (settings)
 	OscillatorParameters oscillatorParameters = *destination.GetOscillatorParameters();

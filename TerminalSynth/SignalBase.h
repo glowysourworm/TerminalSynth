@@ -125,6 +125,11 @@ public:
 		return _settings->GetParameterMax(index);
 	}
 
+	SignalSettings GetSettings() const
+	{
+		return *_settings;
+	}
+
 	// Function should be called to allow override to process (this->Update(..))
 	virtual void UpdateParameter(int index, float value)
 	{

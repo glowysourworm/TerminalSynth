@@ -24,7 +24,7 @@ public:
 	~SynthPlaybackDevice();
 
 	bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters) override;
-	bool Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration) override;
+	bool Update(SoundRegistry* effectRegistry, const SynthSettings* configuration) override;
 	bool SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration) override;
 
 	int WritePlaybackBuffer(
@@ -94,7 +94,7 @@ bool SynthPlaybackDevice<TSignal>::Initialize(const SoundRegistry* effectRegistr
 }
 
 template<SignalValue TSignal>
-bool SynthPlaybackDevice<TSignal>::Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration)
+bool SynthPlaybackDevice<TSignal>::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
 	_synth->Update(effectRegistry, configuration);
 

@@ -26,7 +26,7 @@ public:
 	~MidiPlaybackDevice();
 
 	bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters) override;
-	bool Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration) override;
+	bool Update(SoundRegistry* effectRegistry, const SynthSettings* configuration) override;
 	bool GetLastOutput() const override;
 	bool SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration) override;
 	int WritePlaybackBuffer(
@@ -130,7 +130,7 @@ bool MidiPlaybackDevice<TSignal>::Initialize(const SoundRegistry* effectRegistry
 }
 
 template<SignalValue TSignal>
-bool MidiPlaybackDevice<TSignal>::Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration)
+bool MidiPlaybackDevice<TSignal>::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
 	_synth->Update(effectRegistry, configuration);
 

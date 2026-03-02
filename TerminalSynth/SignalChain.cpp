@@ -14,10 +14,8 @@ SignalChain::SignalChain()
 
 SignalChain::~SignalChain()
 {
-	for (int index = 0; index < _chain->size(); index++)
-	{
-		delete _chain->at(index);
-	}
+	// DO NOT DELETE: SignalBase* (these are handled by the SoundRegistry*)
+	//
 
 	delete _chain;
 }
@@ -29,29 +27,31 @@ void SignalChain::Initialize(const SoundRegistry* effectRegistry, const SignalCh
 	{
 		SignalSettings settings = signalChainSettings->Get(index);
 
-		// MEMORY! ~SignalChain (see SoundRegistry*)
-		SignalBase* effect = effectRegistry->CreateEffect(settings.GetName());
+		// Get an instance from the SoundRegistry* cache (DO NOT DELETE!)
+		SignalBase* effect = effectRegistry->Checkout(settings.GetName());
 
 		_chain->push_back(effect);
 	}
 }
-void SignalChain::Update(const SoundRegistry* effectRegistry, const SignalChainSettings& signalChainSettings)
+void SignalChain::Update(SoundRegistry* effectRegistry, const SignalChainSettings& signalChainSettings)
 {
-	// MEMORY! Delete current instances (TBD, needs better management)
-	for (int index = 0; index < _chain->size(); index++)
+	// Checkin (preserve memory cache)
+	for (int index = _chain->size() - 1; index >= 0; index--)
 	{
-		delete _chain->at(index);
+		effectRegistry->Checkin(_chain->at(index));
+
+		_chain->pop_back();
 	}
 
-	_chain->clear();
-
-	// Add
+	// Checkout (from registry)
 	for (int index = 0; index < signalChainSettings.GetCount(); index++)
 	{
 		SignalSettings settings = signalChainSettings.Get(index);
-		SignalBase* effect = effectRegistry->CreateEffect(settings.GetName());
 
-		// THIS UPDATE PORTION OF THE METHOD COULD BE MANAGED BY THE CONTROLLERS!
+		// DO NOT DELETE! (these are all handled by the SoundRegistry*)
+		SignalBase* effect = effectRegistry->Checkout(settings.GetName());
+
+		// OPTIMIZE!
 		effect->Update(settings);
 
 		_chain->push_back(effect);
