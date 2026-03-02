@@ -6,6 +6,7 @@
 #include "Envelope.h"
 #include "OscillatorParameters.h"
 #include "PlaybackFrame.h"
+#include "SignalChain.h"
 #include "WaveTable.h"
 
 class SynthNote
@@ -37,6 +38,7 @@ private:
 	OscillatorParameters* _parameters;
 	Envelope* _envelope;
 	WaveTable* _waveTable;
+	SignalChain* _effectsChain;
 
 	unsigned int _midiNumber;
 };

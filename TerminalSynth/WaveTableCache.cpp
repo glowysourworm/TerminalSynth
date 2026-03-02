@@ -116,7 +116,7 @@ bool WaveTableCache::Initialize_Oscillators(const SynthSettings* synthSettings, 
 			for (int oscillatorType = 0; oscillatorType <= (int)BuiltInOscillators::SynthesizedStringPluck; oscillatorType++)
 			{
 				float frequency = TerminalSynth::GetMidiFrequency(midiNumber);
-				OscillatorParameters parameters(OscillatorType::BuiltIn, (BuiltInOscillators)oscillatorType, "", "", frequency, SIGNAL_LOW, SIGNAL_HIGH, Envelope());
+				OscillatorParameters parameters(OscillatorType::BuiltIn, (BuiltInOscillators)oscillatorType, "", "", frequency, SIGNAL_LOW, SIGNAL_HIGH);
 
 				// (MEMORY!) ~WaveTableCache (Also, note oversampling factor!) (this is propagated using the second sampling rate in WaveTable*)
 				WTCacheKey_Oscillator* cacheKey = new WTCacheKey_Oscillator(parameters, midiNumber, outputSettings->GetSamplingRate() * synthSettings->GetOversamplingFactor());

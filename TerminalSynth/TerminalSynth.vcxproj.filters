@@ -410,6 +410,9 @@
     <ClInclude Include="ModelUI.h">
       <Filter>Header Files\ModelUI</Filter>
     </ClInclude>
+    <ClInclude Include="SoundSettings.h">
+      <Filter>Header Files\Model</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="RtAudioUserData.h">

@@ -3,8 +3,8 @@
 #include "SignalChain.h"
 #include "SoundRegistry.h"
 #include "Synth.h"
-#include "SynthSettings.h"
 #include "SynthNotePool.h"
+#include "SynthSettings.h"
 
 Synth::Synth(const SynthSettings* configuration, unsigned int numberOfChannels, unsigned int samplingRate)
 {
@@ -22,14 +22,14 @@ Synth::~Synth()
 void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
 {
 	_pianoNotes = new SynthNotePool(configuration, parameters, 10);
-	_postProcessing->Initialize(effectRegistry, configuration->GetSignalChainRegistry(), parameters);
+	_postProcessing->Initialize(effectRegistry, configuration->GetSoundSettings()->GetPostProcessing(), parameters);
 }
 
 void Synth::Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
-	_postProcessing->Update(effectRegistry, configuration->GetSignalChainRegistry());
-	_pianoNotes->Update(*configuration->GetSignalChainRegistry()->GetOscillatorParameters(), 
-						*configuration->GetSignalChainRegistry()->GetOscillatorEnvelope(), _samplingRate);
+	_postProcessing->Update(effectRegistry, configuration->GetSoundSettings()->GetPostProcessing());
+	_pianoNotes->Update(*configuration->GetSoundSettings()->GetOscillatorParameters(), 
+						*configuration->GetSoundSettings()->GetOscillatorEnvelope(), _samplingRate);
 }
 
 void Synth::Set(int midiNumber, bool pressed, double absoluteTime, const SynthSettings* configuration)

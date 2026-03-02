@@ -6,7 +6,6 @@
 #include "OutputSettings.h"
 #include "RtAudioController.h"
 #include "RtAudioUserData.h"
-#include "SignalChainSettings.h"
 #include "SignalSettings.h"
 #include "SoundRegistry.h"
 #include "SynthSettings.h"
@@ -62,13 +61,14 @@ bool MainController::Initialize(SynthSettings* configuration, OutputSettings* pa
 	for (int index = 0; index < effectRegistry->GetCount(); index++)
 	{
 		std::string name = effectRegistry->GetName(index);
-		SignalSettings settings = effectRegistry->GetSettings(name);
+		SignalSettings settings;
+		effectRegistry->GetEntry(name, settings);
 		
 		registryList.push_back(settings);
 	}
 
 	// -> Initialize(..) (completes the configuration's registry)
-	configuration->GetSignalChainRegistry()->Initialize(registryList);
+	configuration->GetSoundSettings()->Initialize(registryList);
 
 	// -> Initilize(..) (the RT Audio playback can now be unblocked)
 	_userData->Initialize(configuration, effectRegistry);

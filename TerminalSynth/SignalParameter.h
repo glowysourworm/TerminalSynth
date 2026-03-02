@@ -36,12 +36,16 @@ public:
 
 	void SetValue(float newValue) { _value = newValue; }
 
-	void Update(const SignalParameter& parameter)
+	bool Update(const SignalParameter& parameter)
 	{
 		if (parameter.GetName() != *_name)
 			throw new std::exception("Trying to update SignalParameter* with mismatching names");
 
+		bool isDirty = _value != parameter.GetValue();
+
 		_value = parameter.GetValue();
+
+		return isDirty;
 	}
 
 private:

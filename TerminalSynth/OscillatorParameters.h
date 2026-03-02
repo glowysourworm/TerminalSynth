@@ -4,7 +4,6 @@
 #define OSCILLATOR_PARAMETERS_H
 
 #include "Constant.h"
-#include "Envelope.h"
 #include "Utility.h"
 #include <string>
 #include <type_traits>
@@ -33,8 +32,7 @@ public:
 						 const std::string& soundName,
 						 float frequency, 
 						 float signalLow, 
-						 float signalHigh, 
-						 const Envelope& envelope)
+						 float signalHigh)
 	{
 		_type = type;
 		_builtInType = builtInType;
@@ -106,8 +104,21 @@ public:
 		return hash1;
 	}
 
-	void Update(const OscillatorParameters& source)
+	/// <summary>
+	/// Updates parameters; and returns true if there were changes
+	/// </summary>
+	bool Update(const OscillatorParameters& source)
 	{
+		bool isDirty = false;
+
+		isDirty |= *_soundBank != source.GetSoundBank();
+		isDirty |= *_soundName != source.GetSoundName();
+		isDirty |= _frequency != source.GetFrequency();
+		isDirty |= _signalLow != source.GetSignalLow();
+		isDirty |= _signalHigh != source.GetSignalHigh();
+		isDirty |= _type != source.GetType();
+		isDirty |= _builtInType != source.GetBuiltInType();
+		
 		_soundBank->clear();
 		_soundName->clear();
 
@@ -118,6 +129,8 @@ public:
 		_builtInType = source.GetBuiltInType();
 		_soundBank->append(source.GetSoundBank());
 		_soundName->append(source.GetSoundName());
+
+		return isDirty;
 	}
 
 	bool operator==(const OscillatorParameters& parameters)

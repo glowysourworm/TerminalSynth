@@ -5,8 +5,8 @@
 
 #include "EqualizerOutput.h"
 #include "OutputSettings.h"
-#include "SignalChainSettings.h"
 #include "SoundBankSettings.h"
+#include "SoundSettings.h"
 #include "SynthNoteMap.h"
 #include "WindowsKeyCodes.h"
 #include <string>
@@ -21,9 +21,10 @@ public:
 
 	bool IsDirty() const;
 	void ClearDirty();
+	void SetDirty();
 
 	void SetSoundBankSettings(const SoundBankSettings& parameters);
-	void SetSignalChain(const SignalChainSettings& elements);
+	void SetSoundSettings(const SoundSettings& settings);
 	void SetEqualizerOutput(const EqualizerOutput& value);
 	void SetOutputSettings(const OutputSettings& value, bool updateDevicePortion, bool updateRTPortion);
 
@@ -47,7 +48,7 @@ public:
 	WindowsKeyCodes GetKeyCode(int midiNote) const;
 
 	SoundBankSettings* GetSoundBankSettings() const;
-	SignalChainSettings* GetSignalChainRegistry() const;
+	SoundSettings* GetSoundSettings() const;
 	OutputSettings* GetOutputSettings() const;
 	EqualizerOutput* GetEqualizerOutput() const;
 
@@ -73,7 +74,7 @@ private:
 
 	float _oversamplingFactor;
 
-	SignalChainSettings* _signalChainRegistry;				// Signal Chain (with registry loaded!)
+	SoundSettings* _soundSettings;				// Signal Chain, Post Processing, Effect Registry, Oscillator, Envelope
 
 	// Output
 	float _leftRight;

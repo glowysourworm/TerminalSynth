@@ -3,6 +3,7 @@
 #include "MainUI.h"
 #include "OutputUI.h"
 #include "SignalChainSettings.h"
+#include "SoundSettings.h"
 #include "SynthInformationUI.h"
 #include "SynthSettings.h"
 #include "SynthTabUI.h"
@@ -24,10 +25,10 @@ MainUI::MainUI(const SynthSettings& configuration)
 		"Midi"
 	});
 
-	_signalChainSettings = configuration.GetSignalChainRegistry();
+	_signalChainSettings = configuration.GetSoundSettings()->GetSignalChain();
 	_synthInformationUI = new SynthInformationUI("Terminal Synth", ftxui::Color::GreenYellow);
 	_outputUI = new OutputUI("Output", ftxui::Color::Green);
-	_synthTabUI = new SynthTabUI(configuration, *configuration.GetSignalChainRegistry());
+	_synthTabUI = new SynthTabUI(configuration);
 
 	_scrollY = new float(0);
 	_tabIndex = new int(0);
@@ -47,11 +48,11 @@ void MainUI::Initialize(const SynthSettings& configuration)
 {
 	_synthInformationUI->Initialize(*configuration.GetOutputSettings());
 	_outputUI->Initialize(configuration);
-	_synthTabUI->Initialize(*configuration.GetSignalChainRegistry());	
+	_synthTabUI->Initialize(*configuration.GetSoundSettings());	
 
 	// Airwin Registry List
 	std::vector<std::string> pluginList;
-	configuration.GetSignalChainRegistry()->GetRegistryList(pluginList);
+	configuration.GetSoundSettings()->GetEffectRegistry()->GetList(pluginList);
 
 	auto midiSettings = ftxui::Container::Horizontal({
 
@@ -117,16 +118,21 @@ void MainUI::UpdateComponent()
 	}
 }
 
-void MainUI::FromUI(SynthSettings& configuration)
+void MainUI::FromUI(SynthSettings& synthSettings)
 {
-	SignalChainSettings signalChain;
+	SoundSettings soundSettings = *synthSettings.GetSoundSettings();
 
 	// Signal Chain
-	_synthTabUI->FromUI(signalChain);
-	configuration.SetSignalChain(signalChain);
+	_synthTabUI->FromUI(soundSettings);
+
+	bool isDirty = synthSettings.GetSoundSettings()->Update(soundSettings);		// Nested setting changed
+
+	// Only alert listeners if we have a dirty status
+	if (isDirty)
+		synthSettings.SetDirty();
 
 	// Output
-	_outputUI->FromUI(configuration);
+	_outputUI->FromUI(synthSettings);
 }
 
 void MainUI::ToUI(const SynthSettings& configuration)

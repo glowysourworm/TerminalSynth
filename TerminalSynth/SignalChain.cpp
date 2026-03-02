@@ -14,6 +14,11 @@ SignalChain::SignalChain()
 
 SignalChain::~SignalChain()
 {
+	for (int index = 0; index < _chain->size(); index++)
+	{
+		delete _chain->at(index);
+	}
+
 	delete _chain;
 }
 
@@ -23,21 +28,28 @@ void SignalChain::Initialize(const SoundRegistry* effectRegistry, const SignalCh
 	for (int index = 0; index < signalChainSettings->GetCount(); index++)
 	{
 		SignalSettings settings = signalChainSettings->Get(index);
-		SignalBase* effect = effectRegistry->GetEffect(settings.GetName());
+
+		// MEMORY! ~SignalChain (see SoundRegistry*)
+		SignalBase* effect = effectRegistry->CreateEffect(settings.GetName());
 
 		_chain->push_back(effect);
 	}
 }
-
 void SignalChain::Update(const SoundRegistry* effectRegistry, const SignalChainSettings* signalChainSettings)
 {
+	// MEMORY! Delete current instances (TBD, needs better management)
+	for (int index = 0; index < _chain->size(); index++)
+	{
+		delete _chain->at(index);
+	}
+
 	_chain->clear();
 
 	// Add
 	for (int index = 0; index < signalChainSettings->GetCount(); index++)
 	{
 		SignalSettings settings = signalChainSettings->Get(index);
-		SignalBase* effect = effectRegistry->GetEffect(settings.GetName());
+		SignalBase* effect = effectRegistry->CreateEffect(settings.GetName());
 
 		// THIS UPDATE PORTION OF THE METHOD COULD BE MANAGED BY THE CONTROLLERS!
 		effect->Update(settings);

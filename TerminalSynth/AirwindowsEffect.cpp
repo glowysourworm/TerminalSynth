@@ -55,6 +55,9 @@ AirwindowsEffect::AirwindowsEffect(AudioEffectX* plugin, const std::string& name
 
 AirwindowsEffect::~AirwindowsEffect()
 {
+	// MEMORY! (see SoundRegistry) (these effect instances are not managed by the registry)
+	delete _effect;
+
 	delete _category;
 	delete _whatText;
 

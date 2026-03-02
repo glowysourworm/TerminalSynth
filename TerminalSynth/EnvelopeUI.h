@@ -50,6 +50,15 @@ EnvelopeUI::EnvelopeUI()
 	_sustainPeak = new SliderUI(0.65f, 0.01f, 1.0f, 0.01f, "Sustain", "Sustain      {:.2f}", ftxui::Color::White);
 }
 
+EnvelopeUI::EnvelopeUI(const Envelope& initialValue)
+{
+	_attack = new SliderUI(initialValue.GetAttack(), 0.01f, 1.0f, 0.01f, "Attack", "Attack   (s) {:.2f}", ftxui::Color::White);
+	_decay = new SliderUI(initialValue.GetDecay(), 0.01f, 2.0f, 0.01f, "Decay", "Decay    (s) {:.2f}", ftxui::Color::White);
+	_release = new SliderUI(initialValue.GetRelease(), 0.01f, 3.0f, 0.01f, "Release", "Release  (s) {:.2f}", ftxui::Color::White);
+	_attackPeak = new SliderUI(initialValue.GetAttackPeak(), 0.01f, 1.0f, 0.01f, "Limit", "Limit        {:.2f}", ftxui::Color::White);
+	_sustainPeak = new SliderUI(initialValue.GetSustainPeak(), 0.01f, 1.0f, 0.01f, "Sustain", "Sustain      {:.2f}", ftxui::Color::White);
+}
+
 EnvelopeUI::~EnvelopeUI()
 {
 	UIBase::~UIBase();
@@ -71,7 +80,7 @@ void EnvelopeUI::Initialize(const Envelope& envelope)
 
 	_component = ftxui::Container::Vertical(
 	{
-		ftxui::Renderer([&] { return ftxui::text("Envelope"); }),
+		ftxui::Renderer([&] { return ftxui::text("Envelope") | ftxui::color(ftxui::Color::GreenYellow); }),
 		ftxui::Renderer([&] { return ftxui::separator(); }),
 
 		_attack->GetComponent(),
@@ -82,7 +91,7 @@ void EnvelopeUI::Initialize(const Envelope& envelope)
 
 		_attackPeak->GetComponent(),
 		_sustainPeak->GetComponent()
-	});
+	}) | ftxui::border | ftxui::xflex_grow;
 }
 
 ftxui::Component EnvelopeUI::GetComponent()

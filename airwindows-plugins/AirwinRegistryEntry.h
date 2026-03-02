@@ -1,11 +1,14 @@
 #pragma once
 
 #include "airwin_consolidated_base.h"
+#include <functional>
 #include <string>
 
 class AirwinRegistryEntry
 {
 public:
+
+    using AirwinEffectConstructor = std::function<AudioEffectX* (float samplingRate)>;
 
     AirwinRegistryEntry(
         const std::string& name,
@@ -15,9 +18,9 @@ public:
         const std::string& whatText,
         int numberParams,
         const std::string& unusedDate,
-        AudioEffectX* effect)
+        AirwinEffectConstructor effectConstructor)
     {
-        _effect = effect;
+        _effectConstructor = effectConstructor;
         _name = new std::string(name);
         _category = new std::string(category);
         _whatText = new std::string(whatText);
@@ -26,7 +29,7 @@ public:
     }
     AirwinRegistryEntry(const AirwinRegistryEntry& copy)
     {
-        _effect = copy.GetEffect();
+        _effectConstructor = copy.GetEffectConstructor();
         _name = new std::string(copy.GetName());
         _category = new std::string(copy.GetCategory());
         _whatText = new std::string(copy.GetWhatText());
@@ -49,7 +52,11 @@ public:
     std::string GetWhatText() const { return *_whatText; }
     bool IsMono() const { return _isMono; }
     int GetNumberOfParams() const { return _numberOfParams; }
-    AudioEffectX* GetEffect() const { return _effect; }
+    AudioEffectX* CreateEffect(float samplingRate) const { return _effectConstructor(samplingRate); }
+
+protected:
+
+    AirwinEffectConstructor GetEffectConstructor() const { return _effectConstructor; }
 
 private:
 
@@ -58,5 +65,5 @@ private:
     std::string* _whatText;
     bool _isMono;    
     int _numberOfParams;
-    AudioEffectX* _effect;
+    AirwinEffectConstructor _effectConstructor;
 };

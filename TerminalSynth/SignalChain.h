@@ -21,7 +21,9 @@ public:
 	~SignalChain();
 
 	void Initialize(const SoundRegistry* effectRegistry, const SignalChainSettings* signalChainSettings, const OutputSettings* parameters);
+
 	void Update(const SoundRegistry* effectRegistry, const SignalChainSettings* signalChainSettings);
+
 	void SetFrame(PlaybackFrame* frame, float absoluteTime);
 	bool HasOutput(float absoluteTime) const;
 

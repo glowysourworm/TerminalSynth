@@ -3,8 +3,6 @@
 #ifndef SIGNAL_CHAIN_SETTINGS_H
 #define SIGNAL_CHAIN_SETTINGS_H
 
-#include "Envelope.h"
-#include "OscillatorParameters.h"
 #include "SignalSettings.h"
 #include <exception>
 #include <string>
@@ -16,142 +14,107 @@ public:
 
 	SignalChainSettings()
 	{
-		_completeList = new std::vector<SignalSettings*>();
-		_signalChain = new std::vector<SignalSettings*>();
-		_oscillatorParameters = new OscillatorParameters();
-		_oscillatorEnvelope = new Envelope();
+		_chain = new std::vector<SignalSettings*>();
 	}
 	SignalChainSettings(const SignalChainSettings& copy)
 	{
-		_completeList = new std::vector<SignalSettings*>();
-		_signalChain = new std::vector<SignalSettings*>();
-		_oscillatorParameters = new OscillatorParameters(*copy.GetOscillatorParameters());
-
-		for (int index = 0; index < copy.GetRegistryCount(); index++)
-		{
-			_completeList->push_back(new SignalSettings(copy.GetFromRegistry(index)));
-		}
+		_chain = new std::vector<SignalSettings*>();
+		
 		for (int index = 0; index < copy.GetCount(); index++)
 		{
-			_signalChain->push_back(new SignalSettings(copy.Get(index)));
+			_chain->push_back(new SignalSettings(copy.Get(index)));
 		}
 	}
 	~SignalChainSettings()
 	{
-		for (int index = 0; index < _signalChain->size(); index++)
-		{
-			delete _signalChain->at(index);
-		}
-		for (int index = 0; index < _completeList->size(); index++)
-		{
-			delete _completeList->at(index);
-		}
+		this->Clear();
 
-		delete _signalChain;
-		delete _completeList;
-		delete _oscillatorParameters;
-		delete _oscillatorEnvelope;
+		delete _chain;
 	}
 
-	void Initialize(const std::vector<SignalSettings>& signalChainRegistry)
+	void Initialize(const std::vector<SignalSettings>& signalChain)
 	{
-		for (int index = 0; index < signalChainRegistry.size(); index++)
+		for (int index = 0; index < signalChain.size(); index++)
 		{
-			_completeList->push_back(new SignalSettings(signalChainRegistry.at(index)));
+			_chain->push_back(new SignalSettings(signalChain.at(index)));
 		}
 	}
 
-	OscillatorParameters* GetOscillatorParameters() const { return _oscillatorParameters; }
-	Envelope* GetOscillatorEnvelope() const { return _oscillatorEnvelope; }
-	int GetCount() const { return _signalChain->size(); }
-	int GetRegistryCount() const { return _completeList->size(); }
+	int GetCount() const { return _chain->size(); }
 
-	void UpdateOscillatorParameters(const OscillatorParameters& parameters)
+	SignalSettings Get(int index) const
 	{
-		_oscillatorParameters->Update(parameters);
+		return *_chain->at(index);
 	}
-	void UpdateOscillatorEnvelope(const Envelope& envelope)
+	void GetList(std::vector<std::string>& destination) const
 	{
-		_oscillatorEnvelope->Set(envelope);
-	}
-
-	/// <summary>
-	/// Add entry to signal chain, not the registry
-	/// </summary>
-	void SignalAdd(const SignalSettings& settings)
-	{
-		_signalChain->push_back(new SignalSettings(settings));
-	}
-	bool SignalContains(const std::string& name) const
-	{
-		for (int index = 0; index < _signalChain->size(); index++)
+		for (int index = 0; index < _chain->size(); index++)
 		{
-			if (_signalChain->at(index)->GetName() == name)
+			destination.push_back(_chain->at(index)->GetName());
+		}
+	}
+	
+	void Add(const SignalSettings& settings)
+	{
+		// MEMORY! Clear(), ~SignalChainSettings
+		_chain->push_back(new SignalSettings(settings));
+	}
+	bool Contains(const std::string& name) const
+	{
+		for (int index = 0; index < _chain->size(); index++)
+		{
+			if (_chain->at(index)->GetName() == name)
 				return true;
 		}
 
 		return false;
 	}
-	SignalSettings Get(int index) const
+	bool Update(const SignalChainSettings& settings, bool overwrite)
 	{
-		return *_signalChain->at(index);
-	}
-	SignalSettings GetFromRegistry(int index) const
-	{
-		return *_completeList->at(index);
-	}
-	SignalSettings GetFromRegistry(const std::string& name) const
-	{
-		for (int index = 0; index < _completeList->size(); index++)
+		if (settings.GetCount() != _chain->size() && !overwrite)
+			throw new std::exception("Trying to update SignalChainSettings* with mismatching parameter sets");
+
+		// Must rebuild the chain
+		if (settings.GetCount() != _chain->size())
 		{
-			if (_completeList->at(index)->GetName() == name)
-				return *_completeList->at(index);
+			// MEMORY!
+			this->Clear();
+
+			// Rebuild
+			for (int index = 0; index < settings.GetCount(); index++)
+			{
+				// MEMORY! Clear(), ~SignalChainSettings
+				_chain->push_back(new SignalSettings(settings.Get(index)));
+			}
+
+			// Go ahead and return (isDirty) since we're done updating
+			return true;
 		}
 
-		throw new std::exception("Unable to find name of effect in registry:  SignalChainSettings.h");
-	}
-	void GetRegistryList(std::vector<std::string>& destination) const
-	{
-		for (int index = 0; index < _completeList->size(); index++)
-		{
-			destination.push_back(_completeList->at(index)->GetName());
-		}
-	}
-	void SignalRemove(int index)
-	{
-		_signalChain->erase(_signalChain->begin() + index);
-	}
-	void SignalUpdate(int index, const SignalSettings& settings)
-	{
-		if (settings.GetParameterCount() != _signalChain->size())
-			throw new std::exception("Trying to update SignalParameters* with mismatching parameter sets");
+		bool isDirty = false;
 
-		_signalChain->at(index)->Update(settings);
-	}
-	void SignalClear()
-	{
-		for (int index = 0; index < _signalChain->size(); index++)
+		for (int index = 0; index < _chain->size(); index++)
 		{
-			delete _signalChain->at(index);
+			isDirty |= _chain->at(index)->Update(settings.Get(index));
 		}
 
-		_signalChain->clear();
+		return isDirty;
+	}
+	void Clear()
+	{
+		//MEMORY! ~SignalSettings
+		for (int index = 0; index < _chain->size(); index++)
+		{
+			delete _chain->at(index);
+		}
+
+		_chain->clear();
 	}
 
 private:
 
-	// Oscillator
-	OscillatorParameters* _oscillatorParameters; 
-
-	// Envelope
-	Envelope* _oscillatorEnvelope;
-
-	// Effect Registry:  There was a circular reference coupling SignalBase* to SynthSettings*. So, this list is just 
-	//					 loose strings for having a lookup. This is the complete list of SignalSettings*.
-	std::vector<SignalSettings*>* _completeList;
-
-	// Current included SignalBase* effects in post processing
-	std::vector<SignalSettings*>* _signalChain;
+	// Signal chain effects settings in post processing, synth note signal chain, or as part of the registry
+	std::vector<SignalSettings*>* _chain;
 };
 
 #endif

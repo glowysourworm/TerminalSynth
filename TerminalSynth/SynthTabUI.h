@@ -16,6 +16,7 @@
 #include "SignalNodeModelUI.h"
 #include "SignalNodeUI.h"
 #include "SignalSettings.h"
+#include "SoundSettings.h"
 #include "SynthSettings.h"
 #include "UIBase.h"
 #include <exception>
@@ -27,19 +28,19 @@
 #include <string>
 #include <utility>
 
-class SynthTabUI : public UIBase<SignalChainSettings>
+class SynthTabUI : public UIBase<SoundSettings>
 {
 public:
 
-	SynthTabUI(const SynthSettings& synthSettings, const SignalChainSettings& settings);
+	SynthTabUI(const SynthSettings& synthSettings);
 	~SynthTabUI();
 
-	void Initialize(const SignalChainSettings& initialValue) override;
+	void Initialize(const SoundSettings& initialValue) override;
 	ftxui::Component GetComponent() override;
 	void UpdateComponent() override;
 
-	void ToUI(const SignalChainSettings& source) override;
-	void FromUI(SignalChainSettings& destination) override;
+	void ToUI(const SoundSettings& source) override;
+	void FromUI(SoundSettings& destination) override;
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
@@ -74,7 +75,7 @@ private:
 	std::map<std::string, EffectUI*>* _effectUIs;
 };
 
-SynthTabUI::SynthTabUI(const SynthSettings& synthSettings, const SignalChainSettings& settings)
+SynthTabUI::SynthTabUI(const SynthSettings& synthSettings)
 {
 	_isDirty = false;
 	_activeEditorUI = new ActiveEditorUI();
@@ -94,15 +95,17 @@ SynthTabUI::SynthTabUI(const SynthSettings& synthSettings, const SignalChainSett
 	_pluginModels = new std::map<std::string, CheckboxModelUI*>();
 	_effectUIs = new std::map<std::string, EffectUI*>();
 
-	_oscillatorUI->Initialize(*settings.GetOscillatorParameters());
-	_envelopeUI->Initialize(*settings.GetOscillatorEnvelope());
+	_oscillatorUI->Initialize(*synthSettings.GetSoundSettings()->GetOscillatorParameters());
+	_envelopeUI->Initialize(*synthSettings.GetSoundSettings()->GetOscillatorEnvelope());
 	_oscillatorSignalUI->Initialize(oscillatorModel);
 	_envelopeSignalUI->Initialize(envelopeModel);
 
+	SignalChainSettings* effectRegistry = synthSettings.GetSoundSettings()->GetEffectRegistry();
+
 	// Effect Registry
-	for (int index = 0; index < settings.GetRegistryCount(); index++)
+	for (int index = 0; index < effectRegistry->GetCount(); index++)
 	{
-		auto element = settings.GetFromRegistry(index);
+		auto element = effectRegistry->Get(index);
 
 		// (MEMORY!) ~SynthTabUI
 		EffectUI* effectUI = new EffectUI(element.GetName(), element.GetCategory(), element.GetInfoText(), ftxui::Color::White);
@@ -161,7 +164,7 @@ SynthTabUI::~SynthTabUI()
 	delete _envelopeSignalUI;
 }
 
-void SynthTabUI::Initialize(const SignalChainSettings& initialValue)
+void SynthTabUI::Initialize(const SoundSettings& initialValue)
 {
 	_editorContainer = ftxui::Container::Vertical({});
 
@@ -199,7 +202,7 @@ void SynthTabUI::Initialize(const SignalChainSettings& initialValue)
 		_signalChainContainer | ftxui::yflex_grow,
 
 		// Active Editor
-		_editorContainer
+		_editorContainer | ftxui::xflex_grow
 	});
 }
 
@@ -353,14 +356,15 @@ void SynthTabUI::UpdateComponent()
 	_effectsSignalChainUI->ClearDirty();
 }
 
-void SynthTabUI::ToUI(const SignalChainSettings& source)
+void SynthTabUI::ToUI(const SoundSettings& source)
 {
 	
 }
 
-void SynthTabUI::FromUI(SignalChainSettings& destination)
+void SynthTabUI::FromUI(SoundSettings& destination)
 {
-	destination.SignalClear();
+	// Clear Existing
+	destination.GetSignalChain()->Clear();
 
 	// Effects (Enable / Disable)
 	// 
@@ -382,19 +386,19 @@ void SynthTabUI::FromUI(SignalChainSettings& destination)
 			_effectUIs->at(modelName)->FromUI(settings);
 
 			// Add to signal
-			destination.SignalAdd(settings);
+			destination.GetSignalChain()->Add(settings);
 		}
 	}
 
 	// Signal Input (settings)
 	OscillatorParameters oscillatorParameters = *destination.GetOscillatorParameters();
-	Envelope envelope = *destination.GetOscillatorEnvelope();
+	Envelope envelope = *destination.GetOscillatorEnvelope();	
 
 	_oscillatorUI->FromUI(oscillatorParameters);
 	_envelopeUI->FromUI(envelope);
 
-	destination.UpdateOscillatorParameters(oscillatorParameters);
-	destination.UpdateOscillatorEnvelope(envelope);
+	destination.GetOscillatorParameters()->Update(oscillatorParameters);
+	destination.GetOscillatorEnvelope()->Update(envelope);
 }
 
 bool SynthTabUI::GetDirty() const

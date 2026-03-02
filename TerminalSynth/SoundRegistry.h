@@ -4,11 +4,13 @@
 #define EFFECT_REGISTRY_H
 
 #include "AirwindowsEffect.h"
+#include "OutputSettings.h"
 #include "SignalBase.h"
 #include "SignalParameter.h"
 #include "SignalSettings.h"
 #include <AirwinRegistry.h>
 #include <AirwinRegistryEntry.h>
+#include <airwin_consolidated_base.h>
 #include <exception>
 #include <map>
 #include <string>
@@ -30,8 +32,10 @@ public:
 
 	int GetCount() const;
 	std::string GetName(int index) const;
-	SignalSettings GetSettings(const std::string& name) const;
-	SignalBase* GetEffect(const std::string& name) const;
+	void GetEntry(const std::string& name, SignalSettings& destination) const;
+
+	// MEMORY! (user must manage this one!)
+	SignalBase* CreateEffect(const std::string& name) const;
 
 private:
 
@@ -39,17 +43,15 @@ private:
 	AirwinRegistry* _airwinEffectRegistry;
 
 	// Created from Airwin / Local effects 
-	std::map<std::string, SignalBase*>* _effectsByName;
+	std::map<std::string, AirwinRegistryEntry*>* _effectsByName;
 
-	// SignalBase* -> Signal Chain Settings (ALL EFFECTS)
-	std::map<SignalBase*, SignalSettings*>* _signalChainAll;
+	float _samplingRate;
 };
 
 SoundRegistry::SoundRegistry()
 {
 	_airwinEffectRegistry = new AirwinRegistry();
-	_effectsByName = new std::map<std::string, SignalBase*>();
-	_signalChainAll = new std::map<SignalBase*, SignalSettings*>();
+	_effectsByName = new std::map<std::string, AirwinRegistryEntry*>();
 }
 
 SoundRegistry::~SoundRegistry()
@@ -58,19 +60,16 @@ SoundRegistry::~SoundRegistry()
 	{
 		delete iter->second;
 	}
-	for (auto iter = _signalChainAll->begin(); iter != _signalChainAll->end(); ++iter)
-	{
-		delete iter->second;
-	}
 
 	delete _airwinEffectRegistry;
 	delete _effectsByName;
-	delete _signalChainAll;
 }
 
 bool SoundRegistry::Initialize(float samplingRate)
 {
-	// LOAD AIRWIN PLUGINS! (This may take a couple seconds)
+	_samplingRate = samplingRate;
+
+	// LOAD AIRWIN PLUGINS!
 	bool success = _airwinEffectRegistry->Load(samplingRate);
 
 	std::vector<std::string> pluginList;
@@ -83,26 +82,8 @@ bool SoundRegistry::Initialize(float samplingRate)
 		// Airwin Plugin
 		AirwinRegistryEntry* pluginEntry = _airwinEffectRegistry->GetPlugin(pluginList[index]);
 
-		// -> AirwindowsEffect (wrapper)
-		AirwindowsEffect* effect = new AirwindowsEffect(pluginEntry->GetEffect(), pluginList[index], pluginEntry->GetCategory(), pluginEntry->GetWhatText());
-
-		// -> Signal Chain
-		SignalSettings* parameters = new SignalSettings(pluginList.at(index), effect->GetCategory(), effect->GetWhatText(), true);
-
-		for (int paramIndex = 0; paramIndex < effect->GetParameterCount(); paramIndex++)
-		{
-			SignalParameter parameter(
-				effect->GetParameterName(paramIndex),
-				effect->GetParameterValue(paramIndex),
-				effect->GetParameterMin(paramIndex),
-				effect->GetParameterMax(paramIndex));
-
-			parameters->AddParameter(parameter);
-		}
-
 		// Store to registry maps
-		_effectsByName->insert(std::make_pair(pluginList.at(index), effect));
-		_signalChainAll->insert(std::make_pair(effect, parameters));
+		_effectsByName->insert(std::make_pair(pluginList.at(index), pluginEntry));
 	}
 
 	return true;
@@ -110,7 +91,7 @@ bool SoundRegistry::Initialize(float samplingRate)
 
 int SoundRegistry::GetCount() const
 {
-	return _signalChainAll->size();
+	return _effectsByName->size();
 }
 
 std::string SoundRegistry::GetName(int index) const
@@ -126,16 +107,58 @@ std::string SoundRegistry::GetName(int index) const
 	throw new std::exception("Effect not found by index:  SoundRegistry.h");
 }
 
-SignalSettings SoundRegistry::GetSettings(const std::string& name) const
+void SoundRegistry::GetEntry(const std::string& name, SignalSettings& destination) const
 {
-	SignalBase* effect = _effectsByName->at(name);
+	AirwinRegistryEntry* entry = _effectsByName->at(name);
 
-	return *_signalChainAll->at(effect);
+	destination.SetName(name);
+	destination.SetCategory(entry->GetCategory());
+	destination.SetInfoText(entry->GetWhatText());
+
+	// Have to create an instance here to initialize the parameters
+	AudioEffectX* effect = entry->CreateEffect(_samplingRate);
+	AirwindowsEffect* wrappedEffect = new AirwindowsEffect(effect, name, entry->GetCategory(), entry->GetWhatText());
+
+	for (int paramIndex = 0; paramIndex < wrappedEffect->GetParameterCount(); paramIndex++)
+	{
+		SignalParameter parameter(
+			wrappedEffect->GetParameterName(paramIndex),
+			wrappedEffect->GetParameterValue(paramIndex),
+			wrappedEffect->GetParameterMin(paramIndex),
+			wrappedEffect->GetParameterMax(paramIndex));
+
+		destination.AddParameter(parameter);
+	}
+
+	// MEMORY! ~AirwindowsEffect (deletes AudioEffectX*)
+	delete wrappedEffect;
 }
 
-SignalBase* SoundRegistry::GetEffect(const std::string& name) const
+SignalBase* SoundRegistry::CreateEffect(const std::string& name) const
 {
-	return _effectsByName->at(name);
+	AirwinRegistryEntry* regEntry = _effectsByName->at(name);
+
+	// MEMORY! (these are user managed!)
+	AudioEffectX* pluginInstance = regEntry->CreateEffect(_samplingRate);
+
+	// -> AirwindowsEffect (wrapper)
+	AirwindowsEffect* effect = new AirwindowsEffect(pluginInstance, name, regEntry->GetCategory(), regEntry->GetWhatText());
+
+	// -> Signal Chain
+	SignalSettings* parameters = new SignalSettings(name,regEntry->GetCategory(), regEntry->GetWhatText(), true);
+
+	for (int paramIndex = 0; paramIndex < effect->GetParameterCount(); paramIndex++)
+	{
+		SignalParameter parameter(
+			effect->GetParameterName(paramIndex),
+			effect->GetParameterValue(paramIndex),
+			effect->GetParameterMin(paramIndex),
+			effect->GetParameterMax(paramIndex));
+
+		parameters->AddParameter(parameter);
+	}
+
+	return effect;
 }
 
 #endif

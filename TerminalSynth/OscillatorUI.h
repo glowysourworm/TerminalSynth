@@ -11,6 +11,7 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
 #include <string>
 #include <vector>
@@ -102,13 +103,13 @@ void OscillatorUI::Initialize(const OscillatorParameters& parameters)
 	auto soundNameItemsUI = ftxui::Dropdown(_soundNameItems, _soundNameSelectedIndex->GetRef());
 
 	_component = ftxui::Container::Vertical({
+			ftxui::Renderer([&] { return ftxui::text("Oscillator") | ftxui::color(ftxui::Color::GreenYellow); }),
+			ftxui::Renderer([&] { return ftxui::separator(); }),
 			soundSourceChoiceUI,
 			oscillatorItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 0; }),
 			soundBankItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 1; }),
 			soundNameItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 1; }),
 		}) | ftxui::CatchEvent([&] (ftxui::Event event) {
-
-
 
 			// Passthrough
 			if (event.is_mouse())
@@ -116,7 +117,8 @@ void OscillatorUI::Initialize(const OscillatorParameters& parameters)
 
 			// Cancel
 			return true;
-		});
+
+		}) | ftxui::border;
 }
 
 ftxui::Component OscillatorUI::GetComponent()

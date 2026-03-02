@@ -49,6 +49,8 @@ public:
 			delete _parameters->at(index);
 		}
 
+		_parameters->clear();
+
 		delete _parameters;
 		delete _name;
 		delete _category;
@@ -90,7 +92,7 @@ public:
 		_name->append(value);
 	}
 
-	void Update(const SignalSettings& parameters)
+	bool Update(const SignalSettings& parameters)
 	{
 		if (parameters.GetName() != *_name)
 			throw new std::exception("Trying to update SignalParameters* with mismatching names");
@@ -98,10 +100,14 @@ public:
 		if (parameters.GetParameterCount() != _parameters->size())
 			throw new std::exception("Trying to update SignalParameters* with mismatching parameter sets");
 
+		bool isDirty = false;
+
 		for (int index = 0; index < parameters.GetParameterCount(); index++)
 		{
-			_parameters->at(index)->Update(parameters.GetParameter(index));
+			isDirty |= _parameters->at(index)->Update(parameters.GetParameter(index));
 		}
+
+		return isDirty;
 	}
 
 private:

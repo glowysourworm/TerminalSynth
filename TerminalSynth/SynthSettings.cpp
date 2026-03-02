@@ -5,6 +5,7 @@
 #include "OutputSettings.h"
 #include "SignalChainSettings.h"
 #include "SoundBankSettings.h"
+#include "SoundSettings.h"
 #include "SynthNoteMap.h"
 #include "SynthSettings.h"
 #include "WindowsKeyCodes.h"
@@ -15,7 +16,7 @@ SynthSettings::SynthSettings(OutputSettings* deviceSettings, const std::string& 
 	_keyMap = new SynthNoteMap();
 	_isDirty = false;
 
-	_signalChainRegistry = new SignalChainSettings();
+	_soundSettings = new SoundSettings();
 	_outputSettings = deviceSettings;
 	_equalizerOutput = new EqualizerOutput();	
 	_soundBankSettings = new SoundBankSettings(soundBankDirectory);		// May fail during a try / catch. Settings will be empty, but useable.
@@ -34,7 +35,7 @@ SynthSettings::SynthSettings(const SynthSettings& copy)
 		delete _keyMap;
 
 	delete _soundBankSettings;
-	delete _signalChainRegistry;
+	delete _soundSettings;
 	delete _outputSettings;
 	delete _equalizerOutput;
 
@@ -46,7 +47,7 @@ SynthSettings::SynthSettings(const SynthSettings& copy)
 	_midiLow = copy.GetMidiLow();
 	_midiHigh = copy.GetMidiHigh();
 	
-	_signalChainRegistry = new SignalChainSettings(*copy.GetSignalChainRegistry());
+	_soundSettings = new SoundSettings(*copy.GetSoundSettings());
 
 	_keyMap = new SynthNoteMap(copy.GetNoteMap());
 
@@ -58,7 +59,7 @@ SynthSettings::~SynthSettings()
 	if (_keyMap != nullptr)
 		delete _keyMap;
 
-	delete _signalChainRegistry;
+	delete _soundSettings;
 	delete _outputSettings;
 	delete _equalizerOutput;
 	delete _soundBankSettings;
@@ -72,26 +73,20 @@ void SynthSettings::ClearDirty()
 	_isDirty = false;
 }
 
+void SynthSettings::SetDirty()
+{
+	// Some change to a nested object caused dirty status
+	_isDirty = true;		
+}
+
 void SynthSettings::SetSoundBankSettings(const SoundBankSettings& parameters)
 {
 	_soundBankSettings = new SoundBankSettings(parameters);
 }
 
-void SynthSettings::SetSignalChain(const SignalChainSettings& settings)
+void SynthSettings::SetSoundSettings(const SoundSettings& settings)
 {
-	_signalChainRegistry->SignalClear();
-
-	// Signal Input
-	_signalChainRegistry->UpdateOscillatorParameters(*settings.GetOscillatorParameters());
-	_signalChainRegistry->UpdateOscillatorEnvelope(*settings.GetOscillatorEnvelope());
-
-	// Signal Chain
-	for (int index = 0; index < settings.GetCount(); index++)
-	{
-		_signalChainRegistry->SignalAdd(settings.Get(index));
-	}
-
-	_isDirty = true;
+	_isDirty |= _soundSettings->Update(settings);
 }
 void SynthSettings::SetEqualizerOutput(const EqualizerOutput& value)
 {
@@ -132,9 +127,9 @@ SoundBankSettings* SynthSettings::GetSoundBankSettings() const
 {
 	return _soundBankSettings;
 }
-SignalChainSettings* SynthSettings::GetSignalChainRegistry() const
+SoundSettings* SynthSettings::GetSoundSettings() const
 {
-	return _signalChainRegistry;
+	return _soundSettings;
 }
 
 OutputSettings* SynthSettings::GetOutputSettings() const
