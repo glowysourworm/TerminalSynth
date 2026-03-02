@@ -7,6 +7,9 @@
 #include "OscillatorParameters.h"
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
+#include "SignalChain.h"
+#include "SignalChainSettings.h"
+#include "SoundRegistry.h"
 #include "SynthNote.h"
 #include "SynthNoteCache.h"
 #include "SynthSettings.h"
@@ -19,11 +22,11 @@ class SynthNotePool
 {
 public:
 
-	SynthNotePool(const SynthSettings* configuration, const OutputSettings* parameters, int capacity);
+	SynthNotePool(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* settings, int capacity);
 	~SynthNotePool();
 
 	// Update Configuration
-	void Update(const OscillatorParameters& parameters, const Envelope& envelope, unsigned int samplingRate);
+	void Update(const SoundRegistry* effectRegistry, const OscillatorParameters& parameters, const Envelope& envelope, const SignalChainSettings& signalChainSettings, unsigned int samplingRate);
 
 	/// <summary>
 	/// Sets midi note to either engaged / disengaged. Returns true if there are enough voice slots
@@ -73,6 +76,7 @@ private:
 
 	Envelope* _envelope;
 	OscillatorParameters* _oscillatorParameters;
+	SignalChain* _signalChain;
 	bool _hasStaleParameters;
 
 	// Capacity-sized map, will hold notes up to the user capacity (should be 10, for 10 active voices)

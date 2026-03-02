@@ -18,10 +18,15 @@ public:
 	/// NOT BE DELETED!
 	/// </summary>
 	/// <param name="parameters">Parameters for the oscillator</param>
+	/// <param name="envelope">Envelope for the output of the note. This is also used in the signal chain for the note.</param>
+	/// <param name="signalChain">The SignalBase* chain for the note's processing. THIS SHOULD NOT BE DELETED!</param>
 	/// <param name="waveTable">WaveTable* sound source. THIS SHOULD NOT BE DELETED! (~WaveTableCache)</param>
 	/// <param name="midiNumber">Midi number for this note</param>
-	/// <param name="samplingRate">Sampling rate for this note</param>
-	SynthNote(const OscillatorParameters& parameters, const Envelope& envelope, WaveTable* waveTable, unsigned int midiNumber);
+	SynthNote(const OscillatorParameters& parameters,
+			  const Envelope& envelope,
+			  SignalChain* signalChain,
+			  WaveTable* waveTable,
+			  unsigned int midiNumber);
 	~SynthNote();
 
 	unsigned int GetMidiNumber() const;

@@ -3,6 +3,9 @@
 #include "OscillatorParameters.h"
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
+#include "SignalChain.h"
+#include "SignalChainSettings.h"
+#include "SoundRegistry.h"
 #include "SynthNote.h"
 #include "SynthNoteCache.h"
 #include "SynthNotePool.h"
@@ -15,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-SynthNotePool::SynthNotePool(const SynthSettings* configuration, const OutputSettings* settings, int capacity)
+SynthNotePool::SynthNotePool(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* settings, int capacity)
 {
 	_capacity = capacity;
 	_systemSamplingRate = settings->GetSamplingRate();
@@ -26,9 +29,11 @@ SynthNotePool::SynthNotePool(const SynthSettings* configuration, const OutputSet
 	_envelope = new Envelope(*configuration->GetSoundSettings()->GetOscillatorEnvelope());
 	_oscillatorParameters = new OscillatorParameters(*configuration->GetSoundSettings()->GetOscillatorParameters());
 	_hasStaleParameters = false;
+	_signalChain = new SignalChain();
 
 	// Initialize (CHECK SOUND BANKS!) (NO LOGGING!)
 	_waveTableCache->Initialize(configuration, settings);
+	_signalChain->Initialize(effectRegistry, configuration->GetSoundSettings()->GetSignalChain(), settings);
 }
 
 SynthNotePool::~SynthNotePool()
@@ -41,11 +46,12 @@ SynthNotePool::~SynthNotePool()
 	delete _oscillatorParameters;
 }
 
-void SynthNotePool::Update(const OscillatorParameters& parameters, const Envelope& envelope, unsigned int samplingRate)
+void SynthNotePool::Update(const SoundRegistry* effectRegistry, const OscillatorParameters& parameters, const Envelope& envelope, const SignalChainSettings& signalChainSettings, unsigned int samplingRate)
 {
 	_systemSamplingRate = samplingRate;
 	_oscillatorParameters->Update(parameters);
 	_envelope->Update(envelope);
+	_signalChain->Update(effectRegistry, signalChainSettings);
 
 	_hasStaleParameters = true;
 }
@@ -107,7 +113,7 @@ bool SynthNotePool::SetNote(int midiNumber, bool pressed, double absoluteTime) c
 					WaveTable* waveTable = _waveTableCache->Get(parameters, midiNumber);
 
 					// Synth note cache will handle these
-					note = _synthNoteCache->Add(parameters, *_envelope, waveTable, midiNumber);
+					note = _synthNoteCache->Add(parameters, *_envelope, _signalChain, waveTable, midiNumber);
 				}
 			}
 			else
@@ -116,7 +122,7 @@ bool SynthNotePool::SetNote(int midiNumber, bool pressed, double absoluteTime) c
 				WaveTable* waveTable = _waveTableCache->Get(parameters, midiNumber);
 
 				// Synth note cache will handle these
-				note = _synthNoteCache->Add(parameters, *_envelope, waveTable, midiNumber);
+				note = _synthNoteCache->Add(parameters, *_envelope, _signalChain, waveTable, midiNumber);
 			}
 
 			note->Engage(absoluteTime);

@@ -1,23 +1,30 @@
 ﻿#include "Envelope.h"
 #include "OscillatorParameters.h"
 #include "PlaybackFrame.h"
+#include "SignalChain.h"
 #include "SynthNote.h"
 #include "WaveTable.h"
 
-SynthNote::SynthNote(const OscillatorParameters& parameters, const Envelope& envelope, WaveTable* waveTable, unsigned int midiNumber)
+SynthNote::SynthNote(const OscillatorParameters& parameters, 
+					 const Envelope& envelope, 
+					 SignalChain* signalChain, 
+					 WaveTable* waveTable, 
+					 unsigned int midiNumber)
 {
 	_midiNumber = midiNumber;
 	_waveTable = waveTable;
+	_effectsChain = signalChain;
 	_envelope = new Envelope(envelope);
 	_parameters = new OscillatorParameters(parameters);
 }
 
 SynthNote::~SynthNote()
 {
-	// DO NOTE DELETE:  WaveTable*  
+	// DO NOTE DELETE:  WaveTable*, SignalChain*
 	//
-	// These are sound sources, and are handled by the wave table cache
+	// These are sound sources, and are handled by the wave table cache and effects registry
 	//
+
 
 	delete _envelope;
 	delete _parameters;
@@ -44,13 +51,16 @@ void SynthNote::AddSample(PlaybackFrame* frame, float absoluteTime)
 	// Create Sample
 	this->GetSample(&noteFrame, absoluteTime);
 
+	// Add Effects Chain
+	_effectsChain->SetFrame(&noteFrame, absoluteTime);
+
 	// Add Output
 	frame->AddFrame(&noteFrame);
 }
 
 bool SynthNote::HasOutput(float absoluteTime)
 {
-	return _envelope->HasOutput(absoluteTime) && _waveTable->HasOutput(_envelope->GetEngageTime(), absoluteTime);
+	return (_envelope->HasOutput(absoluteTime) || _effectsChain->HasOutput(absoluteTime)) && _waveTable->HasOutput(_envelope->GetEngageTime(), absoluteTime);
 }
 
 void SynthNote::Engage(float absoluteTime)

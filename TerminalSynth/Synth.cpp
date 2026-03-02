@@ -21,15 +21,18 @@ Synth::~Synth()
 
 void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
 {
-	_pianoNotes = new SynthNotePool(configuration, parameters, 10);
+	_pianoNotes = new SynthNotePool(effectRegistry, configuration, parameters, 10);
 	_postProcessing->Initialize(effectRegistry, configuration->GetSoundSettings()->GetPostProcessing(), parameters);
 }
 
 void Synth::Update(const SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
-	_postProcessing->Update(effectRegistry, configuration->GetSoundSettings()->GetPostProcessing());
-	_pianoNotes->Update(*configuration->GetSoundSettings()->GetOscillatorParameters(), 
-						*configuration->GetSoundSettings()->GetOscillatorEnvelope(), _samplingRate);
+	_postProcessing->Update(effectRegistry, *configuration->GetSoundSettings()->GetPostProcessing());
+	_pianoNotes->Update(effectRegistry, 
+						*configuration->GetSoundSettings()->GetOscillatorParameters(), 
+						*configuration->GetSoundSettings()->GetOscillatorEnvelope(),
+						*configuration->GetSoundSettings()->GetSignalChain(),
+						_samplingRate);
 }
 
 void Synth::Set(int midiNumber, bool pressed, double absoluteTime, const SynthSettings* configuration)

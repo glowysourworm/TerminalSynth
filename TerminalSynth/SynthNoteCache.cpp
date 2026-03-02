@@ -1,5 +1,6 @@
 #include "Envelope.h"
 #include "OscillatorParameters.h"
+#include "SignalChain.h"
 #include "SynthNote.h"
 #include "SynthNoteCache.h"
 #include "WaveTable.h"
@@ -30,12 +31,12 @@ SynthNoteCache::~SynthNoteCache()
 	delete _cache;
 }
 
-SynthNote* SynthNoteCache::Add(const OscillatorParameters& parameters, const Envelope& envelope, WaveTable* waveTable, unsigned int midiNumber)
+SynthNote* SynthNoteCache::Add(const OscillatorParameters& parameters, const Envelope& envelope, SignalChain* signalChain, WaveTable* waveTable, unsigned int midiNumber)
 {
 	size_t hashCode = parameters.GetHashCode();
 
 	// (MEMORY!) ~SynthNoteCache (for the WaveTable*, see ~WaveTableCache)
-	SynthNote* note = new SynthNote(parameters, envelope, waveTable, midiNumber);
+	SynthNote* note = new SynthNote(parameters, envelope, signalChain, waveTable, midiNumber);
 
 	if (_cache->contains(hashCode))
 	{

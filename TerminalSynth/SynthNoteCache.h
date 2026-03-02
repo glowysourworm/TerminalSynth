@@ -5,6 +5,7 @@
 
 #include "Envelope.h"
 #include "OscillatorParameters.h"
+#include "SignalChain.h"
 #include "SynthNote.h"
 #include "WaveTable.h"
 #include <map>
@@ -20,7 +21,7 @@ public:
 	/// <summary>
 	/// Sets synth note in the cache using the provided parameters. The wave table should NOT BE DELETED!
 	/// </summary>
-	SynthNote* Add(const OscillatorParameters& parameters, const Envelope& envelope, WaveTable* waveTable, unsigned int midiNumber);
+	SynthNote* Add(const OscillatorParameters& parameters, const Envelope& envelope, SignalChain* signalChain, WaveTable* waveTable, unsigned int midiNumber);
 
 	/// <summary>
 	/// Returns true if the synth note is in the cache
