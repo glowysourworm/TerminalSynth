@@ -64,8 +64,33 @@ public:
 	virtual void FromUI(T* destination) = 0;
 
 	/// <summary>
-	/// Forces component to update itself, recreating any variables that it needs for
-	/// the drawing code to render it. This will be called in real time.
+	/// Process one cycle of the UI. This will allow capture of action flags between UI components
+	/// that need to process before UpdateComponent / FromUI are called. 
+	/// </summary>
+	virtual void Tick() = 0;
+
+	/// <summary>
+	/// Services pending action for the UI. This must be run when the HasPendingAction returns true.
+	/// You can choose how to utilize the pending action flag; but it must be servicable from the
+	/// top-down controller method.
+	/// </summary>
+	virtual void ServicePendingAction() = 0;
+
+	/// <summary>
+	/// Returns status flag for pending UI actions. This must be cleared before UpdateComponent() 
+	/// is called. 
+	/// </summary>
+	virtual bool HasPendingAction() const = 0;
+
+	/// <summary>
+	/// Clears pending action flag for the component. This should be called by the direct parent
+	/// component.
+	/// </summary>
+	virtual void ClearPendingAction() = 0;
+
+	/// <summary>
+	/// Forces component to update itself, using action flags and dirty status to setup the
+	/// proper UI state for drawing (which uses FTXUI).
 	/// </summary>
 	virtual void UpdateComponent() = 0;
 

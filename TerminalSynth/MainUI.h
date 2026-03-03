@@ -22,7 +22,10 @@ public:
 
 	void Initialize(const SynthSettings& initialValue) override;
 	ftxui::Component GetComponent() override;
+
+	void ServicePendingAction() override;
 	void UpdateComponent() override;
+	void Tick() override;
 
 	void FromUI(SynthSettings& configuration) override;
 	void FromUI(SynthSettings* configuration) override;
@@ -32,6 +35,9 @@ public:
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
+
+	bool HasPendingAction() const override;
+	void ClearPendingAction() override;
 
 private:
 

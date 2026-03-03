@@ -20,7 +20,10 @@ public:
 
 	void Initialize(const CheckboxModelUI& initialValue) override;
 	ftxui::Component GetComponent() override;
+
+	void ServicePendingAction() override;
 	void UpdateComponent() override;
+	void Tick() override;
 
 	void FromUI(CheckboxModelUI& destination) override;
 	void FromUI(CheckboxModelUI* destination) override;
@@ -29,6 +32,9 @@ public:
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
+
+	bool HasPendingAction() const override;
+	void ClearPendingAction() override;
 
 private:
 
@@ -67,7 +73,15 @@ ftxui::Component CheckboxUI::GetComponent()
 	return _component;
 }
 
+void CheckboxUI::ServicePendingAction()
+{
+}
+
 void CheckboxUI::UpdateComponent()
+{
+}
+
+void CheckboxUI::Tick()
 {
 }
 
@@ -100,6 +114,15 @@ bool CheckboxUI::GetDirty() const
 void CheckboxUI::ClearDirty()
 {
 	_isDirty = false;
+}
+
+bool CheckboxUI::HasPendingAction() const
+{
+	return false;
+}
+
+void CheckboxUI::ClearPendingAction()
+{
 }
 
 #endif

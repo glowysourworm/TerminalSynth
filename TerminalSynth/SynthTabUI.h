@@ -37,19 +37,23 @@ public:
 
 	void Initialize(const SoundSettings& initialValue) override;
 	ftxui::Component GetComponent() override;
+
+	void ServicePendingAction() override;
 	void UpdateComponent() override;
+	void Tick() override;
 
 	void ToUI(const SoundSettings& source) override;
 	void ToUI(const SoundSettings* source) override;
 	void FromUI(SoundSettings& destination) override;
 	void FromUI(SoundSettings* destination) override;
 
+	bool HasPendingAction() const override;
+	void ClearPendingAction() override;
+
 	bool GetDirty() const override;
 	void ClearDirty() override;
 
 private:
-
-	bool _isDirty;
 
 	ftxui::Component _component;
 	ftxui::Component _signalInputContainer;
@@ -79,7 +83,6 @@ private:
 
 SynthTabUI::SynthTabUI(const SynthSettings& synthSettings)
 {
-	_isDirty = false;
 	_activeEditorUI = new ActiveEditorUI();
 
 	SignalNodeModelUI envelopeModel("Envelope", true, false, false, false, 0);
@@ -215,36 +218,28 @@ ftxui::Component SynthTabUI::GetComponent()
 	});
 }
 
-void SynthTabUI::UpdateComponent()
+void SynthTabUI::ServicePendingAction()
 {
-	_oscillatorUI->UpdateComponent();
-	_envelopeUI->UpdateComponent();
-	
-	// This will contain dummy text if there is no active editor
-	_activeEditorUI->UpdateComponent();
-
-	// Static Signal Chain Elements
-	_oscillatorSignalUI->UpdateComponent();
-	_envelopeSignalUI->UpdateComponent();
-
-	// Scroll Viewers
-	_effectsSignalChainUI->UpdateComponent();
-	_pluginListUI->UpdateComponent();
-
 	// Envelope / Oscillator Signal Nodes
-	if (_oscillatorSignalUI->GetDirty())
+	if (_oscillatorSignalUI->HasPendingAction())
 	{
 		_editorContainer->DetachAllChildren();
 		_editorContainer->Add(_oscillatorUI->GetComponent());
+
+		// Clear Pending
+		_oscillatorSignalUI->ClearPendingAction();
 	}
-	if (_envelopeSignalUI->GetDirty())
+	if (_envelopeSignalUI->HasPendingAction())
 	{
 		_editorContainer->DetachAllChildren();
 		_editorContainer->Add(_envelopeUI->GetComponent());
+
+		// Clear Pending
+		_envelopeSignalUI->ClearPendingAction();
 	}
 
 	// Plugin List (Changes)
-	if (_pluginListUI->GetDirty())
+	if (_pluginListUI->HasPendingAction())
 	{
 		for (int index = _pluginListUI->GetUICount() - 1; index >= 0; index--)
 		{
@@ -277,11 +272,11 @@ void SynthTabUI::UpdateComponent()
 		}
 
 		// Notify Parent (this may not be cleared for several 100 iterations)
-		_isDirty = true;
+		_pluginListUI->ClearPendingAction();
 	}
 
 	// Signal Chain (Changes)
-	if (_effectsSignalChainUI->GetDirty())
+	if (_effectsSignalChainUI->HasPendingAction())
 	{
 		for (int index = _effectsSignalChainUI->GetUICount() - 1; index >= 0; index--)
 		{
@@ -327,7 +322,7 @@ void SynthTabUI::UpdateComponent()
 						_activeEditorUI->SetEffect(nullptr);
 						_editorContainer->DetachAllChildren();
 					}
-				}					
+				}
 				break;
 
 				// These are tricky to do in real time. We need to make sure to handle one thing
@@ -347,15 +342,42 @@ void SynthTabUI::UpdateComponent()
 		}
 
 		// Notify Parent (this may not be cleared for several 100 iterations)
-		_isDirty = true;
+		_effectsSignalChainUI->ClearPendingAction();
 	}
+}
 
-	// Signal Node UI's (Dirty Flag seems two-purposed. We might need two flags, one for needs update)
-	_oscillatorSignalUI->ClearDirty();
-	_envelopeSignalUI->ClearDirty();
+void SynthTabUI::UpdateComponent()
+{
+	_oscillatorUI->UpdateComponent();
+	_envelopeUI->UpdateComponent();
+	
+	// This will contain dummy text if there is no active editor
+	_activeEditorUI->UpdateComponent();
 
-	_pluginListUI->ClearDirty();
-	_effectsSignalChainUI->ClearDirty();
+	// Static Signal Chain Elements
+	_oscillatorSignalUI->UpdateComponent();
+	_envelopeSignalUI->UpdateComponent();
+
+	// Scroll Viewers
+	_effectsSignalChainUI->UpdateComponent();
+	_pluginListUI->UpdateComponent();
+}
+
+void SynthTabUI::Tick()
+{
+	_oscillatorUI->Tick();
+	_envelopeUI->Tick();
+
+	// This will contain dummy text if there is no active editor
+	_activeEditorUI->Tick();
+
+	// Static Signal Chain Elements
+	_oscillatorSignalUI->Tick();
+	_envelopeSignalUI->Tick();
+
+	// Scroll Viewers
+	_effectsSignalChainUI->Tick();
+	_pluginListUI->Tick();
 }
 
 void SynthTabUI::ToUI(const SoundSettings& source)
@@ -430,13 +452,55 @@ void SynthTabUI::FromUI(SoundSettings* destination)
 	_envelopeUI->FromUI(destination->GetOscillatorEnvelope());
 }
 
+bool SynthTabUI::HasPendingAction() const
+{
+	// This is left over from our Tick() function - which should have
+	// a much higher frequency than the UpdateComponent / ToUI / FromUI 
+	// functions. This is controlled by the UIController.
+	//
+	bool hasPendingAction = false;
+
+	// Plugin List
+	hasPendingAction |= _pluginListUI->HasPendingAction();
+
+	// Signal Nodes (enabled / disabled)
+	hasPendingAction |= _effectsSignalChainUI->HasPendingAction();
+	hasPendingAction |= _oscillatorSignalUI->HasPendingAction();
+	hasPendingAction |= _envelopeSignalUI->HasPendingAction();
+
+	// Active Effect Editor
+	hasPendingAction |= _activeEditorUI->HasPendingAction();
+
+	// Signal Input Editors
+	hasPendingAction |= _oscillatorUI->HasPendingAction();
+	hasPendingAction |= _envelopeUI->HasPendingAction();
+
+	return hasPendingAction;
+}
+
+void SynthTabUI::ClearPendingAction()
+{
+	// Plugin List (checkbox change)
+	_pluginListUI->ClearPendingAction();
+
+	// Signal Nodes (hover, edit, remove, move up, move down)
+	_effectsSignalChainUI->ClearPendingAction();
+	_oscillatorSignalUI->ClearPendingAction();
+	_envelopeSignalUI->ClearPendingAction();
+
+	// Effects (settings) (should not be any actions)
+	_activeEditorUI->ClearPendingAction();
+	_oscillatorUI->ClearPendingAction();
+	_envelopeUI->ClearPendingAction();
+}
+
 bool SynthTabUI::GetDirty() const
 {
 	// This is left over from our UpdateComponent() function - which should have
 	// a much higher frequency than the ToUI / FromUI functions. This is controlled
 	// by the UIController.
 	//
-	bool isDirty = _isDirty;
+	bool isDirty = false;
 
 	// Plugin List
 	isDirty |= _pluginListUI->GetDirty();

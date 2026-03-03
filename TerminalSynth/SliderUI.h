@@ -28,7 +28,10 @@ public:
 
 	void Initialize(const float& initialValue) override;
 	ftxui::Component GetComponent() override;
-	void UpdateComponent() override;
+
+    void ServicePendingAction() override;
+    void UpdateComponent() override;
+    void Tick() override;
 
     void ToUI(const float& source) override;
     void ToUI(const float* source) override;
@@ -36,6 +39,9 @@ public:
     void FromUI(float* destination) override;
 
     std::string GetName() const;
+
+    bool HasPendingAction() const override;
+    void ClearPendingAction() override;
 
     bool GetDirty() const override;
     void ClearDirty() override;
@@ -112,6 +118,10 @@ ftxui::Component SliderUI::GetComponent()
     return _component;
 }
 
+void SliderUI::ServicePendingAction()
+{
+}
+
 void SliderUI::UpdateComponent()
 {
     // Update Label
@@ -119,6 +129,10 @@ void SliderUI::UpdateComponent()
 
     _label->erase(0, _label->size());
     _label->append(std::vformat(labelFormat, std::make_format_args(*_value)));
+}
+
+void SliderUI::Tick()
+{
 }
 
 void SliderUI::FromUI(float& destination)
@@ -140,6 +154,15 @@ void SliderUI::ToUI(const float* source)
 std::string SliderUI::GetName() const
 {
     return *_name;
+}
+
+bool SliderUI::HasPendingAction() const
+{
+    return false;
+}
+
+void SliderUI::ClearPendingAction()
+{
 }
 
 bool SliderUI::GetDirty() const

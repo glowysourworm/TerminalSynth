@@ -18,7 +18,10 @@ public:
 
 	void Initialize(const bool& initialValue) override;
 	ftxui::Component GetComponent() override;
+
+	void ServicePendingAction() override;
 	void UpdateComponent() override;
+	void Tick() override;
 
 	void ToUI(const bool& source) override;
 	void ToUI(const bool* source) override;
@@ -27,6 +30,9 @@ public:
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
+
+	bool HasPendingAction() const override;
+	void ClearPendingAction() override;
 
 public:
 
@@ -63,10 +69,18 @@ ftxui::Component ActiveEditorUI::GetComponent()
 		return _activeEffect->GetComponent();
 }
 
+void ActiveEditorUI::ServicePendingAction()
+{
+}
+
 void ActiveEditorUI::UpdateComponent()
 {
 	if (_activeEffect != nullptr)
 		_activeEffect->UpdateComponent();
+}
+
+void ActiveEditorUI::Tick()
+{
 }
 
 void ActiveEditorUI::ToUI(const bool& source)
@@ -94,6 +108,15 @@ void ActiveEditorUI::ClearDirty()
 {
 	if (_activeEffect != nullptr)
 		_activeEffect->ClearDirty();
+}
+
+bool ActiveEditorUI::HasPendingAction() const
+{
+	return false;
+}
+
+void ActiveEditorUI::ClearPendingAction()
+{
 }
 
 void ActiveEditorUI::SetEffect(EffectUI* activeEffect)

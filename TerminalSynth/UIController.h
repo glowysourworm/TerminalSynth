@@ -8,6 +8,7 @@
 #include "MainUI.h"
 #include "OutputSettings.h"
 #include "SoundRegistry.h"
+#include "StopWatch.h"
 #include "SynthSettings.h"
 #include <thread>
 
@@ -46,10 +47,17 @@ private:
 
 private:
 
+	// Primary sleep time for the while loop of 15ms
+	//
+	const long SLEEP_TIME_MICRO = 15000;
+
 	MainUI* _mainUI;
 
 	// This was needed to accomodate the FTXUI stack-based API (ftxui::Screen does not have a way to create a private pointer)
 	std::thread* _thread;
+
+	// We're going to throttle the UI loop to try and stabilize the sleep time
+	StopWatch* _stopWatch;
 };
 
 #endif

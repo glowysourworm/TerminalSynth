@@ -35,7 +35,10 @@ public:
 
 	void Initialize(const SignalNodeModelUI& initialValue) override;
 	ftxui::Component GetComponent() override;
+
+	void ServicePendingAction() override;
 	void UpdateComponent() override;
+	void Tick() override;
 
 	void ToUI(const SignalNodeModelUI& source) override;
 	void ToUI(const SignalNodeModelUI* source) override;
@@ -44,6 +47,9 @@ public:
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
+
+	bool HasPendingAction() const override;
+	void ClearPendingAction() override;
 
 public:
 
@@ -137,8 +143,21 @@ ftxui::Component SignalNodeUI::GetComponent()
 	});
 }
 
+void SignalNodeUI::ServicePendingAction()
+{
+}
+
 void SignalNodeUI::UpdateComponent()
 {
+	// Nothing to do here; but, if we wanted, we could rebuild the UI. I'd rather let FTXUI
+	// use its renderer (see GetComponent())
+}
+
+void SignalNodeUI::Tick()
+{
+	// Take the real-time changes from FTXUI by using our shared pointer values
+	//
+
 	// Mouse Leave
 	if (!_mainHover)
 	{
@@ -171,13 +190,21 @@ void SignalNodeUI::FromUI(SignalNodeModelUI* destination)
 
 bool SignalNodeUI::GetDirty() const
 {
-	return _enabledValue->HasChanged() ||
-		   _uiAction->HasChanged();
+	return _enabledValue->HasChanged();
 }
 
 void SignalNodeUI::ClearDirty()
 {
-	_enabledValue->Clear();
+	_enabledValue->Clear();	
+}
+
+bool SignalNodeUI::HasPendingAction() const
+{
+	return _uiAction->HasChanged();
+}
+
+void SignalNodeUI::ClearPendingAction()
+{
 	_uiAction->Clear();
 }
 

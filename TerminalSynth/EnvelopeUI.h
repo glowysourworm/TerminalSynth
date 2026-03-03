@@ -22,7 +22,10 @@ public:
 
 	void Initialize(const Envelope& envelope) override;
 	ftxui::Component GetComponent() override;
+
+	void ServicePendingAction() override;
 	void UpdateComponent() override;
+	void Tick() override;
 
 	void FromUI(Envelope& destination) override;
 	void FromUI(Envelope* destination) override;
@@ -31,6 +34,9 @@ public:
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
+
+	bool HasPendingAction() const override;
+	void ClearPendingAction() override;
 
 private:
 
@@ -102,6 +108,11 @@ ftxui::Component EnvelopeUI::GetComponent()
 	return _component;
 }
 
+void EnvelopeUI::ServicePendingAction()
+{
+	// Nothing to do (no reason to call sub-functions)
+}
+
 void EnvelopeUI::UpdateComponent()
 {
 	_attack->UpdateComponent();
@@ -109,6 +120,11 @@ void EnvelopeUI::UpdateComponent()
 	_release->UpdateComponent();
 	_attackPeak->UpdateComponent();
 	_sustainPeak->UpdateComponent();
+}
+
+void EnvelopeUI::Tick()
+{
+	// Nothing to do (no reason to call sub-functions)
 }
 
 void EnvelopeUI::FromUI(Envelope& destination)
@@ -153,6 +169,15 @@ void EnvelopeUI::ClearDirty()
 	_release->ClearDirty();
 	_attackPeak->ClearDirty();
 	_sustainPeak->ClearDirty();
+}
+
+bool EnvelopeUI::HasPendingAction() const
+{
+	return false;
+}
+
+void EnvelopeUI::ClearPendingAction()
+{
 }
 
 #endif

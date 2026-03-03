@@ -133,10 +133,18 @@ void MainController::Loop()
 		// CRITICAL SECTION:  This is an update from the UI, which will reset the synth parameters. So,
 		//					  it is only allowed every ~100ms at the most.
 		//
-		//					  The std::mutex is in the UIController* (for To / From UI, and IsDirty)
+		//					  The synchronization mechanism is in the AtomicLock*, which is in the UIController* 
+		//					  (for To / From UI, and IsDirty), and also in the AudioController* for updatin the
+		//					  SynthPlaybackDevice* before playback. 
+		// 
+		//					  This synchronization mechanism may be quite a bit faster than std::mutex; but must
+		//					  still be utilized properly to know that we have a proper semaphor flag for the audio
+		//					  thread to share with the UI thread.
 		//
-		//				      The SynthSettings* has an extra std::atomic<bool> for sync. with
-		//					  the audio thread callback.
+		//					  Here, we're waiting for a UI timer to allow us to enter the loop and collect the 
+		//					  configuration data. During that time, the UI controller will have many 1000's of
+		//					  cycles where the FTXUI, and our UI components (UIBase*) must properly service the
+		//					  UI in real-time and avoid memory allocation; and extra CPU cycles.
 		//
 		if (_uiTimer->Mark())
 		{

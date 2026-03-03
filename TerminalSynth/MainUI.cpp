@@ -97,6 +97,28 @@ ftxui::Component MainUI::GetComponent()
 	return _mainControl;
 }
 
+void MainUI::ServicePendingAction()
+{
+	// Output Tab
+	if (*_tabIndex == 0)
+	{
+		_synthInformationUI->ServicePendingAction();
+		_outputUI->ServicePendingAction();
+	}
+
+	// Synth Tab
+	else if (*_tabIndex == 1)
+	{
+		_synthTabUI->ServicePendingAction();
+	}
+
+	// MIDI Tab
+	else if (*_tabIndex == 2)
+	{
+
+	}
+}
+
 void MainUI::UpdateComponent()
 {
 	// Output Tab
@@ -110,6 +132,28 @@ void MainUI::UpdateComponent()
 	else if (*_tabIndex == 1)
 	{
 		_synthTabUI->UpdateComponent();
+	}
+
+	// MIDI Tab
+	else if (*_tabIndex == 2)
+	{
+
+	}
+}
+
+void MainUI::Tick()
+{
+	// Output Tab
+	if (*_tabIndex == 0)
+	{
+		_synthInformationUI->Tick();
+		_outputUI->Tick();
+	}
+
+	// Synth Tab
+	else if (*_tabIndex == 1)
+	{
+		_synthTabUI->Tick();
 	}
 
 	// MIDI Tab
@@ -164,4 +208,16 @@ void MainUI::ClearDirty()
 {
 	_synthTabUI->ClearDirty();
 	_outputUI->ClearDirty();
+}
+
+bool MainUI::HasPendingAction() const
+{
+	return _synthTabUI->HasPendingAction() ||
+		   _outputUI->HasPendingAction();
+}
+
+void MainUI::ClearPendingAction()
+{
+	_synthTabUI->ClearPendingAction();
+	_outputUI->ClearPendingAction();
 }

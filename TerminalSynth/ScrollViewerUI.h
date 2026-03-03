@@ -69,6 +69,8 @@ public:
 	// UIBase Functions:  There could be another component type which is a container for 
 	//					  more UIBase components.
 	void UpdateComponent();
+	void ServicePendingAction();
+	void Tick();
 
 	void FromUI(const std::string& name, TModel& destination);
 	void FromUI(const std::string& name, TModel* destination);
@@ -85,6 +87,11 @@ public:
 	bool GetDirty(const std::string& name) const;
 	void ClearDirty();
 	void ClearDirty(const std::string& name);
+
+	bool HasPendingAction(const std::string& name) const;
+	bool HasPendingAction() const;
+	void ClearPendingAction(const std::string& name);
+	void ClearPendingAction();
 
 private:
 
@@ -262,6 +269,22 @@ void ScrollViewerUI<TModel, T>::UpdateComponent()
 	}
 }
 template<class TModel, IsUIBase<TModel> T>
+void ScrollViewerUI<TModel, T>::ServicePendingAction()
+{
+	for (auto iter = _uiComponents->begin(); iter != _uiComponents->end(); ++iter)
+	{
+		iter->second->ServicePendingAction();
+	}
+}
+template<class TModel, IsUIBase<TModel> T>
+void ScrollViewerUI<TModel, T>::Tick()
+{
+	for (auto iter = _uiComponents->begin(); iter != _uiComponents->end(); ++iter)
+	{
+		iter->second->Tick();
+	}
+}
+template<class TModel, IsUIBase<TModel> T>
 void ScrollViewerUI<TModel, T>::FromUI(const std::string& name, TModel& destination)
 {
 	_uiComponents->at(name)->FromUI(destination);
@@ -355,7 +378,7 @@ bool ScrollViewerUI<TModel, T>::GetDirty() const
 {
 	bool isDirty = false;
 
-	for (auto iter = _uiComponents->begin(); iter != _uiComponents->end(); ++iter)
+	for (auto iter = _uiComponents->begin(); iter != _uiComponents->end() && !isDirty; ++iter)
 	{
 		isDirty |= iter->second->GetDirty();
 	}
@@ -379,6 +402,36 @@ template<class TModel, IsUIBase<TModel> T>
 void ScrollViewerUI<TModel, T>::ClearDirty(const std::string& name)
 {
 	_uiComponents->at(name)->ClearDirty();
+}
+template<class TModel, IsUIBase<TModel> T>
+bool ScrollViewerUI<TModel, T>::HasPendingAction(const std::string& name) const
+{
+	return _uiComponents->at(name)->HasPendingAction();
+}
+template<class TModel, IsUIBase<TModel> T>
+bool ScrollViewerUI<TModel, T>::HasPendingAction() const
+{
+	bool hasPendingAction = false;
+
+	for (auto iter = _uiComponents->begin(); iter != _uiComponents->end() && !hasPendingAction; ++iter)
+	{
+		hasPendingAction |= iter->second->HasPendingAction();
+	}
+
+	return hasPendingAction;
+}
+template<class TModel, IsUIBase<TModel> T>
+void ScrollViewerUI<TModel, T>::ClearPendingAction(const std::string& name)
+{
+	_uiComponents->at(name)->ClearPendingAction();
+}
+template<class TModel, IsUIBase<TModel> T>
+void ScrollViewerUI<TModel, T>::ClearPendingAction()
+{
+	for (auto iter = _uiComponents->begin(); iter != _uiComponents->end(); ++iter)
+	{
+		iter->second->ClearPendingAction();
+	}
 }
 template<class TModel, IsUIBase<TModel> T>
 void ScrollViewerUI<TModel, T>::RebuildUI()

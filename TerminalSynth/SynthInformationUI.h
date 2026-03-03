@@ -22,12 +22,18 @@ public:
 
 	void Initialize(const OutputSettings& settings) override;
 	ftxui::Component GetComponent() override;
+
+	void ServicePendingAction() override;
 	void UpdateComponent() override;
+	void Tick() override;
 
 	void ToUI(const OutputSettings& source) override;
 	void ToUI(const OutputSettings* source) override;
 	void FromUI(OutputSettings& destination) override;
 	void FromUI(OutputSettings* destination) override;
+
+	bool HasPendingAction() const override;
+	void ClearPendingAction() override;
 
 	bool GetDirty() const override { return false; }
 	void ClearDirty() override {}
@@ -146,7 +152,13 @@ ftxui::Component SynthInformationUI::GetComponent()
 {
 	return _component;
 }
+void SynthInformationUI::ServicePendingAction()
+{
+}
 void SynthInformationUI::UpdateComponent()
+{
+}
+void SynthInformationUI::Tick()
 {
 }
 void SynthInformationUI::ToUI(const OutputSettings& source)
@@ -191,6 +203,15 @@ void SynthInformationUI::FromUI(OutputSettings& destination)
 }
 
 void SynthInformationUI::FromUI(OutputSettings* destination)
+{
+}
+
+bool SynthInformationUI::HasPendingAction() const
+{
+	return false;
+}
+
+void SynthInformationUI::ClearPendingAction()
 {
 }
 

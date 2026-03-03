@@ -28,7 +28,10 @@ public:
 
 	void Initialize(const SignalSettings& effect) override;
 	ftxui::Component GetComponent() override;
+
+	void ServicePendingAction() override;
 	void UpdateComponent() override;
+	void Tick() override;
 
 	void ToUI(const SignalSettings& source) override;
 	void ToUI(const SignalSettings* source) override;
@@ -37,6 +40,9 @@ public:
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
+
+	bool HasPendingAction() const override;
+	void ClearPendingAction() override;
 
 private:
 
@@ -150,12 +156,20 @@ ftxui::Component EffectUI::GetComponent()
 	});
 }
 
+void EffectUI::ServicePendingAction()
+{
+}
+
 void EffectUI::UpdateComponent()
 {
 	for (int index = 0; index < _parameterUIs->size(); index++)
 	{
 		_parameterUIs->at(index)->UpdateComponent();
 	}
+}
+
+void EffectUI::Tick()
+{
 }
 
 bool EffectUI::GetDirty() const
@@ -176,6 +190,15 @@ void EffectUI::ClearDirty()
 	{
 		_parameterUIs->at(index)->ClearDirty();
 	}
+}
+
+bool EffectUI::HasPendingAction() const
+{
+	return false;
+}
+
+void EffectUI::ClearPendingAction()
+{
 }
 
 void EffectUI::ToUI(const SignalSettings& source)

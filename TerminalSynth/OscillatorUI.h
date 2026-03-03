@@ -26,7 +26,10 @@ public:
 
 	void Initialize(const OscillatorParameters& parameters) override;
 	ftxui::Component GetComponent() override;
+
+	void ServicePendingAction() override;
 	void UpdateComponent() override;
+	void Tick() override;
 
 	void ToUI(const OscillatorParameters& source) override;
 	void ToUI(const OscillatorParameters* source) override;
@@ -35,6 +38,9 @@ public:
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
+
+	bool HasPendingAction() const override;
+	void ClearPendingAction() override;
 
 private:
 
@@ -129,6 +135,11 @@ ftxui::Component OscillatorUI::GetComponent()
 	return _component;
 }
 
+void OscillatorUI::ServicePendingAction()
+{
+
+}
+
 void OscillatorUI::UpdateComponent()
 {
 	if (_soundBankSelectedIndex->HasChanged())
@@ -145,6 +156,10 @@ void OscillatorUI::UpdateComponent()
 			_soundNameItems->push_back(soundNames[index]);
 		}
 	}
+}
+
+void OscillatorUI::Tick()
+{
 }
 
 void OscillatorUI::ToUI(const OscillatorParameters& source)
@@ -201,6 +216,15 @@ void OscillatorUI::ClearDirty()
 	_oscillatorSelectedIndex->Clear();
 	_soundBankSelectedIndex->Clear();
 	_soundNameSelectedIndex->Clear();
+}
+
+bool OscillatorUI::HasPendingAction() const
+{
+	return false;
+}
+
+void OscillatorUI::ClearPendingAction()
+{
 }
 
 void OscillatorUI::FromUI(OscillatorParameters& destination)
