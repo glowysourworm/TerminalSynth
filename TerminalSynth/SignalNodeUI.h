@@ -128,8 +128,8 @@ void SignalNodeUI::Initialize(const SignalNodeModelUI& initialValue)
 
 		}) | ftxui::vcenter | ftxui::hcenter,
 		ftxui::Renderer([&] { return ftxui::text(_model->GetName()) | ftxui::vcenter; }) | ftxui::flex_grow,
-		ftxui::Button(*_arrowUp, [&] { _uiAction->SetValue(UIAction::MoveUp); }) | ftxui::Maybe(&_canReorder),
-		ftxui::Button(*_arrowDown, [&] { _uiAction->SetValue(UIAction::MoveDown); }) | ftxui::Maybe(&_canReorder),
+		//ftxui::Button(*_arrowUp, [&] { _uiAction->SetValue(UIAction::MoveUp); }) | ftxui::Maybe(&_canReorder),
+		//ftxui::Button(*_arrowDown, [&] { _uiAction->SetValue(UIAction::MoveDown); }) | ftxui::Maybe(&_canReorder),
 		ftxui::Button("Edit", [&] { _uiAction->SetValue(UIAction::Edit); }),
 		ftxui::Button("Remove", [&] { _uiAction->SetValue(UIAction::Remove); }) | ftxui::Maybe(&_canRemove),
 
