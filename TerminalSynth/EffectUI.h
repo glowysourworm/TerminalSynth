@@ -211,7 +211,8 @@ void EffectUI::ToUI(const SignalSettings* source)
 
 void EffectUI::FromUI(SignalSettings& destination)
 {
-	throw new std::exception("Please use the pointer version of this function FromUI");
+	destination.SetName(*_name);
+	this->FromUI(&destination);
 }
 
 void EffectUI::FromUI(SignalSettings* destination)
@@ -236,8 +237,15 @@ void EffectUI::FromUI(SignalSettings* destination)
 
 		parameter.SetValue(setting);
 
-		// -> (set by index)
-		destination->AddParameter(parameter);
+		// Add / Update
+		if (destination->GetParameterCount() <= index)
+			destination->AddParameter(parameter);
+
+		else if (destination->GetParameterName(index) != _parameterUIs->at(index)->GetName())
+			destination->AddParameter(parameter);
+
+		else
+			destination->SetParameter(index, setting);
 	}
 }
 

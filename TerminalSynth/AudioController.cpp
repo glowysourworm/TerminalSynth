@@ -13,7 +13,7 @@
 #include <exception>
 #include <string>
 
-AudioController::AudioController(AtomicLock* atomicLock) : BaseController(atomicLock)
+AudioController::AudioController(AtomicLock* playbackLock) : BaseController(playbackLock)
 {
 	_initialized = false;
 	_midiMode = false;
@@ -67,7 +67,7 @@ int AudioController::ProcessAudioCallback(float* outputBuffer, unsigned int numb
 	SoundRegistry* effectRegistry = userData->GetEffectRegistry();
 
 	// std::atomic wait loop
-	this->Lock->AcquireLock();
+	this->PlaybackLock->AcquireLock();
 
 	// Update Synth Device (DIRTY FLAG IS IN REAL TIME! WE NEED TO AVOID IT UNTIL THE USER HAS CHANGED A SYNTH SETTING!)
 	if (configuration->IsDirty())
@@ -108,7 +108,7 @@ int AudioController::ProcessAudioCallback(float* outputBuffer, unsigned int numb
 	}
 
 	// std::atomic end loop
-	this->Lock->Release();
+	this->PlaybackLock->Release();
 
 	// Frontend Processing Time (Mark.)
 	_synthIntervalTimer->Mark();

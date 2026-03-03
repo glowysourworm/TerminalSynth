@@ -19,6 +19,7 @@ public:
 		_category = new std::string("");
 		_infoText = new std::string("");
 		_isAirwinEffect = false;
+		_isEnabled = false;
 	}
 	SignalSettings(const std::string& name, const std::string& category, const std::string& infoText, bool isAirwinEffect)
 	{
@@ -27,6 +28,7 @@ public:
 		_category = new std::string(category);
 		_infoText = new std::string(infoText);
 		_isAirwinEffect = isAirwinEffect;
+		_isEnabled = false;
 	}
 	SignalSettings(const SignalSettings& copy)
 	{
@@ -41,6 +43,7 @@ public:
 		_category = new std::string(copy.GetCategory());
 		_infoText = new std::string(copy.GetInfoText());
 		_isAirwinEffect = copy.GetIsAirwinEffect();
+		_isEnabled = copy.GetIsEnabled();
 	}
 	~SignalSettings()
 	{
@@ -61,6 +64,7 @@ public:
 	std::string GetCategory() const { return *_category; }
 	std::string GetInfoText() const { return *_infoText; }
 	bool GetIsAirwinEffect() const { return _isAirwinEffect; }
+	bool GetIsEnabled() const { return _isEnabled; }
 	SignalParameter GetParameter(int index) const { return *_parameters->at(index); }
 	float GetParameterValue(int index) const { return _parameters->at(index)->GetValue(); }
 	float GetParameterMin(int index) const { return _parameters->at(index)->GetMin(); }
@@ -91,6 +95,10 @@ public:
 		_name->clear();
 		_name->append(value);
 	}
+	void SetIsEnabled(bool value)
+	{
+		_isEnabled = value;
+	}
 
 	bool Update(const SignalSettings* parameters, bool overwrite)
 	{
@@ -114,6 +122,7 @@ public:
 		isDirty |= *_category != parameters->GetCategory();
 		isDirty |= *_infoText != parameters->GetInfoText();
 		isDirty |= _isAirwinEffect != parameters->GetIsAirwinEffect();
+		isDirty |= _isEnabled != parameters->GetIsEnabled();
 
 		_name->clear();
 		_category->clear();
@@ -124,6 +133,7 @@ public:
 		_infoText->append(parameters->GetInfoText());
 		
 		_isAirwinEffect = parameters->GetIsAirwinEffect();
+		_isEnabled = parameters->GetIsEnabled();
 
 		// Update
 		for (int index = 0; index < parameters->GetParameterCount(); index++)
@@ -167,6 +177,7 @@ private:
 	std::string* _name;
 	std::string* _category;
 	std::string* _infoText;
+	bool _isEnabled;
 	bool _isAirwinEffect;
 	std::vector<SignalParameter*>* _parameters;
 };

@@ -90,10 +90,10 @@ int main(int argc, char* argv[], char* envp[])
 	OutputSettings* parameters = RtAudioController::GetPlaybackParametersUnsafe();
 	SynthSettings* configuration = CreateConfiguration(parameters, soundBankDirectory);
 	SoundRegistry* registry = new SoundRegistry();											// NEEDS INITIALIZATION (W/ SAMPLING RATE)
-	AtomicLock* atomicLock = new AtomicLock();
+	AtomicLock* playbackLock = new AtomicLock();
 
 	// Manual keyboard input
-	MainController controller(atomicLock);
+	MainController controller(playbackLock);
 
 	SetConsoleTitleA("Terminal Synth");
 
@@ -107,7 +107,7 @@ int main(int argc, char* argv[], char* envp[])
 
 	// All threads have stopped, we can now delete the rest of our heap memory
 	delete configuration;
-	delete atomicLock;
+	delete playbackLock;
 	delete registry;
 	delete parameters;
 

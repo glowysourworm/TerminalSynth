@@ -135,9 +135,6 @@
     <ClCompile Include="MainController.cpp">
       <Filter>Source Files\Controller</Filter>
     </ClCompile>
-    <ClCompile Include="UIController.cpp">
-      <Filter>Source Files\Controller</Filter>
-    </ClCompile>
     <ClCompile Include="RtAudioController.cpp">
       <Filter>Source Files\Controller</Filter>
     </ClCompile>
@@ -280,9 +277,6 @@
     </ClInclude>
     <ClInclude Include="SynthInformationUI.h">
       <Filter>Header Files\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="UIController.h">
-      <Filter>Header Files\Controller</Filter>
     </ClInclude>
     <ClInclude Include="SignalBase.h">
       <Filter>Header Files\Signal</Filter>

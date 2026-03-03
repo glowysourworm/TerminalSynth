@@ -118,7 +118,9 @@ void CheckboxUI::ClearDirty()
 
 bool CheckboxUI::HasPendingAction() const
 {
-	return false;
+	return _isDirty;		// Makes sense to have the checking of the box be the "pending action";
+							// but clearing it depends on retrieving the data (so don't clear it
+							// as a pending action.
 }
 
 void CheckboxUI::ClearPendingAction()

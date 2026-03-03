@@ -24,6 +24,11 @@ public:
 	/// </summary>
 	bool Mark();
 
+	double PeekSeconds() const;
+	double PeekMilli() const;
+	double PeekMicro() const;
+	double PeekNano() const;
+
 	double GetLastSeconds() const;
 	double GetLastMilli() const;
 	double GetLastMicro() const;

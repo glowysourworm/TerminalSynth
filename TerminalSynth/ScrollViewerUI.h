@@ -114,7 +114,7 @@ private:
 
 	std::map<std::string, T*>* _uiComponents;			// T : UIBase
 	std::map<std::string, TModel*>* _uiModels;			// TModel (must have copy constructor!)
-	std::map<int, TModel*>* _uiModelOrders;
+	//std::map<int, TModel*>* _uiModelOrders;
 };
 
 template<class TModel, IsUIBase<TModel> T>
@@ -125,7 +125,7 @@ ScrollViewerUI<TModel, T>::ScrollViewerUI(const std::string& title, const ftxui:
 	_isMouseOver = new bool(false);
 	_uiComponents = new std::map<std::string, T*>();
 	_uiModels = new std::map<std::string, TModel*>();
-	_uiModelOrders = new std::map<int, TModel*>();
+	//_uiModelOrders = new std::map<int, TModel*>();
 
 	_title = new std::string(title);
 	_titleColor = new ftxui::Color(titleColor);
@@ -204,14 +204,14 @@ ScrollViewerUI<TModel, T>::~ScrollViewerUI()
 	delete _scrollY;
 	delete _uiComponents;
 	delete _uiModels;
-	delete _uiModelOrders;
+	//delete _uiModelOrders;
 }
 
 template<class TModel, IsUIBase<TModel> T>
 ftxui::Component ScrollViewerUI<TModel, T>::GetComponent()
 {
-	return ftxui::Renderer(_component, [&] { 
-		return _component->Render(); 
+	return ftxui::Renderer(_component, [&] {
+		return _component->Render();
 	});
 }
 
@@ -237,7 +237,7 @@ void ScrollViewerUI<TModel, T>::AddUI(const TModel& model)
 	// Keep these in the ui tree
 	_uiComponents->insert(std::make_pair(model.GetName(), uiComponent));
 	_uiModels->insert(std::make_pair(model.GetName(), uiModel));
-	_uiModelOrders->insert(std::make_pair(model.GetOrder(), uiModel));
+	//_uiModelOrders->insert(std::make_pair(model.GetOrder(), uiModel));
 	_listComponent->Add(uiComponent->GetComponent());
 }
 template<class TModel, IsUIBase<TModel> T>
@@ -256,7 +256,7 @@ void ScrollViewerUI<TModel, T>::RemoveUI(const TModel& model)
 	// Remove
 	_uiComponents->erase(model.GetName());
 	_uiModels->erase(model.GetName());
-	_uiModelOrders->erase(model.GetOrder());
+	//_uiModelOrders->erase(model.GetOrder());
 	
 	this->RebuildUI();
 }
@@ -324,54 +324,54 @@ T* ScrollViewerUI<TModel, T>::GetUI(const std::string& name) const
 template<class TModel, IsUIBase<TModel> T>
 void ScrollViewerUI<TModel, T>::MoveUp(const std::string& name)
 {
-	auto iter = _uiModels->find(name);
-	if (iter == _uiModels->begin())
-		return;
+	//auto iter = _uiModels->find(name);
+	//if (iter == _uiModels->begin())
+	//	return;
 
-	// std::advance (previous position)
-	auto iterLast = iter;
-	std::advance(iterLast, -1);
+	//// std::advance (previous position)
+	//auto iterLast = iter;
+	//std::advance(iterLast, -1);
 
-	int order = iter->second->GetOrder();
-	int orderLast = iterLast->second->GetOrder();
+	//int order = iter->second->GetOrder();
+	//int orderLast = iterLast->second->GetOrder();
 
-	// Swap Order #'s
-	iter->second->SetOrder(orderLast);
-	iterLast->second->SetOrder(order);
+	//// Swap Order #'s
+	//iter->second->SetOrder(orderLast);
+	//iterLast->second->SetOrder(order);
 
-	_uiModelOrders->erase(order);
-	_uiModelOrders->erase(orderLast);
+	//_uiModelOrders->erase(order);
+	//_uiModelOrders->erase(orderLast);
 
-	_uiModelOrders->insert(std::make_pair(iter->second->GetOrder(), iter->second));
-	_uiModelOrders->insert(std::make_pair(iterLast->second->GetOrder(), iterLast->second));
+	//_uiModelOrders->insert(std::make_pair(iter->second->GetOrder(), iter->second));
+	//_uiModelOrders->insert(std::make_pair(iterLast->second->GetOrder(), iterLast->second));
 
-	this->RebuildUI();
+	//this->RebuildUI();
 }
 template<class TModel, IsUIBase<TModel> T>
 void ScrollViewerUI<TModel, T>::MoveDown(const std::string& name)
 {
-	auto iter = _uiModels->find(name);
-	if (iter == _uiModels->end())
-		return;
+	//auto iter = _uiModels->find(name);
+	//if (iter == _uiModels->end())
+	//	return;
 
-	// std::advance (next position)
-	auto iterNext = iter;
-	std::advance(iterNext, 1);
+	//// std::advance (next position)
+	//auto iterNext = iter;
+	//std::advance(iterNext, 1);
 
-	int order = iter->second->GetOrder();
-	int orderNext = iterNext->second->GetOrder();
+	//int order = iter->second->GetOrder();
+	//int orderNext = iterNext->second->GetOrder();
 
-	// Swap Order #'s
-	iter->second->SetOrder(orderNext);
-	iterNext->second->SetOrder(order);
+	//// Swap Order #'s
+	//iter->second->SetOrder(orderNext);
+	//iterNext->second->SetOrder(order);
 
-	_uiModelOrders->erase(order);
-	_uiModelOrders->erase(orderNext);
+	//_uiModelOrders->erase(order);
+	//_uiModelOrders->erase(orderNext);
 
-	_uiModelOrders->insert(std::make_pair(iter->second->GetOrder(), iter->second));
-	_uiModelOrders->insert(std::make_pair(iterNext->second->GetOrder(), iterNext->second));
+	//_uiModelOrders->insert(std::make_pair(iter->second->GetOrder(), iter->second));
+	//_uiModelOrders->insert(std::make_pair(iterNext->second->GetOrder(), iterNext->second));
 
-	this->RebuildUI();
+	//this->RebuildUI();
 }
 template<class TModel, IsUIBase<TModel> T>
 bool ScrollViewerUI<TModel, T>::GetDirty() const
@@ -436,26 +436,41 @@ void ScrollViewerUI<TModel, T>::ClearPendingAction()
 template<class TModel, IsUIBase<TModel> T>
 void ScrollViewerUI<TModel, T>::RebuildUI()
 {
-	// Collect Order #'s
-	std::vector<int> orderNumbers;
+	//if (_uiModels->size() == 0)
+	//{
+	//	_listComponent->DetachAllChildren();
+	//	return;
+	//}
 
-	for (auto iter = _uiModels->begin(); iter != _uiModels->end(); ++iter)
-	{
-		orderNumbers.push_back(iter->second->GetOrder());
-	}
+	//// Collect Order #'s
+	//std::vector<int> orderNumbers;
 
-	std::sort(orderNumbers.begin(), orderNumbers.end(), [](int order1, int order2) { return order1 > order2; });
+	//for (auto iter = _uiModels->begin(); iter != _uiModels->end(); ++iter)
+	//{
+	//	orderNumbers.push_back(iter->second->GetOrder());
+	//}
+
+	//std::sort(orderNumbers.begin(), orderNumbers.end(), [](int order1, int order2) { return order1 > order2; });
+
+	//// Rebuild List
+	//_listComponent->DetachAllChildren();
+
+	//for (int index = 0; index < orderNumbers.size(); index++)
+	//{
+	//	// Get name for this (unique) order number
+	//	std::string name = _uiModelOrders->at(orderNumbers[index])->GetName();
+
+	//	// Add Component
+	//	_listComponent->Add(_uiComponents->at(name)->GetComponent());
+	//}
 
 	// Rebuild List
 	_listComponent->DetachAllChildren();
 
-	for (int index = 0; index < orderNumbers.size(); index++)
+	for (auto iter = _uiComponents->begin(); iter != _uiComponents->end(); ++iter)
 	{
-		// Get name for this (unique) order number
-		std::string name = _uiModelOrders->at(orderNumbers[index])->GetName();
-
 		// Add Component
-		_listComponent->Add(_uiComponents->at(name)->GetComponent());
+		_listComponent->Add(iter->second->GetComponent());
 	}
 }
 #endif

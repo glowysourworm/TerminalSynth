@@ -20,7 +20,7 @@ class AudioController : public BaseController
 {
 public:
 
-	AudioController(AtomicLock* atomicLock);
+	AudioController(AtomicLock* playbackLock);
 	~AudioController();
 
 	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry) override;

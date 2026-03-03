@@ -60,7 +60,10 @@ void SynthNote::AddSample(PlaybackFrame* frame, float absoluteTime)
 
 bool SynthNote::HasOutput(float absoluteTime)
 {
-	return (_envelope->HasOutput(absoluteTime) || _effectsChain->HasOutput(absoluteTime)) && _waveTable->HasOutput(_envelope->GetEngageTime(), absoluteTime);
+	// We must have a way to terminate the note! So, this must be set with the envelope! Otherwise,
+	// the effect may ring out!
+	//
+	return _envelope->HasOutput(absoluteTime) && _waveTable->HasOutput(_envelope->GetEngageTime(), absoluteTime);
 }
 
 void SynthNote::Engage(float absoluteTime)

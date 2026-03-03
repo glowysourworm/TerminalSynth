@@ -7,17 +7,17 @@
 #include "AudioController.h"
 #include "BaseController.h"
 #include "LoopTimer.h"
+#include "MainUI.h"
 #include "OutputSettings.h"
 #include "RtAudioUserData.h"
 #include "SoundRegistry.h"
 #include "SynthSettings.h"
-#include "UIController.h"
 
 class MainController : public BaseController
 {
 public:
 
-	MainController(AtomicLock* atomicLock);
+	MainController(AtomicLock* playbackLock);
 	~MainController();
 
 	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry) override;
@@ -35,15 +35,18 @@ private:
 
 private:
 
+	const long LOOP_PERIOD_MICRO = 10000;
+
 	RtAudioUserData* _userData;
 
 	// Primary Owner of SynthSettings*
 	SynthSettings* _configuration;
 
 	AudioController* _audioController;
-	UIController* _uiController;
 
 	LoopTimer* _uiTimer;
+
+	MainUI* _mainUI;
 };
 
 #endif

@@ -27,6 +27,10 @@ void SignalChain::Initialize(const SoundRegistry* effectRegistry, const SignalCh
 	{
 		SignalSettings* settings = signalChainSettings->Get(index);
 
+		// Not Enabled
+		if (!settings->GetIsEnabled())
+			continue;
+
 		// Get an instance from the SoundRegistry* cache (DO NOT DELETE!)
 		SignalBase* effect = effectRegistry->Checkout(settings->GetName());
 
@@ -47,6 +51,10 @@ void SignalChain::Update(SoundRegistry* effectRegistry, const SignalChainSetting
 	for (int index = 0; index < signalChainSettings->GetCount(); index++)
 	{
 		SignalSettings* settings = signalChainSettings->Get(index);
+
+		// Not Enabled
+		if (!settings->GetIsEnabled())
+			continue;
 
 		// DO NOT DELETE! (these are all handled by the SoundRegistry*)
 		SignalBase* effect = effectRegistry->Checkout(settings->GetName());

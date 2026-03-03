@@ -7,9 +7,7 @@
 #include "CheckboxModelUI.h"
 #include "CheckboxUI.h"
 #include "EffectUI.h"
-#include "Envelope.h"
 #include "EnvelopeUI.h"
-#include "OscillatorParameters.h"
 #include "OscillatorUI.h"
 #include "ScrollViewerUI.h"
 #include "SignalChainSettings.h"
@@ -68,9 +66,9 @@ private:
 
 	// Scroll Viewers
 	ScrollViewerUI<CheckboxModelUI, CheckboxUI>* _pluginListUI;
-	ScrollViewerUI<SignalNodeModelUI, SignalNodeUI>* _effectsSignalChainUI;
+	ScrollViewerUI<SignalNodeModelUI, SignalNodeUI>* _postProcessingUI;
 
-	std::map<std::string, SignalNodeModelUI*>* _signalModels;
+	std::map<std::string, SignalNodeModelUI*>* _postProcessingModels;
 	std::map<std::string, CheckboxModelUI*>* _pluginModels;
 
 	// Static Signal Chain Elements
@@ -79,24 +77,28 @@ private:
 
 	// EffectUI instances by name
 	std::map<std::string, EffectUI*>* _effectUIs;
+
+	// Extra local dirty status for enabling / disabling effects
+	bool _isDirty;
 };
 
 SynthTabUI::SynthTabUI(const SynthSettings& synthSettings)
 {
+	_isDirty = false;
 	_activeEditorUI = new ActiveEditorUI();
 
 	SignalNodeModelUI envelopeModel("Envelope", true, false, false, false, 0);
 	SignalNodeModelUI oscillatorModel("Oscillator", true, false, false, false, 0);
 
 	_pluginListUI = new ScrollViewerUI<CheckboxModelUI, CheckboxUI>("Airwin Plugins (airwin@github.com)", ftxui::Color::BlueLight, 0.005);
-	_effectsSignalChainUI = new ScrollViewerUI<SignalNodeModelUI, SignalNodeUI>("Signal Effects", ftxui::Color::GreenYellow);
+	_postProcessingUI = new ScrollViewerUI<SignalNodeModelUI, SignalNodeUI>("Signal Effects", ftxui::Color::GreenYellow);
 
 	_envelopeUI = new EnvelopeUI();
 	_oscillatorUI = new OscillatorUI(synthSettings.GetSoundBankSettings(), ftxui::Color::White);
 	_envelopeSignalUI = new SignalNodeUI(envelopeModel);
 	_oscillatorSignalUI = new SignalNodeUI(oscillatorModel);
 
-	_signalModels = new std::map<std::string, SignalNodeModelUI*>();
+	_postProcessingModels = new std::map<std::string, SignalNodeModelUI*>();
 	_pluginModels = new std::map<std::string, CheckboxModelUI*>();
 	_effectUIs = new std::map<std::string, EffectUI*>();
 
@@ -127,7 +129,7 @@ SynthTabUI::SynthTabUI(const SynthSettings& synthSettings)
 		effectUI->Initialize(*element);
 
 		_effectUIs->insert(std::make_pair(element->GetName(), effectUI));
-		_signalModels->insert(std::make_pair(element->GetName(), signalModelUI));
+		_postProcessingModels->insert(std::make_pair(element->GetName(), signalModelUI));
 		_pluginModels->insert(std::make_pair(element->GetName(), checkboxModelUI));
 	}
 }
@@ -139,7 +141,7 @@ SynthTabUI::~SynthTabUI()
 		delete iter->second;
 	}
 	// MEMORY! (SignalModelUI*)
-	for (auto iter = _signalModels->begin(); iter != _signalModels->end(); ++iter)
+	for (auto iter = _postProcessingModels->begin(); iter != _postProcessingModels->end(); ++iter)
 	{
 		delete iter->second;
 	}
@@ -152,7 +154,7 @@ SynthTabUI::~SynthTabUI()
 
 	// Collections
 	delete _effectUIs;
-	delete _signalModels;
+	delete _postProcessingModels;
 	delete _pluginModels;
 
 	// Editors
@@ -162,7 +164,7 @@ SynthTabUI::~SynthTabUI()
 
 	// Scroll Viewers
 	delete _pluginListUI;
-	delete _effectsSignalChainUI;
+	delete _postProcessingUI;
 
 	// Signal Input
 	delete _oscillatorSignalUI;
@@ -176,7 +178,7 @@ void SynthTabUI::Initialize(const SoundSettings& initialValue)
 	_signalEffectsContainer = ftxui::Container::Vertical({
 
 		// Signal Effects (ScrollViewerUI)
-		_effectsSignalChainUI->GetComponent() | ftxui::yflex_shrink
+		_postProcessingUI->GetComponent() | ftxui::yflex_shrink
 
 	});
 
@@ -243,27 +245,29 @@ void SynthTabUI::ServicePendingAction()
 	{
 		for (int index = _pluginListUI->GetUICount() - 1; index >= 0; index--)
 		{
-			// -> FromUI
+			// -> FromUI (we can go ahead and clear dirty flags here, if there are any)
 			std::string modelName = _pluginListUI->GetName(index);
-			CheckboxModelUI model;
+			CheckboxModelUI* model = _pluginModels->at(modelName);
+
+			// Previous Value
+			bool previousValue = model->GetIsChecked();
+
+			// Updated Value
 			_pluginListUI->FromUI(modelName, model);
 
 			// Has Changed
-			if (model.GetIsChecked() != _pluginModels->at(model.GetName())->GetIsChecked())
+			if (model->GetIsChecked() != previousValue)
 			{
 				// Add
-				if (model.GetIsChecked())
-					_effectsSignalChainUI->AddUI(*_signalModels->at(model.GetName()));
+				if (model->GetIsChecked())
+					_postProcessingUI->AddUI(*_postProcessingModels->at(modelName));
 
 				// Remove
 				else
-					_effectsSignalChainUI->RemoveUI(*_signalModels->at(model.GetName()));
-
-				// Model Update (we must update our copy)
-				_pluginModels->at(model.GetName())->SetIsChecked(model.GetIsChecked());
+					_postProcessingUI->RemoveUI(*_postProcessingModels->at(modelName));
 
 				// Check Active Editor
-				if (_activeEditorUI->GetEffect() == _effectUIs->at(modelName) && !model.GetIsChecked())
+				if (_activeEditorUI->GetEffect() == _effectUIs->at(modelName) && !model->GetIsChecked())
 				{
 					_activeEditorUI->SetEffect(nullptr);
 					_editorContainer->DetachAllChildren();
@@ -273,17 +277,20 @@ void SynthTabUI::ServicePendingAction()
 
 		// Notify Parent (this may not be cleared for several 100 iterations)
 		_pluginListUI->ClearPendingAction();
+
+		// Go ahead and notify parent to collect UI data
+		_isDirty = true;
 	}
 
 	// Signal Chain (Changes)
-	if (_effectsSignalChainUI->HasPendingAction())
+	if (_postProcessingUI->HasPendingAction())
 	{
-		for (int index = _effectsSignalChainUI->GetUICount() - 1; index >= 0; index--)
+		for (int index = _postProcessingUI->GetUICount() - 1; index >= 0; index--)
 		{
-			std::string modelName = _effectsSignalChainUI->GetName(index);
+			std::string modelName = _postProcessingUI->GetName(index);
 
 			// Get UI Component (for the real-time captures)
-			SignalNodeUI* signalNodeUI = _effectsSignalChainUI->GetUI(modelName);
+			SignalNodeUI* signalNodeUI = _postProcessingUI->GetUI(modelName);
 
 			// UI Action (these could be put into the model classes)
 			bool hasUIAction = signalNodeUI->GetHasUIAction();
@@ -293,28 +300,28 @@ void SynthTabUI::ServicePendingAction()
 			if (hasUIAction)
 			{
 				// -> FromUI
-				SignalNodeModelUI signalNodeModelUI;
-				_effectsSignalChainUI->FromUI(modelName, signalNodeModelUI);
+				SignalNodeModelUI* signalNodeModelUI = _postProcessingModels->at(modelName);
+				_postProcessingUI->FromUI(modelName, signalNodeModelUI);
 
 				switch (action)
 				{
 				case SignalNodeUI::UIAction::Edit:
-					_activeEditorUI->SetEffect(_effectUIs->at(signalNodeModelUI.GetName()));
+					_activeEditorUI->SetEffect(_effectUIs->at(modelName));
 					_editorContainer->DetachAllChildren();
 					_editorContainer->Add(_activeEditorUI->GetComponent());
 					break;
 				case SignalNodeUI::UIAction::Remove:
 				{
 					// Plugin List (may change)
-					CheckboxModelUI* model = _pluginModels->at(signalNodeModelUI.GetName());
+					CheckboxModelUI* model = _pluginModels->at(modelName);
 
 					// -> RemoveUI
-					_effectsSignalChainUI->RemoveUI(signalNodeModelUI);
+					_postProcessingUI->RemoveUI(*signalNodeModelUI);
 
 					model->SetIsChecked(false);
 
 					// Update Plugin List
-					_pluginListUI->ToUI(model->GetName(), *model);
+					_pluginListUI->ToUI(model->GetName(), model);
 
 					// Check Active Editor
 					if (_activeEditorUI->GetEffect() == _effectUIs->at(modelName))
@@ -322,6 +329,9 @@ void SynthTabUI::ServicePendingAction()
 						_activeEditorUI->SetEffect(nullptr);
 						_editorContainer->DetachAllChildren();
 					}
+
+					// Notify parent to collect UI data
+					_isDirty = true;
 				}
 				break;
 
@@ -329,11 +339,11 @@ void SynthTabUI::ServicePendingAction()
 				// at a time in this loop. Come back when the rest is finished.
 				case SignalNodeUI::UIAction::MoveDown:
 					//_effectsSignalChainUI->MoveDown(modelName);
-					_effectsSignalChainUI->ClearDirty(modelName);
+					//_effectsSignalChainUI->ClearDirty(modelName);
 					break;
 				case SignalNodeUI::UIAction::MoveUp:
 					//_effectsSignalChainUI->MoveUp(modelName);
-					_effectsSignalChainUI->ClearDirty(modelName);
+					//_effectsSignalChainUI->ClearDirty(modelName);
 					break;
 				default:
 					throw new std::exception("Unhandled UI Action:  SynthTabUI.h");
@@ -342,7 +352,7 @@ void SynthTabUI::ServicePendingAction()
 		}
 
 		// Notify Parent (this may not be cleared for several 100 iterations)
-		_effectsSignalChainUI->ClearPendingAction();
+		_postProcessingUI->ClearPendingAction();
 	}
 }
 
@@ -359,7 +369,7 @@ void SynthTabUI::UpdateComponent()
 	_envelopeSignalUI->UpdateComponent();
 
 	// Scroll Viewers
-	_effectsSignalChainUI->UpdateComponent();
+	_postProcessingUI->UpdateComponent();
 	_pluginListUI->UpdateComponent();
 }
 
@@ -376,7 +386,7 @@ void SynthTabUI::Tick()
 	_envelopeSignalUI->Tick();
 
 	// Scroll Viewers
-	_effectsSignalChainUI->Tick();
+	_postProcessingUI->Tick();
 	_pluginListUI->Tick();
 }
 
@@ -396,54 +406,46 @@ void SynthTabUI::FromUI(SoundSettings& destination)
 
 void SynthTabUI::FromUI(SoundSettings* destination)
 {
-	// Effects (Add) (Enable / Disable)
+	// Effects (check for changes)
 	// 
-	for (int index = 0; index < _effectsSignalChainUI->GetUICount(); index++)
+	for (int index = 0; index < _postProcessingUI->GetUICount(); index++)
 	{
 		// Effect Name
-		std::string modelName = _effectsSignalChainUI->GetName(index);
-
-		// No changes
-		if (!_effectsSignalChainUI->GetDirty(modelName))
-			continue;
+		std::string modelName = _postProcessingUI->GetName(index);
 
 		// Model (local)
-		SignalNodeModelUI* model = _signalModels->at(modelName);
+		SignalNodeModelUI* model = _postProcessingModels->at(modelName);
 
 		// -> FromUI (update local)
-		_effectsSignalChainUI->FromUI(modelName, model);
+		_postProcessingUI->FromUI(modelName, model);
 
 		// Add (if enabled)
-		if (!destination->GetSignalChain()->Contains(modelName))
+		if (!destination->GetPostProcessing()->Contains(modelName))
 		{
-			if (model->GetEnabled())
-			{
-				// Effect Settings
-				SignalSettings settings;
-				_effectUIs->at(modelName)->FromUI(settings);
-				destination->GetSignalChain()->Add(settings);
-			}
+			// Effect Settings 
+			SignalSettings settings;
+			settings.SetIsEnabled(model->GetEnabled());
+			_effectUIs->at(modelName)->FromUI(settings);
+			destination->GetPostProcessing()->Add(settings);
 		}
 
 		// Update
 		else
 		{
-			if (model->GetEnabled())
-			{
-				// Effect Settings (already heaped)
-				SignalSettings* settings = destination->GetSignalChain()->Get(modelName);
-				_effectUIs->at(modelName)->FromUI(settings);
-			}
+			// Effect Settings (already heaped)
+			SignalSettings* settings = destination->GetPostProcessing()->Get(modelName);
+			settings->SetIsEnabled(model->GetEnabled());
+			_effectUIs->at(modelName)->FromUI(settings);
 		}
 	}
 
 	// Remove SignalChainSettings*
-	for (int index = destination->GetSignalChain()->GetCount() - 1; index >= 0; index--)
+	for (int index = destination->GetPostProcessing()->GetCount() - 1; index >= 0; index--)
 	{
 		// Remove
-		if (index >= _effectsSignalChainUI->GetUICount())
+		if (index >= _postProcessingUI->GetUICount())
 		{
-			destination->GetSignalChain()->RemoveAt(index);
+			destination->GetPostProcessing()->RemoveAt(index);
 		}
 	}
 
@@ -464,7 +466,7 @@ bool SynthTabUI::HasPendingAction() const
 	hasPendingAction |= _pluginListUI->HasPendingAction();
 
 	// Signal Nodes (enabled / disabled)
-	hasPendingAction |= _effectsSignalChainUI->HasPendingAction();
+	hasPendingAction |= _postProcessingUI->HasPendingAction();
 	hasPendingAction |= _oscillatorSignalUI->HasPendingAction();
 	hasPendingAction |= _envelopeSignalUI->HasPendingAction();
 
@@ -484,7 +486,7 @@ void SynthTabUI::ClearPendingAction()
 	_pluginListUI->ClearPendingAction();
 
 	// Signal Nodes (hover, edit, remove, move up, move down)
-	_effectsSignalChainUI->ClearPendingAction();
+	_postProcessingUI->ClearPendingAction();
 	_oscillatorSignalUI->ClearPendingAction();
 	_envelopeSignalUI->ClearPendingAction();
 
@@ -500,13 +502,13 @@ bool SynthTabUI::GetDirty() const
 	// a much higher frequency than the ToUI / FromUI functions. This is controlled
 	// by the UIController.
 	//
-	bool isDirty = false;
+	bool isDirty = _isDirty;
 
 	// Plugin List
 	isDirty |= _pluginListUI->GetDirty();
 
 	// Signal Nodes (enabled / disabled)
-	isDirty |= _effectsSignalChainUI->GetDirty();
+	isDirty |= _postProcessingUI->GetDirty();
 	isDirty |= _oscillatorSignalUI->GetDirty();
 	isDirty |= _envelopeSignalUI->GetDirty();
 
@@ -526,7 +528,7 @@ void SynthTabUI::ClearDirty()
 	_pluginListUI->ClearDirty();
 
 	// Signal Nodes (enabled / disabled)
-	_effectsSignalChainUI->ClearDirty();
+	_postProcessingUI->ClearDirty();
 	_oscillatorSignalUI->ClearDirty();
 	_envelopeSignalUI->ClearDirty();
 
@@ -534,6 +536,8 @@ void SynthTabUI::ClearDirty()
 	_activeEditorUI->ClearDirty();
 	_oscillatorUI->ClearDirty();
 	_envelopeUI->ClearDirty();
+
+	_isDirty = false;
 }
 
 #endif

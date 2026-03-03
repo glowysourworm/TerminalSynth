@@ -185,6 +185,7 @@ void SignalNodeUI::FromUI(SignalNodeModelUI& destination)
 void SignalNodeUI::FromUI(SignalNodeModelUI* destination)
 {
 	bool enabled = _enabledValue->GetValue();
+	_model->SetEnabled(enabled);
 	destination->Update(_model);
 }
 

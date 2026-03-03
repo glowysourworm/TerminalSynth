@@ -56,6 +56,26 @@ bool LoopTimer::Mark()
 	return this->GoalReached();
 }
 
+double LoopTimer::PeekSeconds() const
+{
+	return _secondTimer->peek();
+}
+
+double LoopTimer::PeekMilli() const
+{
+	return _milliTimer->peekMilli();
+}
+
+double LoopTimer::PeekMicro() const
+{
+	return _microTimer->peekMicro();
+}
+
+double LoopTimer::PeekNano() const
+{
+	return _nanoTimer->peekNano();
+}
+
 double LoopTimer::GetLastSeconds() const
 {
 	return _lastSeconds;

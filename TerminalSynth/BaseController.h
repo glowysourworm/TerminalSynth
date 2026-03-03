@@ -17,9 +17,9 @@ class BaseController
 {
 public:
 
-	BaseController(AtomicLock* atomicLock)
+	BaseController(AtomicLock* playbackLock)
 	{
-		this->Lock = atomicLock;
+		this->PlaybackLock = playbackLock;
 	};
 	~BaseController() {};
 
@@ -40,7 +40,11 @@ public:
 
 protected:
 
-	AtomicLock* Lock;
+	/// <summary>
+	/// Lock required for the playback thread since we do not have dispatch control over
+	/// it, we have to force synchronization to wait on the SynthSettings* shared pointer.
+	/// </summary>
+	AtomicLock* PlaybackLock;
 };
 
 #endif

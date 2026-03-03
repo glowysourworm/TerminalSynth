@@ -182,7 +182,7 @@ SignalBase* SoundRegistry::Checkout(const std::string& name) const
 	// Available Instances
 	if (_effectInstances->at(name)->size() > 0)
 	{
-		SignalBase* instance = *_effectInstances->at(name)->end();
+		SignalBase* instance = _effectInstances->at(name)->back();
 
 		_effectInstancesCheckedOut->at(name)->push_back(instance);
 		_effectInstances->at(name)->pop_back();

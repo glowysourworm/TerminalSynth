@@ -266,7 +266,6 @@
     <ClCompile Include="SynthNote.cpp" />
     <ClCompile Include="SynthNoteMap.cpp" />
     <ClCompile Include="SynthNotePool.cpp" />
-    <ClCompile Include="UIController.cpp" />
     <ClCompile Include="WaveTable.cpp" />
     <ClCompile Include="WaveTableCache.cpp" />
   </ItemGroup>
@@ -335,7 +334,6 @@
     <ClInclude Include="SynthNotePool.h" />
     <ClInclude Include="SynthPlaybackDevice.h" />
     <ClInclude Include="UIBase.h" />
-    <ClInclude Include="UIController.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="ValueCapture.h" />
     <ClInclude Include="Vector.h" />
