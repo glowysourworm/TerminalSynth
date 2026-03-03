@@ -49,8 +49,8 @@ public:
 	{
 		if (_previouslySet)
 		{
-			_left += copy->GetLeft() / 2.0f;
-			_right += copy->GetRight() / 2.0f;
+			_left += copy->GetLeft() /* / 2.0f */;
+			_right += copy->GetRight() /* / 2.0f */;
 		}
 		else
 			this->SetFrame(copy);

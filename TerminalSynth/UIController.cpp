@@ -152,6 +152,13 @@ void UIController::ThreadStart()
 			_mainUI->ServicePendingAction();
 
 
+		// These were added to help create UI classes. The stack-oriented rendering
+		// architecture of FTXUI is tricky to get to provide an update each call. You
+		// basically have to either follow their UI inheritance pattern (closely), or
+		// you have to add something to trigger re-rendering!
+		//
+		_mainUI->UpdateComponent();
+
 		// Sleep Cycle (Try to use approx 10ms of total time in the while loop)
 		//
 		long currentMicro = (long)_stopWatch->peekMicro();
@@ -159,14 +166,6 @@ void UIController::ThreadStart()
 		
 		if (sleepTime > 0.0)
 			std::this_thread::sleep_for(std::chrono::microseconds(sleepTime));
-
-
-		// These were added to help create UI classes. The stack-oriented rendering
-		// architecture of FTXUI is tricky to get to provide an update each call. You
-		// basically have to either follow their UI inheritance pattern (closely), or
-		// you have to add something to trigger re-rendering!
-		//
-		_mainUI->UpdateComponent();
 
 		// Use custom event to force one UI update
 		screen.PostEvent(ftxui::Event::Custom);
