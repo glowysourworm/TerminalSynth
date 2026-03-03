@@ -95,7 +95,8 @@ bool SynthNotePool::SetNote(int midiNumber, bool pressed, double absoluteTime) c
 		if (_engagedNotes->size() < _capacity)
 		{
 			// Calculate frequency from MIDI number
-			float frequency = TerminalSynth::GetMidiFrequency(midiNumber);
+			unsigned int octave = _oscillatorParameters->GetOctave();
+			float frequency = TerminalSynth::GetMidiFrequency(midiNumber + (octave * 12));
 
 			// Oscillator Parameters (copy, and set next frequency)
 			OscillatorParameters parameters = *_oscillatorParameters;

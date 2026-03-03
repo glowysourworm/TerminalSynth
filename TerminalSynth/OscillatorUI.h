@@ -5,9 +5,11 @@
 
 #include "Constant.h"
 #include "OscillatorParameters.h"
+#include "SliderUI.h"
 #include "SoundBankSettings.h"
 #include "UIBase.h"
 #include "ValueCapture.h"
+#include <cmath>
 #include <exception>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
@@ -48,6 +50,10 @@ private:
 
 	ftxui::Component _component;
 
+	// Octave Selector
+	SliderUI* _octaveUI;
+
+	// Sound Bank Map
 	std::map<std::string, std::vector<std::string>*>* _soundBankMap;
 
 	// Oscillator Selected Index
@@ -61,6 +67,8 @@ private:
 	std::vector<std::string>* _oscillatorItems;
 	std::vector<std::string>* _soundBankItems;
 	std::vector<std::string>* _soundNameItems;
+
+
 };
 
 OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const ftxui::Color& labelColor)
@@ -87,6 +95,8 @@ OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const ftx
 	_soundSourceChoiceIndex = new ValueCapture<int>(0);
 	_soundBankSelectedIndex = new ValueCapture<int>(0);
 	_soundNameSelectedIndex = new ValueCapture<int>(0);
+
+	_octaveUI = new SliderUI(0, 0.0f, 3.0f, 1.0f, "Octave", "Octave {:2.0f}", ftxui::Color::BlueLight);
 
 	_soundBankMap = new std::map<std::string, std::vector<std::string>*>();
 
@@ -123,6 +133,8 @@ OscillatorUI::~OscillatorUI()
 
 void OscillatorUI::Initialize(const OscillatorParameters& parameters)
 {
+	_octaveUI->Initialize(parameters.GetOctave());
+
 	auto soundSourceChoiceUI = ftxui::Dropdown(_soundSourceChoices, _soundSourceChoiceIndex->GetRef());
 	auto oscillatorItemsUI = ftxui::Dropdown(_oscillatorItems, _oscillatorSelectedIndex->GetRef());
 	auto soundBankItemsUI = ftxui::Dropdown(_soundBankItems, _soundBankSelectedIndex->GetRef());
@@ -135,6 +147,7 @@ void OscillatorUI::Initialize(const OscillatorParameters& parameters)
 			oscillatorItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 0; }),
 			soundBankItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 1; }),
 			soundNameItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 1; }),
+			_octaveUI->GetComponent() | ftxui::border
 		}) | ftxui::CatchEvent([&] (ftxui::Event event) {
 
 			// Passthrough
@@ -159,6 +172,8 @@ void OscillatorUI::ServicePendingAction()
 
 void OscillatorUI::UpdateComponent()
 {
+	_octaveUI->UpdateComponent();
+
 	if (_soundBankSelectedIndex->HasChanged())
 	{
 		std::string soundBank = _soundBankItems->at(_soundBankSelectedIndex->GetValue());
@@ -186,6 +201,8 @@ void OscillatorUI::ToUI(const OscillatorParameters& source)
 
 void OscillatorUI::ToUI(const OscillatorParameters* source)
 {
+	//_octaveUI->ToUI(source->GetOctave());
+
 	_soundSourceChoiceIndex->SetValue((int)source->GetType());
 	_oscillatorSelectedIndex->SetValue((int)source->GetBuiltInType());
 
@@ -224,7 +241,8 @@ bool OscillatorUI::GetDirty() const
 	return _soundSourceChoiceIndex->HasChanged() ||
 		_oscillatorSelectedIndex->HasChanged() ||
 		_soundBankSelectedIndex->HasChanged() ||
-		_soundNameSelectedIndex->HasChanged();
+		_soundNameSelectedIndex->HasChanged() ||
+		_octaveUI->GetDirty();
 }
 
 void OscillatorUI::ClearDirty()
@@ -233,6 +251,7 @@ void OscillatorUI::ClearDirty()
 	_oscillatorSelectedIndex->Clear();
 	_soundBankSelectedIndex->Clear();
 	_soundNameSelectedIndex->Clear();
+	_octaveUI->ClearDirty();
 }
 
 bool OscillatorUI::HasPendingAction() const
@@ -251,6 +270,10 @@ void OscillatorUI::FromUI(OscillatorParameters& destination)
 
 void OscillatorUI::FromUI(OscillatorParameters* destination)
 {
+	float octave;
+	_octaveUI->FromUI(octave);
+
+	destination->SetOctave((unsigned int)ceil(octave));
 	destination->SetType((OscillatorType)_soundSourceChoiceIndex->GetValue());
 	destination->SetBuiltInType((BuiltInOscillators)_oscillatorSelectedIndex->GetValue());
 

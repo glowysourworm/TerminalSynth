@@ -21,6 +21,7 @@ public:
 		_frequency = TerminalSynth::GetMidiFrequency(60);
 		_signalLow = SIGNAL_LOW;
 		_signalHigh = SIGNAL_HIGH;
+		_octave = 0;
 	}
 
 	/// <summary>
@@ -41,6 +42,7 @@ public:
 		_frequency = frequency;
 		_signalLow = signalLow;
 		_signalHigh = signalHigh;
+		_octave = 0;
 	}
 	OscillatorParameters(const OscillatorParameters& copy)
 	{
@@ -51,6 +53,7 @@ public:
 		_frequency = copy.GetFrequency();
 		_signalLow = copy.GetSignalLow();
 		_signalHigh = copy.GetSignalHigh();
+		_octave = copy.GetOctave();
 	}
 	~OscillatorParameters()
 	{
@@ -61,6 +64,7 @@ public:
 	float GetFrequency() const { return _frequency; }
 	float GetSignalLow() const { return _signalLow; }
 	float GetSignalHigh() const { return _signalHigh; }
+	unsigned int GetOctave() const { return _octave; }
 	std::string GetSoundBank() const { return *_soundBank; }
 	std::string GetSoundName() const { return *_soundName; }
 	OscillatorType GetType() const { return _type; }
@@ -69,6 +73,7 @@ public:
 	void SetFrequency(float value) { _frequency = value; }
 	void SetSignalLow(float value) { _signalLow = value; }
 	void SetSignalHigh(float value) { _signalHigh = value; }
+	void SetOctave(unsigned int value) { _octave = value; }
 	void SetSoundBank(const std::string& value) 
 	{ 
 		_soundBank->clear();
@@ -118,6 +123,7 @@ public:
 		isDirty |= _signalHigh != source->GetSignalHigh();
 		isDirty |= _type != source->GetType();
 		isDirty |= _builtInType != source->GetBuiltInType();
+		isDirty |= _octave != source->GetOctave();
 		
 		_soundBank->clear();
 		_soundName->clear();
@@ -125,6 +131,7 @@ public:
 		_frequency = source->GetFrequency();
 		_signalLow = source->GetSignalLow();
 		_signalHigh = source->GetSignalHigh();
+		_octave = source->GetOctave();
 		_type = source->GetType();
 		_builtInType = source->GetBuiltInType();
 		_soundBank->append(source->GetSoundBank());
@@ -152,14 +159,16 @@ private:
 			other.GetSignalLow() == this->GetSignalLow() &&
 			other.GetSignalHigh() == this->GetSignalHigh() &&
 			other.GetType() == this->GetType() &&
-			other.GetBuiltInType() == this->GetBuiltInType();
+			other.GetBuiltInType() == this->GetBuiltInType() &&
+			other.GetOctave() == this->GetOctave();
 	}
 
 private:
 
 	std::string* _soundBank;
 	std::string* _soundName;
-	float _frequency;
+	float _frequency;						// This gets set with the octave:  see SynthNotePool*
+	unsigned int _octave;
 	float _signalLow;
 	float _signalHigh;
 	OscillatorType _type;
