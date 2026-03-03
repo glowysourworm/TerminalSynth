@@ -14,7 +14,9 @@
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 class OscillatorUI : public UIBase<OscillatorParameters>
@@ -46,7 +48,7 @@ private:
 
 	ftxui::Component _component;
 
-	const SoundBankSettings* _soundBankSettings;
+	std::map<std::string, std::vector<std::string>*>* _soundBankMap;
 
 	// Oscillator Selected Index
 	ValueCapture<int>* _soundSourceChoiceIndex;
@@ -63,11 +65,9 @@ private:
 
 OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const ftxui::Color& labelColor)
 {
-	_soundBankSettings = soundBankSettings;
-
-	std::vector<std::string> soundBanks = _soundBankSettings->GetSoundBanks();
+	std::vector<std::string> soundBanks = soundBankSettings->GetSoundBanks();
 	std::string initialSoundBank = soundBanks.size() > 0 ? soundBanks[0] : "";
-	std::vector<std::string> soundNames = initialSoundBank.size() > 0 ? _soundBankSettings->GetSoundNames(initialSoundBank) : std::vector<std::string>();
+	std::vector<std::string> soundNames = initialSoundBank.size() > 0 ? soundBankSettings->GetSoundNames(initialSoundBank) : std::vector<std::string>();
 
 	_soundSourceChoices = new std::vector<std::string>({
 		"Oscillators",
@@ -87,11 +87,26 @@ OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const ftx
 	_soundSourceChoiceIndex = new ValueCapture<int>(0);
 	_soundBankSelectedIndex = new ValueCapture<int>(0);
 	_soundNameSelectedIndex = new ValueCapture<int>(0);
+
+	_soundBankMap = new std::map<std::string, std::vector<std::string>*>();
+
+	for (int index = 0; index < soundBanks.size(); index++)
+	{
+		auto soundNames = new std::vector<std::string>(soundBankSettings->GetSoundNames(soundBanks[index]));
+
+		_soundBankMap->insert(std::make_pair(soundBanks[index], soundNames));
+	}
 }
 
 OscillatorUI::~OscillatorUI()
 {
 	UIBase::~UIBase();
+
+	for (auto iter = _soundBankMap->begin(); iter != _soundBankMap->end(); ++iter)
+	{
+		// std::vector<std::string>*
+		delete iter->second;
+	}
 
 	delete _soundBankItems;
 	delete _soundNameItems;
@@ -102,6 +117,8 @@ OscillatorUI::~OscillatorUI()
 	delete _soundBankSelectedIndex;
 	delete _soundNameSelectedIndex;
 	delete _oscillatorSelectedIndex;
+
+	delete _soundBankMap;
 }
 
 void OscillatorUI::Initialize(const OscillatorParameters& parameters)
@@ -147,13 +164,13 @@ void OscillatorUI::UpdateComponent()
 		std::string soundBank = _soundBankItems->at(_soundBankSelectedIndex->GetValue());
 
 		// Update Sound Names
-		std::vector<std::string> soundNames = _soundBankSettings->GetSoundNames(soundBank);
+		std::vector<std::string>* soundNames = _soundBankMap->at(soundBank);
 
 		_soundNameItems->clear();
 
-		for (int index = 0; index < soundNames.size(); index++)
+		for (int index = 0; index < soundNames->size(); index++)
 		{
-			_soundNameItems->push_back(soundNames[index]);
+			_soundNameItems->push_back(soundNames->at(index));
 		}
 	}
 }
@@ -190,11 +207,11 @@ void OscillatorUI::ToUI(const OscillatorParameters* source)
 		}
 	}
 
-	std::vector<std::string> soundNames = _soundBankSettings->GetSoundNames(soundBank);
+	std::vector<std::string>* soundNames = _soundBankMap->at(soundBank);
 
-	for (int index = 0; index < soundNames.size(); index++)
+	for (int index = 0; index < soundNames->size(); index++)
 	{
-		if (soundNames.at(index) == soundName)
+		if (soundNames->at(index) == soundName)
 		{
 			_soundNameSelectedIndex->SetValue(index);
 			break;
