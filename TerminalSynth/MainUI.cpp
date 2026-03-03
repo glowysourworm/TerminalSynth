@@ -7,6 +7,7 @@
 #include "SynthInformationUI.h"
 #include "SynthSettings.h"
 #include "SynthTabUI.h"
+#include <exception>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
@@ -120,16 +121,20 @@ void MainUI::UpdateComponent()
 
 void MainUI::FromUI(SynthSettings& synthSettings)
 {
-	SoundSettings soundSettings = *synthSettings.GetSoundSettings();
+	throw new std::exception("Please use the pointer version of this function FromUI");
+}
+
+void MainUI::FromUI(SynthSettings* synthSettings)
+{
+	SoundSettings* soundSettings = synthSettings->GetSoundSettings();
 
 	// Signal Chain
-	_synthTabUI->FromUI(soundSettings);
+	_synthTabUI->FromUI(soundSettings);		// Nested setting changed
 
-	bool isDirty = synthSettings.GetSoundSettings()->Update(soundSettings);		// Nested setting changed
-
-	// Only alert listeners if we have a dirty status
-	if (isDirty)
-		synthSettings.SetDirty();
+	// Alert listeners that there has been a change to the UI (which there was already a dirty flag 
+	// to enter this function) (the controller is checking)
+	//
+	synthSettings->SetDirty();
 
 	// Output
 	_outputUI->FromUI(synthSettings);
@@ -137,8 +142,13 @@ void MainUI::FromUI(SynthSettings& synthSettings)
 
 void MainUI::ToUI(const SynthSettings& configuration)
 {
+	throw new std::exception("Please use the pointer version of this function ToUI");
+}
+
+void MainUI::ToUI(const SynthSettings* configuration)
+{
 	// Synth Information
-	_synthInformationUI->ToUI(*configuration.GetOutputSettings());
+	_synthInformationUI->ToUI(configuration->GetOutputSettings());
 
 	// Synth Output Channels
 	_outputUI->ToUI(configuration);

@@ -26,7 +26,11 @@ public:
 	~SynthNotePool();
 
 	// Update Configuration
-	void Update(SoundRegistry* effectRegistry, const OscillatorParameters& parameters, const Envelope& envelope, const SignalChainSettings& signalChainSettings, unsigned int samplingRate);
+	void Update(SoundRegistry* effectRegistry,
+				const OscillatorParameters* parameters,
+				const Envelope* envelope,
+				const SignalChainSettings* signalChainSettings,
+				unsigned int samplingRate);
 
 	/// <summary>
 	/// Sets midi note to either engaged / disengaged. Returns true if there are enough voice slots

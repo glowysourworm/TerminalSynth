@@ -8,6 +8,7 @@
 #include "SoundBankSettings.h"
 #include "UIBase.h"
 #include "ValueCapture.h"
+#include <exception>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
@@ -28,7 +29,9 @@ public:
 	void UpdateComponent() override;
 
 	void ToUI(const OscillatorParameters& source) override;
+	void ToUI(const OscillatorParameters* source) override;
 	void FromUI(OscillatorParameters& destination) override;
+	void FromUI(OscillatorParameters* destination) override;
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
@@ -146,14 +149,19 @@ void OscillatorUI::UpdateComponent()
 
 void OscillatorUI::ToUI(const OscillatorParameters& source)
 {
-	_soundSourceChoiceIndex->SetValue((int)source.GetType());
-	_oscillatorSelectedIndex->SetValue((int)source.GetBuiltInType());
+	throw new std::exception("Please use the pointer version of this function ToUI");
+}
+
+void OscillatorUI::ToUI(const OscillatorParameters* source)
+{
+	_soundSourceChoiceIndex->SetValue((int)source->GetType());
+	_oscillatorSelectedIndex->SetValue((int)source->GetBuiltInType());
 
 	_soundBankSelectedIndex->SetValue(0);
 	_soundNameSelectedIndex->SetValue(0);
 
-	std::string soundBank = source.GetSoundBank();
-	std::string soundName = source.GetSoundName();
+	std::string soundBank = source->GetSoundBank();
+	std::string soundName = source->GetSoundName();
 
 	if (soundBank == "")
 		return;
@@ -197,14 +205,19 @@ void OscillatorUI::ClearDirty()
 
 void OscillatorUI::FromUI(OscillatorParameters& destination)
 {
-	destination.SetType((OscillatorType)_soundSourceChoiceIndex->GetValue());
-	destination.SetBuiltInType((BuiltInOscillators)_oscillatorSelectedIndex->GetValue());
+	throw new std::exception("Please use the pointer version of this function FromUI");
+}
+
+void OscillatorUI::FromUI(OscillatorParameters* destination)
+{
+	destination->SetType((OscillatorType)_soundSourceChoiceIndex->GetValue());
+	destination->SetBuiltInType((BuiltInOscillators)_oscillatorSelectedIndex->GetValue());
 
 	if (_soundBankItems->size() > 0)
-		destination.SetSoundBank(_soundBankItems->at(_soundBankSelectedIndex->GetValue()));
+		destination->SetSoundBank(_soundBankItems->at(_soundBankSelectedIndex->GetValue()));
 
 	if (_soundNameItems->size() > 0)
-		destination.SetSoundName(_soundNameItems->at(_soundNameSelectedIndex->GetValue()));
+		destination->SetSoundName(_soundNameItems->at(_soundNameSelectedIndex->GetValue()));
 }
 
 #endif	

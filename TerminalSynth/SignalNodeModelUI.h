@@ -55,15 +55,15 @@ public:
 	void SetCanRemove(bool value) { _canRemove = value; }
 	void SetOrder(int value) { _order = value; }
 
-	void Update(const SignalNodeModelUI& model)
+	void Update(const SignalNodeModelUI* model)
 	{
 		_name->clear();
-		_name->append(model.GetName());
-		_enabled = model.GetEnabled();
-		_canEnable = model.GetCanEnable();
-		_canReorder = model.GetCanReorder();
-		_canRemove = model.GetCanRemove();
-		_order = model.GetOrder();
+		_name->append(model->GetName());
+		_enabled = model->GetEnabled();
+		_canEnable = model->GetCanEnable();
+		_canReorder = model->GetCanReorder();
+		_canRemove = model->GetCanRemove();
+		_order = model->GetOrder();
 	}
 
 	bool operator==(const SignalNodeModelUI& model) const { return IsEqual(model); }

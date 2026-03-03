@@ -5,6 +5,7 @@
 
 #include "CheckboxModelUI.h"
 #include "UIBase.h"
+#include <exception>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/screen/color.hpp>
@@ -22,7 +23,9 @@ public:
 	void UpdateComponent() override;
 
 	void FromUI(CheckboxModelUI& destination) override;
+	void FromUI(CheckboxModelUI* destination) override;
 	void ToUI(const CheckboxModelUI& source) override;
+	void ToUI(const CheckboxModelUI* source) override;
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
@@ -70,13 +73,23 @@ void CheckboxUI::UpdateComponent()
 
 void CheckboxUI::FromUI(CheckboxModelUI& destination)
 {
-	destination.SetName(*_label);
-	destination.SetIsChecked(*_value);
+	throw new std::exception("Please use pointer version of this function");
+}
+
+void CheckboxUI::FromUI(CheckboxModelUI* destination)
+{
+	destination->SetName(*_label);
+	destination->SetIsChecked(*_value);
 }
 
 void CheckboxUI::ToUI(const CheckboxModelUI& source)
 {
-	*_value = source.GetIsChecked();
+	throw new std::exception("Please use pointer version of this function");
+}
+
+void CheckboxUI::ToUI(const CheckboxModelUI* source)
+{
+	*_value = source->GetIsChecked();
 }
 
 bool CheckboxUI::GetDirty() const

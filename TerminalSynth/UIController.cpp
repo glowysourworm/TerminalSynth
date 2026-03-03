@@ -1,15 +1,14 @@
 #include "AtomicLock.h"
 #include "BaseController.h"
-#include "SoundRegistry.h"
 #include "MainUI.h"
 #include "OutputSettings.h"
+#include "SoundRegistry.h"
 #include "SynthSettings.h"
 #include "UIController.h"
 #include <chrono>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/loop.hpp>
 #include <ftxui/component/screen_interactive.hpp>
-#include <ftxui/screen/color.hpp>
 #include <thread>
 
 UIController::UIController(AtomicLock* atomicLock) : BaseController(atomicLock)
@@ -80,7 +79,8 @@ void UIController::FromUI(SynthSettings* configuration)
 	// std::atomic wait loop
 	this->Lock->AcquireLock();
 
-	_mainUI->FromUI(*configuration);
+	_mainUI->FromUI(configuration);
+	_mainUI->ClearDirty();				// Top-down clear
 
 	// std::atomic end loop
 	this->Lock->Release();
@@ -91,7 +91,7 @@ void UIController::ToUI(SynthSettings* parameters)
 	// std::atomic wait loop
 	this->Lock->AcquireLock();
 
-	_mainUI->ToUI(*parameters);
+	_mainUI->ToUI(parameters);
 
 	// std::atomic end loop
 	this->Lock->Release();

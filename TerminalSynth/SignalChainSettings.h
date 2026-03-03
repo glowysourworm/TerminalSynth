@@ -5,6 +5,7 @@
 
 #include "SignalSettings.h"
 #include <exception>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -22,7 +23,7 @@ public:
 		
 		for (int index = 0; index < copy.GetCount(); index++)
 		{
-			_chain->push_back(new SignalSettings(copy.Get(index)));
+			_chain->push_back(new SignalSettings(*copy.Get(index)));
 		}
 	}
 	~SignalChainSettings()
@@ -48,16 +49,16 @@ public:
 
 	int GetCount() const { return _chain->size(); }
 
-	SignalSettings Get(int index) const
+	SignalSettings* Get(int index) const
 	{
-		return *_chain->at(index);
+		return _chain->at(index);
 	}
-	SignalSettings Get(const std::string& name) const
+	SignalSettings* Get(const std::string& name) const
 	{
 		for (int index = 0; index < _chain->size(); index++)
 		{
 			if (_chain->at(index)->GetName() == name)
-				return *_chain->at(index);
+				return _chain->at(index);
 		}
 
 		throw new std::exception("Signal chain settings not found:  SignalChainSettings.h");
@@ -75,6 +76,19 @@ public:
 		// MEMORY! Clear(), ~SignalChainSettings
 		_chain->push_back(new SignalSettings(settings));
 	}
+	void RemoveAt(int index)
+	{
+		if (index >= _chain->size())
+			throw new std::exception("Index outside the bounds of an array:  SignalChainSettings.h");
+
+		auto iter = _chain->begin();
+		std::advance(iter, index);
+
+		// MEMORY! ~SignalSettings
+		delete* iter;
+
+		_chain->erase(iter);
+	}
 	bool Contains(const std::string& name) const
 	{
 		for (int index = 0; index < _chain->size(); index++)
@@ -85,39 +99,39 @@ public:
 
 		return false;
 	}
-	bool Update(const SignalChainSettings& settings, bool overwrite)
+	bool Update(const SignalChainSettings* settings, bool overwrite)
 	{
-		if (settings.GetCount() != _chain->size() && !overwrite)
+		if (settings->GetCount() != _chain->size() && !overwrite)
 			throw new std::exception("Trying to update SignalChainSettings* with mismatching parameter sets");
 
 		bool isDirty = false;
 
 		// Update
-		for (int index = 0; index < settings.GetCount(); index++)
+		for (int index = 0; index < settings->GetCount(); index++)
 		{
 			// Update (larger in size)
 			if (index >= _chain->size())
 			{
-				_chain->push_back(new SignalSettings(settings.Get(index)));			// MEMORY!
+				_chain->push_back(settings->Get(index));
 				isDirty = true;
 			}
 
 			// Update (entries not aligned or matched)
-			else if (_chain->at(index)->GetName() != settings.Get(index).GetName())
+			else if (_chain->at(index)->GetName() != settings->Get(index)->GetName())
 			{
 				if (!overwrite)
 					throw new std::exception("Trying to overwrite protected parameter:  SignalChainSettings.h");
 
-				isDirty |= _chain->at(index)->Update(settings.Get(index), overwrite);
+				isDirty |= _chain->at(index)->Update(settings->Get(index), overwrite);
 			}
 
 			// Update
 			else
-				isDirty |= _chain->at(index)->Update(settings.Get(index), false);
+				isDirty |= _chain->at(index)->Update(settings->Get(index), false);
 		}
 
 		// Remove (excess elements)
-		for (int index = _chain->size() - 1; index >= settings.GetCount(); index--)
+		for (int index = _chain->size() - 1; index >= settings->GetCount(); index--)
 		{
 			delete _chain->at(index);		// MEMORY! ~SignalSettings
 

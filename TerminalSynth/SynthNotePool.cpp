@@ -46,7 +46,11 @@ SynthNotePool::~SynthNotePool()
 	delete _oscillatorParameters;
 }
 
-void SynthNotePool::Update(SoundRegistry* effectRegistry, const OscillatorParameters& parameters, const Envelope& envelope, const SignalChainSettings& signalChainSettings, unsigned int samplingRate)
+void SynthNotePool::Update(SoundRegistry* effectRegistry, 
+						   const OscillatorParameters* parameters, 
+						   const Envelope* envelope, 
+						   const SignalChainSettings* signalChainSettings, 
+						   unsigned int samplingRate)
 {
 	_systemSamplingRate = samplingRate;
 	_oscillatorParameters->Update(parameters);

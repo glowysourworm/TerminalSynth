@@ -56,15 +56,15 @@ public:
 	/// <summary>
 	/// Updates the sound settings data. Returns true if there were changes to the settings.
 	/// </summary>
-	bool Update(const SoundSettings& settings)
+	bool Update(const SoundSettings* settings)
 	{
 		bool isDirty = false;
 
-		isDirty |= _oscillatorParameters->Update(*settings.GetOscillatorParameters());
-		isDirty |= _oscillatorEnvelope->Update(*settings.GetOscillatorEnvelope());
-		isDirty |= _completeList->Update(*settings.GetEffectRegistry(), false);
-		isDirty |= _postProcessing->Update(*settings.GetPostProcessing(), true);			// overwrite
-		isDirty |= _signalProcessing->Update(*settings.GetSignalChain(), true);				// overwrite
+		isDirty |= _oscillatorParameters->Update(settings->GetOscillatorParameters());
+		isDirty |= _oscillatorEnvelope->Update(settings->GetOscillatorEnvelope());
+		isDirty |= _completeList->Update(settings->GetEffectRegistry(), false);
+		isDirty |= _postProcessing->Update(settings->GetPostProcessing(), true);			// overwrite
+		isDirty |= _signalProcessing->Update(settings->GetSignalChain(), true);				// overwrite
 
 		return isDirty;
 	}

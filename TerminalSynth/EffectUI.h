@@ -7,6 +7,7 @@
 #include "SignalSettings.h"
 #include "SliderUI.h"
 #include "UIBase.h"
+#include <exception>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -30,7 +31,9 @@ public:
 	void UpdateComponent() override;
 
 	void ToUI(const SignalSettings& source) override;
+	void ToUI(const SignalSettings* source) override;
 	void FromUI(SignalSettings& destination) override;
+	void FromUI(SignalSettings* destination) override;
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
@@ -179,12 +182,24 @@ void EffectUI::ToUI(const SignalSettings& source)
 {
 }
 
+void EffectUI::ToUI(const SignalSettings* source)
+{
+}
+
 void EffectUI::FromUI(SignalSettings& destination)
 {
+	throw new std::exception("Please use the pointer version of this function FromUI");
+}
+
+void EffectUI::FromUI(SignalSettings* destination)
+{
+	if (destination->GetName() != *_name)
+		throw new std::exception("Name mismatch EffectUI::FromUI");
+
 	// Name (const), Category, Info Text
-	destination.SetName(*_name);
-	destination.SetCategory(*_category);
-	destination.SetInfoText(*_infoText);
+	// destination->SetName(*_name);
+	destination->SetCategory(*_category);
+	destination->SetInfoText(*_infoText);
 
 	for (int index = 0; index < _parameterUIs->size(); index++)
 	{
@@ -195,11 +210,11 @@ void EffectUI::FromUI(SignalSettings& destination)
 
 		// Get UI Setting
 		_parameterUIs->at(index)->FromUI(setting);
-		
+
 		parameter.SetValue(setting);
 
 		// -> (set by index)
-		destination.AddParameter(parameter);
+		destination->AddParameter(parameter);
 	}
 }
 

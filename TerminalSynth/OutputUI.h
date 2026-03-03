@@ -6,6 +6,7 @@
 #include "SliderUI.h"
 #include "SynthSettings.h"
 #include "UIBase.h"
+#include <exception>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -23,7 +24,9 @@ public:
 	void UpdateComponent() override;
 
 	void ToUI(const SynthSettings& source) override;
+    void ToUI(const SynthSettings* source) override;
 	void FromUI(SynthSettings& destination) override;
+    void FromUI(SynthSettings* destination) override;
 
 	bool GetDirty() const override;
     void ClearDirty() override;
@@ -107,7 +110,7 @@ bool OutputUI::GetDirty() const
     return _gainUI->GetDirty() || _leftRightUI->GetDirty();
 }
 
-inline void OutputUI::ClearDirty()
+void OutputUI::ClearDirty()
 {
     _gainUI->ClearDirty();
     _leftRightUI->ClearDirty();
@@ -115,10 +118,19 @@ inline void OutputUI::ClearDirty()
 
 void OutputUI::ToUI(const SynthSettings& source)
 {
-    _gainUI->ToUI(source.GetOutputGain());
-    _leftRightUI->ToUI(source.GetOutputLeftRight());
+    throw new std::exception("Please use the pointer version of this function ToUI");
+}
+void OutputUI::ToUI(const SynthSettings* source)
+{
+    _gainUI->ToUI(source->GetOutputGain());
+    _leftRightUI->ToUI(source->GetOutputLeftRight());
 }
 void OutputUI::FromUI(SynthSettings& destination)
+{
+    throw new std::exception("Please use the pointer version of this function FromUI");
+}
+
+void OutputUI::FromUI(SynthSettings* destination)
 {
     float gain;
     float leftRight;
@@ -126,8 +138,8 @@ void OutputUI::FromUI(SynthSettings& destination)
     _gainUI->FromUI(gain);
     _leftRightUI->FromUI(leftRight);
 
-    destination.SetOutputGain(gain);
-    destination.SetOutputLeftRight(leftRight);
+    destination->SetOutputGain(gain);
+    destination->SetOutputLeftRight(leftRight);
 }
 
 #endif

@@ -63,13 +63,13 @@ public:
 	/// Updates SignalBase* by calling UpdateParameter(..)
 	/// </summary>
 	/// <param name="settings">New SignalSettings object - used for parameter values only!</param>
-	void Update(const SignalSettings& settings)
+	void Update(const SignalSettings* settings)
 	{
 		// Update Parameter (override)
-		for (int index = 0; index < settings.GetParameterCount(); index++)
+		for (int index = 0; index < settings->GetParameterCount(); index++)
 		{
 			// -> override
-			this->UpdateParameter(index, settings.GetParameterValue(index));
+			this->UpdateParameter(index, settings->GetParameterValue(index));
 		}
 	}
 

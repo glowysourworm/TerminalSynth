@@ -86,7 +86,7 @@ void SynthSettings::SetSoundBankSettings(const SoundBankSettings& parameters)
 
 void SynthSettings::SetSoundSettings(const SoundSettings& settings)
 {
-	_isDirty |= _soundSettings->Update(settings);
+	_isDirty |= _soundSettings->Update(&settings);
 }
 void SynthSettings::SetEqualizerOutput(const EqualizerOutput& value)
 {

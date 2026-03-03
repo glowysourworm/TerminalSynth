@@ -71,7 +71,9 @@ public:
 	void UpdateComponent();
 
 	void FromUI(const std::string& name, TModel& destination);
+	void FromUI(const std::string& name, TModel* destination);
 	void ToUI(const std::string& name, const TModel& source);
+	void ToUI(const std::string& name, const TModel* source);
 	int GetUICount() const;
 	std::string GetName(int index) const;
 	T* GetUI(const std::string& name) const;
@@ -80,6 +82,7 @@ public:
 	void MoveDown(const std::string& name);
 
 	bool GetDirty() const;
+	bool GetDirty(const std::string& name) const;
 	void ClearDirty();
 	void ClearDirty(const std::string& name);
 
@@ -264,7 +267,17 @@ void ScrollViewerUI<TModel, T>::FromUI(const std::string& name, TModel& destinat
 	_uiComponents->at(name)->FromUI(destination);
 }
 template<class TModel, IsUIBase<TModel> T>
+void ScrollViewerUI<TModel, T>::FromUI(const std::string& name, TModel* destination)
+{
+	_uiComponents->at(name)->FromUI(destination);
+}
+template<class TModel, IsUIBase<TModel> T>
 void ScrollViewerUI<TModel, T>::ToUI(const std::string& name, const TModel& source)
+{
+	_uiComponents->at(name)->ToUI(source);
+}
+template<class TModel, IsUIBase<TModel> T>
+void ScrollViewerUI<TModel, T>::ToUI(const std::string& name, const TModel* source)
 {
 	_uiComponents->at(name)->ToUI(source);
 }
@@ -348,6 +361,11 @@ bool ScrollViewerUI<TModel, T>::GetDirty() const
 	}
 
 	return isDirty;
+}
+template<class TModel, IsUIBase<TModel> T>
+bool ScrollViewerUI<TModel, T>::GetDirty(const std::string& name) const
+{
+	return _uiComponents->at(name)->GetDirty();
 }
 template<class TModel, IsUIBase<TModel> T>
 void ScrollViewerUI<TModel, T>::ClearDirty()

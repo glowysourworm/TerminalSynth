@@ -24,15 +24,11 @@ public:
 	ftxui::Component GetComponent() override;
 	void UpdateComponent() override;
 
-	/// <summary>
-	/// Collects information from the UI using a prepared configuration (pre-locked!)
-	/// </summary>
 	void FromUI(SynthSettings& configuration) override;
+	void FromUI(SynthSettings* configuration) override;
 
-	/// <summary>
-	/// Sets the UI from the update parameters (prepared for use by this component)
-	/// </summary>
 	void ToUI(const SynthSettings& configuration) override;
+	void ToUI(const SynthSettings* configuration) override;
 
 	bool GetDirty() const override;
 	void ClearDirty() override;

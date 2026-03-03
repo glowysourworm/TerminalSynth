@@ -47,10 +47,21 @@ public:
 	virtual void ToUI(const T& source) = 0;
 
 	/// <summary>
+	/// Sets the UI from the (current) value. This will be called in real time.
+	/// </summary>
+	virtual void ToUI(const T* source) = 0;
+
+	/// <summary>
 	/// Sets the destination parameter from the UI. This will be called when the
 	/// UI's dirty flag is set.
 	/// </summary>
 	virtual void FromUI(T& destination) = 0;
+
+	/// <summary>
+	/// Sets the destination parameter from the UI. This will be called when the
+	/// UI's dirty flag is set.
+	/// </summary>
+	virtual void FromUI(T* destination) = 0;
 
 	/// <summary>
 	/// Forces component to update itself, recreating any variables that it needs for

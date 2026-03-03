@@ -107,28 +107,28 @@ public:
 	/// <summary>
 	/// Updates parameters; and returns true if there were changes
 	/// </summary>
-	bool Update(const OscillatorParameters& source)
+	bool Update(const OscillatorParameters* source)
 	{
 		bool isDirty = false;
 
-		isDirty |= *_soundBank != source.GetSoundBank();
-		isDirty |= *_soundName != source.GetSoundName();
-		isDirty |= _frequency != source.GetFrequency();
-		isDirty |= _signalLow != source.GetSignalLow();
-		isDirty |= _signalHigh != source.GetSignalHigh();
-		isDirty |= _type != source.GetType();
-		isDirty |= _builtInType != source.GetBuiltInType();
+		isDirty |= *_soundBank != source->GetSoundBank();
+		isDirty |= *_soundName != source->GetSoundName();
+		isDirty |= _frequency != source->GetFrequency();
+		isDirty |= _signalLow != source->GetSignalLow();
+		isDirty |= _signalHigh != source->GetSignalHigh();
+		isDirty |= _type != source->GetType();
+		isDirty |= _builtInType != source->GetBuiltInType();
 		
 		_soundBank->clear();
 		_soundName->clear();
 
-		_frequency = source.GetFrequency();
-		_signalLow = source.GetSignalLow();
-		_signalHigh = source.GetSignalHigh();
-		_type = source.GetType();
-		_builtInType = source.GetBuiltInType();
-		_soundBank->append(source.GetSoundBank());
-		_soundName->append(source.GetSoundName());
+		_frequency = source->GetFrequency();
+		_signalLow = source->GetSignalLow();
+		_signalHigh = source->GetSignalHigh();
+		_type = source->GetType();
+		_builtInType = source->GetBuiltInType();
+		_soundBank->append(source->GetSoundBank());
+		_soundName->append(source->GetSoundName());
 
 		return isDirty;
 	}

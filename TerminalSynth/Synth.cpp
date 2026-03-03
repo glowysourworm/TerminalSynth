@@ -27,11 +27,11 @@ void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings*
 
 void Synth::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
-	_postProcessing->Update(effectRegistry, *configuration->GetSoundSettings()->GetPostProcessing());
+	_postProcessing->Update(effectRegistry, configuration->GetSoundSettings()->GetPostProcessing());
 	_pianoNotes->Update(effectRegistry, 
-						*configuration->GetSoundSettings()->GetOscillatorParameters(), 
-						*configuration->GetSoundSettings()->GetOscillatorEnvelope(),
-						*configuration->GetSoundSettings()->GetSignalChain(),
+						configuration->GetSoundSettings()->GetOscillatorParameters(), 
+						configuration->GetSoundSettings()->GetOscillatorEnvelope(),
+						configuration->GetSoundSettings()->GetSignalChain(),
 						_samplingRate);
 }
 

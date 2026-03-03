@@ -61,25 +61,25 @@ Envelope::~Envelope()
 /// <summary>
 /// Returns true if there were changes to the envelope
 /// </summary>
-bool Envelope::Update(const Envelope& envelope)
+bool Envelope::Update(const Envelope* envelope)
 {
 	bool isDirty = false;
 
-	isDirty |= _attack != envelope.GetAttack();
-	isDirty |= _decay != envelope.GetDecay();
-	isDirty |= _sustain != envelope.GetSustain();
-	isDirty |= _release != envelope.GetRelease();
+	isDirty |= _attack != envelope->GetAttack();
+	isDirty |= _decay != envelope->GetDecay();
+	isDirty |= _sustain != envelope->GetSustain();
+	isDirty |= _release != envelope->GetRelease();
 
-	isDirty |= _attackPeak != envelope.GetAttackPeak();
-	isDirty |= _sustainPeak != envelope.GetSustainPeak();
+	isDirty |= _attackPeak != envelope->GetAttackPeak();
+	isDirty |= _sustainPeak != envelope->GetSustainPeak();
 
-	_attack = envelope.GetAttack();
-	_decay = envelope.GetDecay();
-	_sustain = envelope.GetSustain();
-	_release = envelope.GetRelease();
+	_attack = envelope->GetAttack();
+	_decay = envelope->GetDecay();
+	_sustain = envelope->GetSustain();
+	_release = envelope->GetRelease();
 
-	_attackPeak = envelope.GetAttackPeak();
-	_sustainPeak = envelope.GetSustainPeak();
+	_attackPeak = envelope->GetAttackPeak();
+	_sustainPeak = envelope->GetSustainPeak();
 
 	return isDirty;
 }

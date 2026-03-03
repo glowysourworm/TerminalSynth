@@ -25,15 +25,15 @@ void SignalChain::Initialize(const SoundRegistry* effectRegistry, const SignalCh
 	// Add
 	for (int index = 0; index < signalChainSettings->GetCount(); index++)
 	{
-		SignalSettings settings = signalChainSettings->Get(index);
+		SignalSettings* settings = signalChainSettings->Get(index);
 
 		// Get an instance from the SoundRegistry* cache (DO NOT DELETE!)
-		SignalBase* effect = effectRegistry->Checkout(settings.GetName());
+		SignalBase* effect = effectRegistry->Checkout(settings->GetName());
 
 		_chain->push_back(effect);
 	}
 }
-void SignalChain::Update(SoundRegistry* effectRegistry, const SignalChainSettings& signalChainSettings)
+void SignalChain::Update(SoundRegistry* effectRegistry, const SignalChainSettings* signalChainSettings)
 {
 	// Checkin (preserve memory cache)
 	for (int index = _chain->size() - 1; index >= 0; index--)
@@ -44,12 +44,12 @@ void SignalChain::Update(SoundRegistry* effectRegistry, const SignalChainSetting
 	}
 
 	// Checkout (from registry)
-	for (int index = 0; index < signalChainSettings.GetCount(); index++)
+	for (int index = 0; index < signalChainSettings->GetCount(); index++)
 	{
-		SignalSettings settings = signalChainSettings.Get(index);
+		SignalSettings* settings = signalChainSettings->Get(index);
 
 		// DO NOT DELETE! (these are all handled by the SoundRegistry*)
-		SignalBase* effect = effectRegistry->Checkout(settings.GetName());
+		SignalBase* effect = effectRegistry->Checkout(settings->GetName());
 
 		// OPTIMIZE!
 		effect->Update(settings);

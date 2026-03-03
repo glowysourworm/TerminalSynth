@@ -40,7 +40,9 @@ public:
 	void UpdateComponent() override;
 
 	void ToUI(const SoundSettings& source) override;
+	void ToUI(const SoundSettings* source) override;
 	void FromUI(SoundSettings& destination) override;
+	void FromUI(SoundSettings* destination) override;
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
@@ -108,22 +110,22 @@ SynthTabUI::SynthTabUI(const SynthSettings& synthSettings)
 		auto element = effectRegistry->Get(index);
 
 		// (MEMORY!) ~SynthTabUI
-		EffectUI* effectUI = new EffectUI(element.GetName(), element.GetCategory(), element.GetInfoText(), ftxui::Color::White);
+		EffectUI* effectUI = new EffectUI(element->GetName(), element->GetCategory(), element->GetInfoText(), ftxui::Color::White);
 
 		// (MEMORY!) ~SynthTabUI
-		SignalNodeModelUI* signalModelUI = new SignalNodeModelUI(element.GetName(), true, true, true, true, index);
+		SignalNodeModelUI* signalModelUI = new SignalNodeModelUI(element->GetName(), true, true, true, true, index);
 
 		// (MEMORY!) ~SynthTabUI
-		CheckboxModelUI* checkboxModelUI = new CheckboxModelUI(element.GetName(), false, index);
+		CheckboxModelUI* checkboxModelUI = new CheckboxModelUI(element->GetName(), false, index);
 
 		// Plugin List UI
 		_pluginListUI->AddUI(*checkboxModelUI);
 
-		effectUI->Initialize(element);
+		effectUI->Initialize(*element);
 
-		_effectUIs->insert(std::make_pair(element.GetName(), effectUI));
-		_signalModels->insert(std::make_pair(element.GetName(), signalModelUI));
-		_pluginModels->insert(std::make_pair(element.GetName(), checkboxModelUI));
+		_effectUIs->insert(std::make_pair(element->GetName(), effectUI));
+		_signalModels->insert(std::make_pair(element->GetName(), signalModelUI));
+		_pluginModels->insert(std::make_pair(element->GetName(), checkboxModelUI));
 	}
 }
 SynthTabUI::~SynthTabUI()
@@ -361,48 +363,71 @@ void SynthTabUI::ToUI(const SoundSettings& source)
 	
 }
 
+void SynthTabUI::ToUI(const SoundSettings* source)
+{
+}
+
 void SynthTabUI::FromUI(SoundSettings& destination)
 {
-	// OPTIMIZE!
-	SignalChainSettings signalChainSettings;
+	throw new std::exception("Pleaes use the pointer version of this function FromUI(..)");
+}
 
-	// Effects (Enable / Disable)
+void SynthTabUI::FromUI(SoundSettings* destination)
+{
+	// Effects (Add) (Enable / Disable)
 	// 
 	for (int index = 0; index < _effectsSignalChainUI->GetUICount(); index++)
 	{
 		// Effect Name
 		std::string modelName = _effectsSignalChainUI->GetName(index);
 
+		// No changes
+		if (!_effectsSignalChainUI->GetDirty(modelName))
+			continue;
+
 		// Model (local)
 		SignalNodeModelUI* model = _signalModels->at(modelName);
 
-		// -> FromUI
-		_effectsSignalChainUI->FromUI(modelName, *model);
+		// -> FromUI (update local)
+		_effectsSignalChainUI->FromUI(modelName, model);
 
-		// Effect Settings
-		SignalSettings settings;
-
-		if (model->GetEnabled())
+		// Add (if enabled)
+		if (!destination->GetSignalChain()->Contains(modelName))
 		{
-			_effectUIs->at(modelName)->FromUI(settings);
+			if (model->GetEnabled())
+			{
+				// Effect Settings
+				SignalSettings settings;
+				_effectUIs->at(modelName)->FromUI(settings);
+				destination->GetSignalChain()->Add(settings);
+			}
 		}
 
-		// Add to signal
-		signalChainSettings.Add(settings);
+		// Update
+		else
+		{
+			if (model->GetEnabled())
+			{
+				// Effect Settings (already heaped)
+				SignalSettings* settings = destination->GetSignalChain()->Get(modelName);
+				_effectUIs->at(modelName)->FromUI(settings);
+			}
+		}
 	}
 
-	// OPTIMIZE!
-	destination.GetSignalChain()->Update(signalChainSettings, true);
+	// Remove SignalChainSettings*
+	for (int index = destination->GetSignalChain()->GetCount() - 1; index >= 0; index--)
+	{
+		// Remove
+		if (index >= _effectsSignalChainUI->GetUICount())
+		{
+			destination->GetSignalChain()->RemoveAt(index);
+		}
+	}
 
 	// Signal Input (settings)
-	OscillatorParameters oscillatorParameters = *destination.GetOscillatorParameters();
-	Envelope envelope = *destination.GetOscillatorEnvelope();	
-
-	_oscillatorUI->FromUI(oscillatorParameters);
-	_envelopeUI->FromUI(envelope);
-
-	destination.GetOscillatorParameters()->Update(oscillatorParameters);
-	destination.GetOscillatorEnvelope()->Update(envelope);
+	_oscillatorUI->FromUI(destination->GetOscillatorParameters());
+	_envelopeUI->FromUI(destination->GetOscillatorEnvelope());
 }
 
 bool SynthTabUI::GetDirty() const

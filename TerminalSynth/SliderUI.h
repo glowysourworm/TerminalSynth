@@ -31,7 +31,9 @@ public:
 	void UpdateComponent() override;
 
     void ToUI(const float& source) override;
+    void ToUI(const float* source) override;
     void FromUI(float& destination) override;
+    void FromUI(float* destination) override;
 
     std::string GetName() const;
 
@@ -123,9 +125,17 @@ void SliderUI::FromUI(float& destination)
 {
     destination = *_value;
 }
-void SliderUI::ToUI(const float& newValue)
+void SliderUI::FromUI(float* destination)
 {
-    (*_value) = newValue;
+    *destination = *_value;
+}
+void SliderUI::ToUI(const float& source)
+{
+    (*_value) = source;
+}
+void SliderUI::ToUI(const float* source)
+{
+    (*_value) = *source;
 }
 std::string SliderUI::GetName() const
 {

@@ -21,7 +21,9 @@ public:
 	void UpdateComponent() override;
 
 	void ToUI(const bool& source) override;
+	void ToUI(const bool* source) override;
 	void FromUI(bool& destination) override;
+	void FromUI(bool* destination) override;
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
@@ -71,7 +73,15 @@ void ActiveEditorUI::ToUI(const bool& source)
 {
 }
 
+void ActiveEditorUI::ToUI(const bool* source)
+{
+}
+
 void ActiveEditorUI::FromUI(bool& destination)
+{
+}
+
+void ActiveEditorUI::FromUI(bool* destination)
 {
 }
 

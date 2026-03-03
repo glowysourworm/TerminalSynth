@@ -6,6 +6,7 @@
 #include "SignalNodeModelUI.h"
 #include "UIBase.h"
 #include "ValueCapture.h"
+#include <exception>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
@@ -37,7 +38,9 @@ public:
 	void UpdateComponent() override;
 
 	void ToUI(const SignalNodeModelUI& source) override;
+	void ToUI(const SignalNodeModelUI* source) override;
 	void FromUI(SignalNodeModelUI& destination) override;
+	void FromUI(SignalNodeModelUI* destination) override;
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
@@ -146,15 +149,24 @@ void SignalNodeUI::UpdateComponent()
 
 void SignalNodeUI::ToUI(const SignalNodeModelUI& source)
 {
-	_enabledValue->SetValue(source.GetEnabled());	
+	throw new std::exception("Please use  the pointer version of this function ToUI");
+}
+
+void SignalNodeUI::ToUI(const SignalNodeModelUI* source)
+{
+	_enabledValue->SetValue(source->GetEnabled());
 	_model->Update(source);
 }
 
 void SignalNodeUI::FromUI(SignalNodeModelUI& destination)
 {
+	throw new std::exception("Please use  the pointer version of this function FromUI");
+}
+
+void SignalNodeUI::FromUI(SignalNodeModelUI* destination)
+{
 	bool enabled = _enabledValue->GetValue();
-	
-	destination.Update(*_model);
+	destination->Update(_model);
 }
 
 bool SignalNodeUI::GetDirty() const

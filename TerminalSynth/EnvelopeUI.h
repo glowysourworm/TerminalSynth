@@ -6,6 +6,7 @@
 #include "Envelope.h"
 #include "SliderUI.h"
 #include "UIBase.h"
+#include <exception>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -24,7 +25,9 @@ public:
 	void UpdateComponent() override;
 
 	void FromUI(Envelope& destination) override;
+	void FromUI(Envelope* destination) override;
 	void ToUI(const Envelope& source) override;
+	void ToUI(const Envelope* source) override;
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
@@ -110,6 +113,11 @@ void EnvelopeUI::UpdateComponent()
 
 void EnvelopeUI::FromUI(Envelope& destination)
 {
+	throw new std::exception("Please use pointer version of this function FromUI");
+}
+
+void EnvelopeUI::FromUI(Envelope* destination)
+{
 	float attack, decay, release, attackPeak, sustainPeak;
 
 	_attack->FromUI(attack);
@@ -118,10 +126,14 @@ void EnvelopeUI::FromUI(Envelope& destination)
 	_attackPeak->FromUI(attackPeak);
 	_sustainPeak->FromUI(sustainPeak);
 
-	destination.Set(attack, decay, 0, release, attackPeak, sustainPeak);
+	destination->Set(attack, decay, 0, release, attackPeak, sustainPeak);
 }
 
 void EnvelopeUI::ToUI(const Envelope& source)
+{
+}
+
+void EnvelopeUI::ToUI(const Envelope* source)
 {
 }
 

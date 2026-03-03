@@ -5,6 +5,7 @@
 
 #include "OutputSettings.h"
 #include "UIBase.h"
+#include <exception>
 #include <format>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
@@ -24,7 +25,9 @@ public:
 	void UpdateComponent() override;
 
 	void ToUI(const OutputSettings& source) override;
+	void ToUI(const OutputSettings* source) override;
 	void FromUI(OutputSettings& destination) override;
+	void FromUI(OutputSettings* destination) override;
 
 	bool GetDirty() const override { return false; }
 	void ClearDirty() override {}
@@ -148,37 +151,46 @@ void SynthInformationUI::UpdateComponent()
 }
 void SynthInformationUI::ToUI(const OutputSettings& source)
 {
+	throw new std::exception("Pleaes use the pointer version of this function ToUI(..)");
+}
+void SynthInformationUI::ToUI(const OutputSettings* source)
+{
 	_hostApi->clear();
-	_hostApi->append(source.GetHostApi());
+	_hostApi->append(source->GetHostApi());
 
 	_deviceName->clear();
-	_deviceName->append(source.GetDeviceName());
+	_deviceName->append(source->GetDeviceName());
 
 	_streamFormat->clear();
-	_streamFormat->append(source.GetDeviceFormat());
+	_streamFormat->append(source->GetDeviceFormat());
 
 	_streamBufferSize->clear();
-	_streamBufferSize->append(std::format("{} (frames)", source.GetOutputBufferFrameSize()));
+	_streamBufferSize->append(std::format("{} (frames)", source->GetOutputBufferFrameSize()));
 
 	_samplingRate->clear();
-	_samplingRate->append(std::to_string(source.GetSamplingRate()));
+	_samplingRate->append(std::to_string(source->GetSamplingRate()));
 
 	_streamTime->clear();
-	_streamTime->append(std::format("{:.3f}", source.GetStreamTime()));
+	_streamTime->append(std::format("{:.3f}", source->GetStreamTime()));
 
 	_averageUITime->clear();
-	_averageUITime->append(std::format("{:.3f}", source.GetAvgUIMilli()));
+	_averageUITime->append(std::format("{:.3f}", source->GetAvgUIMilli()));
 
 	_averageCallbackTime->clear();
-	_averageCallbackTime->append(std::format("{:.3f}", source.GetAvgAudioMilli()));
+	_averageCallbackTime->append(std::format("{:.3f}", source->GetAvgAudioMilli()));
 
 	_averageFrontendTime->clear();
-	_averageFrontendTime->append(std::format("{:.3f}", source.GetAvgFrontendMilli()));
+	_averageFrontendTime->append(std::format("{:.3f}", source->GetAvgFrontendMilli()));
 
 	_streamLatency->clear();
-	_streamLatency->append(std::to_string(source.GetStreamLatency()));
+	_streamLatency->append(std::to_string(source->GetStreamLatency()));
 }
 void SynthInformationUI::FromUI(OutputSettings& destination)
+{
+
+}
+
+void SynthInformationUI::FromUI(OutputSettings* destination)
 {
 }
 
