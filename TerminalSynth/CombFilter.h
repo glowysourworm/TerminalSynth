@@ -6,7 +6,6 @@
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
-#include "SignalSettings.h"
 #include <queue>
 
 /// <summary>
@@ -22,14 +21,21 @@ public:
 	CombFilter(float delaySeconds, float gain, bool feedback);
 	~CombFilter();
 
-	void Initialize(const SignalSettings* settings, const OutputSettings* parameters) override;
+	void Initialize(const OutputSettings* parameters) override;
 	void SetFrame(PlaybackFrame* frame, float absoluteTime) override;
 	bool HasOutput(float absoluteTime) const override;
+
+	void UpdateParameter(int index, float parameterValue) override {};		// Doesn't support parameter automation
 
 private:
 
 	std::queue<float>* _bufferL;
 	std::queue<float>* _bufferR;
+
+	// Needed pre-initialization
+	float _delaySeconds; 
+	float _gain; 
+	bool _feedback;
 };
 
 #endif

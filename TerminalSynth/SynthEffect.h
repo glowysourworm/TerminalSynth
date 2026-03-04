@@ -14,12 +14,12 @@ class SynthEffect : public SignalBase
 	SynthEffect(const std::string& name, const SignalSettings& parameters);
 	~SynthEffect();
 
-	void Initialize(const SignalSettings* configuration, const OutputSettings* parameters) override;
+	void Initialize(const OutputSettings* parameters) override;
 	void SetFrame(PlaybackFrame* frame, float absoluteTime) override;
 	bool HasOutput(float absoluteTime) const override;
 
-private:
+	void UpdateParameter(int index, float value) override;
 
-	SignalSettings* _parameters;
+private:
 };
 #endif

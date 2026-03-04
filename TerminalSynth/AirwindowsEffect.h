@@ -6,7 +6,6 @@
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
-#include "SignalParameter.h"
 #include "SignalSettings.h"
 #include <airwin_consolidated_base.h>
 #include <string>
@@ -19,24 +18,18 @@ class AirwindowsEffect : public SignalBase
 {
 public:
 
-	AirwindowsEffect(AudioEffectX* plugin, const std::string& name, const std::string& category, const std::string& whatText);
+	AirwindowsEffect(const SignalSettings& settings, AudioEffectX* plugin);
 	~AirwindowsEffect();
 
-	void Initialize(const SignalSettings* configuration, const OutputSettings* parameters) override;
+	void Initialize(const OutputSettings* outputSettings) override;
 	void SetFrame(PlaybackFrame* frame, float absoluteTime) override;
 	bool HasOutput(float absoluteTime) const override;
 
-	void UpdateParameter(int index, const SignalParameter* parameter) override;
-
-	std::string GetCategory() const;
-	std::string GetWhatText() const;
+	void UpdateParameter(int index, float value) override;
 
 private:
 
 	AudioEffectX* _effect;
-
-	std::string* _category;
-	std::string* _whatText;
 
 	float** _input;
 	float** _output;

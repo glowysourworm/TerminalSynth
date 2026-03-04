@@ -196,7 +196,7 @@ bool SynthNotePool::SetFrame(PlaybackFrame* frame, double absoluteTime, double g
 
 	// MIXING THIS RIGHT AWAY FOR NOW
 	// 
-	noteFrame.SetFrame(noteFrame.GetLeft() * gain * (1 - leftRight), noteFrame.GetRight() * gain * leftRight);
+	noteFrame.SetFrame(noteFrame.GetLeft() * gain * (1 - leftRight), noteFrame.GetRight() * gain * leftRight, noteFrame.GetEnvelopeLevel());
 
 	frame->SetFrame(&noteFrame);
 

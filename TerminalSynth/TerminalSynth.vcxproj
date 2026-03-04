@@ -256,6 +256,8 @@
     <ClCompile Include="Options.cpp" />
     <ClCompile Include="PlaybackClock.cpp" />
     <ClCompile Include="RtAudioController.cpp" />
+    <ClCompile Include="SignalFactoryCore.cpp" />
+    <ClCompile Include="SignalParameterAutomater.cpp" />
     <ClCompile Include="SoundFileReader.cpp" />
     <ClCompile Include="StopWatch.cpp" />
     <ClCompile Include="Synth.cpp" />
@@ -273,6 +275,7 @@
     <ClInclude Include="Accumulator.h" />
     <ClInclude Include="ActiveEditorUI.h" />
     <ClInclude Include="AirwindowsEffect.h" />
+    <ClInclude Include="AirwindowsEffectLoader.h" />
     <ClInclude Include="AtomicLock.h" />
     <ClInclude Include="BiQuadFilter.h" />
     <ClInclude Include="CheckboxModelUI.h" />
@@ -310,6 +313,8 @@
     <ClInclude Include="ScrollViewerUI.h" />
     <ClInclude Include="SignalChain.h" />
     <ClInclude Include="SignalChainSettings.h" />
+    <ClInclude Include="SignalFactoryCore.h" />
+    <ClInclude Include="SignalParameterAutomater.h" />
     <ClInclude Include="SignalParameterUI.h" />
     <ClInclude Include="SoundSettings.h" />
     <ClInclude Include="SynthTabUI.h" />

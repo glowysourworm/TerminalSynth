@@ -26,6 +26,13 @@ public:
 	Accumulator(bool useAbsoluteValue, int windowLength);
 	~Accumulator();
 
+	/// <summary>
+	/// Resets for a new configuration 
+	/// </summary>
+	/// <param name="useAbsoluteValue">Use absolute value of input signal for accumulator</param>
+	/// <param name="windowLength">Window length for the signal (samples)</param>
+	void ResetFor(bool useAbsoluteValue, int windowLength);
+
 	void Add(TSignal value);
 
 	TSignal GetTotal() const;
@@ -72,6 +79,18 @@ Accumulator<TSignal>::Accumulator(bool useAbsoluteValue, int windowLength)
 template<SignalValue TSignal>
 Accumulator<TSignal>::~Accumulator()
 {
+}
+
+template<SignalValue TSignal>
+void Accumulator<TSignal>::ResetFor(bool useAbsoluteValue, int windowLength)
+{
+	_last = 0;
+	_lastWindowed = 0;
+	_average = 0;
+	_total = 0;
+	_counter = 0;
+	_windowLength = windowLength;
+	_useAbsoluteValue = useAbsoluteValue;
 }
 
 template<SignalValue TSignal>

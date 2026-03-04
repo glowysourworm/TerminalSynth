@@ -66,7 +66,7 @@ public:
 
 		// Input / Output Buffer
 		_input->SetFrame(&input);
-		_output->SetFrame(frame->GetLeft(), frame->GetRight());
+		_output->SetFrame(frame->GetLeft(), frame->GetRight(), frame->GetEnvelopeLevel());
 		_lastSystemTime = absoluteTime;
 
 		_leftAccumulator->Add(frame->GetLeft());

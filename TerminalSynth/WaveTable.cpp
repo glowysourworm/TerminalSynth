@@ -41,7 +41,7 @@ void WaveTable::CreateSamplesByTime(WaveTableSampleGenerateSecondCallback callba
 		float sampleTime = (index / (float)_samplingRate);		// Frame length and sampling rate are both in the scaled domain
 		callback(sampleTime, left, right);
 
-		_frames[index].SetFrame(left, right);
+		_frames[index].SetFrame(left, right, 1.0f);
 	}
 }
 
@@ -54,7 +54,7 @@ void WaveTable::CreateSamplesByFrame(WaveTableSampleGenerateFrameCallback callba
 		float right = 0;
 		callback(index, left, right);
 
-		_frames[index].SetFrame(left, right);
+		_frames[index].SetFrame(left, right, 1.0f);
 	}
 }
 
@@ -81,7 +81,7 @@ void WaveTable::SetFrameImpl(PlaybackFrame* frame, double zeroTime, double absol
 	float left = GetLinearSpline(zeroTime, absoluteTime, true);
 	float right = GetLinearSpline(zeroTime, absoluteTime, false);
 
-	frame->SetFrame(left, right);
+	frame->SetFrame(left, right, frame->GetEnvelopeLevel());
 }
 
 float WaveTable::GetLinearSpline(double zeroTime, double absoluteTime, bool channelLeft)

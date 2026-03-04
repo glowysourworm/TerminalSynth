@@ -8,55 +8,70 @@
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalParameter.h"
+#include "SignalParameterAutomater.h"
 #include "SignalSettings.h"
 #include <string>
+#include <vector>
 
 class SignalBase
 {
 public:
 
-	SignalBase(const std::string& name) 
+	SignalBase()
 	{
-		_name = new std::string(name);
 		_low = SIGNAL_LOW;
 		_high = SIGNAL_HIGH;
-		_numberOfChannels = 0;
-		_samplingRate = 0;
-		_settings = new SignalSettings(name, "", "", false);
-		_leftAccumulator = nullptr;
-		_rightAccumulator = nullptr;
-	};
-	SignalBase(const std::string& name, const std::string& category, const std::string& infoText, float low, float high)
-	{
-		_name = new std::string(name);
-		_low = low;
-		_high = high;
-		_numberOfChannels = 0;
-		_samplingRate = 0;
-		_settings = new SignalSettings(name, category, infoText, false);
-		_leftAccumulator = nullptr;
-		_rightAccumulator = nullptr;
+		_settings = new SignalSettings();
+		_leftAccumulator = new Accumulator<float>(true);
+		_rightAccumulator = new Accumulator<float>(true);
+		_parameterAutomaters = new std::vector<SignalParameterAutomater*>();
+		_outputSettings = nullptr;
 	}
+	SignalBase(const SignalSettings& settings)
+	{
+		_low = SIGNAL_LOW;
+		_high = SIGNAL_HIGH;
+		_settings = new SignalSettings(settings);
+		_leftAccumulator = new Accumulator<float>(true);
+		_rightAccumulator = new Accumulator<float>(true);
+		_parameterAutomaters = new std::vector<SignalParameterAutomater*>();
+		_outputSettings = nullptr;
+
+		for (int index = 0; index < _settings->GetParameterCount(); index++)
+		{
+			// MEMORY! ~SignalBase
+			auto automater = new SignalParameterAutomater();
+
+			// Requires Initialization
+			_parameterAutomaters->push_back(automater);
+		}
+	};
 	virtual ~SignalBase() 
 	{
-		delete _name;
 		delete _settings;
+		delete _leftAccumulator;
+		delete _rightAccumulator;
 
-		if (_leftAccumulator != nullptr)
-			delete _leftAccumulator;
+		for (int index = 0; index < _parameterAutomaters->size(); index++)
+		{
+			delete _parameterAutomaters->at(index);
+		}
 
-		if (_rightAccumulator != nullptr)
-			delete _rightAccumulator;
+		delete _parameterAutomaters;
 	}
 
-	virtual void Initialize(const SignalSettings* settings, const OutputSettings* parameters)
+	virtual void Initialize(const OutputSettings* outputSettings)
 	{
-		_numberOfChannels = parameters->GetNumberOfChannels();
-		_samplingRate = parameters->GetSamplingRate();
+		_outputSettings = outputSettings;
+
+		for (int index = 0; index < _settings->GetParameterCount(); index++)
+		{
+			_parameterAutomaters->at(index)->Initialize(outputSettings);
+		}
 
 		// Track clipping
-		_leftAccumulator = new Accumulator<float>(true, parameters->GetSamplingRate());
-		_rightAccumulator = new Accumulator<float>(true, parameters->GetSamplingRate());
+		_leftAccumulator->ResetFor(true, outputSettings->GetSamplingRate());
+		_rightAccumulator->ResetFor(true, outputSettings->GetSamplingRate());
 	}
 
 	/// <summary>
@@ -65,11 +80,20 @@ public:
 	/// <param name="settings">New SignalSettings object - used for parameter values only!</param>
 	void Update(const SignalSettings* settings)
 	{
-		// Update Parameter (override)
+		_settings->Update(settings, false);		// Catches name change and parameter count change
+
+		// Parameter Automation
 		for (int index = 0; index < settings->GetParameterCount(); index++)
 		{
-			// -> override
-			this->UpdateParameter(index, settings->GetParameter(index));
+			// Enabled
+			if (settings->GetParameter(index)->GetAutomationEnabled())
+			{
+				_parameterAutomaters->at(index)->Update(settings->GetParameter(index));
+			}
+			else
+			{
+				this->UpdateParameter(index, settings->GetParameterValue(index));
+			}
 		}
 	}
 
@@ -79,6 +103,19 @@ public:
 	/// </summary>
 	virtual void SetFrame(PlaybackFrame* frame, float absoluteTime)
 	{
+		// Parameter Automation
+		for (int index = 0; index < _settings->GetParameterCount(); index++)
+		{
+			if (_settings->GetParameter(index)->GetAutomationEnabled())
+			{
+				float value = _parameterAutomaters->at(index)->GetValue(frame, absoluteTime);
+
+				// Call function to set the current parameter value before sample
+				// is calculated
+				this->UpdateParameter(index, value);
+			}		
+		}
+
 		_leftAccumulator->Add(frame->GetLeft());
 		_rightAccumulator->Add(frame->GetRight());
 	}
@@ -102,7 +139,7 @@ public:
 
 	std::string GetName() const
 	{
-		return *_name;
+		return _settings->GetName();
 	}
 	int GetParameterCount() const
 	{
@@ -130,34 +167,35 @@ public:
 		return *_settings;
 	}
 
-	// Function should be called to allow override to process (this->Update(..))
-	virtual void UpdateParameter(int index, const SignalParameter* parameter)
-	{
-		_settings->UpdateParameter(index, parameter);
-	}
-
 protected:
 
 	void AddParameter(const std::string& name, float min, float max, float initialValue)
 	{
+		// MEMORY! ~SignalBase
+		auto automater = new SignalParameterAutomater();
+		automater->Initialize(_outputSettings);
+		
 		_settings->AddParameter(SignalParameter(name, initialValue, min, max));
+		_parameterAutomaters->push_back(automater);
 	}
+
+	/// <summary>
+	/// Function to update the parameter value for automating the paramter
+	/// </summary>
+	virtual void UpdateParameter(int index, float value) = 0;
 	
-public:
-
-	unsigned int GetSamplingRate() const { return _samplingRate; }
-	unsigned int GetNumberOfChannels() const { return _numberOfChannels; }
-
 private:
 
-	std::string* _name;
 	float _low;
 	float _high;
-	unsigned int _numberOfChannels;
-	unsigned int _samplingRate;	
 	SignalSettings* _settings;
 	Accumulator<float>* _leftAccumulator;
 	Accumulator<float>* _rightAccumulator;
+
+	// We should try to remove this initialization dependency
+	const OutputSettings* _outputSettings;
+	
+	std::vector<SignalParameterAutomater*>* _parameterAutomaters;
 };
 
 #endif

@@ -198,7 +198,7 @@ bool WaveTableCache::CreateWaveTable(WTCacheKey_Oscillator* cacheKey)
 										     cacheKey->GetSampleRate(), 
 											 _systemSamplingRate);
 		SignalFactory* signalFactory = _signalFactory;
-		OscillatorParameters parameters = cacheKey->GetParameters();
+		OscillatorParameters* parameters = cacheKey->GetParameters();
 		PlaybackFrame frame;
 
 		// Sets SignalFactory* for next oscillator
@@ -207,7 +207,7 @@ bool WaveTableCache::CreateWaveTable(WTCacheKey_Oscillator* cacheKey)
 		// Create Samples
 		waveTable->CreateSamplesByTime(WaveTable::WaveTableSampleGenerateSecondCallback([&signalFactory, &parameters, &frame](float sampleTime, float& leftSample, float& rightSample)
 		{
-			signalFactory->GenerateSample(parameters, frame, sampleTime);
+			signalFactory->GenerateSample(parameters, &frame, sampleTime);
 			leftSample = frame.GetLeft();
 			rightSample = frame.GetRight();
 		}));

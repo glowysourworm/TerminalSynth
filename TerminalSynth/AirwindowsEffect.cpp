@@ -2,21 +2,17 @@
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
-#include "SignalParameter.h"
 #include "SignalSettings.h"
 #include <airwin_consolidated_base.h>
-#include <cctype>
 #include <exception>
 #include <string>
 
-AirwindowsEffect::AirwindowsEffect(AudioEffectX* plugin, const std::string& name, const std::string& category, const std::string& whatText) : SignalBase(name)
+AirwindowsEffect::AirwindowsEffect(const SignalSettings& settings, AudioEffectX* plugin)
+	: SignalBase(settings)
 {
 	//_effect = new kCathedral(0);
 	_input = new float* [2];
 	_output = new float* [2];
-
-	_category = new std::string(category);
-	_whatText = new std::string(whatText);
 
 	// One sample per channel
 	_input[0] = new float[1];			// Left
@@ -26,41 +22,12 @@ AirwindowsEffect::AirwindowsEffect(AudioEffectX* plugin, const std::string& name
 	_output[1] = new float[1];			// Right (output)
 
 	_effect = plugin;
-
-	// Parameters (Copy Airwindows Parameter Defaults)
-	int parameterCount = 0;
-
-	// Needed way to count parameters
-	while (plugin->canConvertParameterTextToValue(parameterCount++)) {}
-
-	// Set SignalBase* parameters (use these for reading, and write both copies)
-	//
-	for (int index = 0; index < parameterCount - 1; index++)
-	{
-		char paramName[100];
-		plugin->getParameterName(index, paramName);
-
-		// VALIDATE STRING! THESE HAD PROBLEMS WITH NULL TERMINATORS!
-		for (int index = 0; index < 100; index++)
-		{
-			if (!std::isalnum(paramName[index]))
-			{
-				paramName[index] = '\0';
-				break;
-			}
-		}
-
-		this->AddParameter(paramName, 0.0f, 1.0f, plugin->getParameter(index));
-	}
 }
 
 AirwindowsEffect::~AirwindowsEffect()
 {
 	// MEMORY! (see SoundRegistry) (these effect instances are not managed by the registry)
 	delete _effect;
-
-	delete _category;
-	delete _whatText;
 
 	delete[] _input[0];
 	delete[] _input[1];
@@ -71,28 +38,15 @@ AirwindowsEffect::~AirwindowsEffect()
 	delete[] _output;
 }
 
-void AirwindowsEffect::Initialize(const SignalSettings* configuration, const OutputSettings* parameters)
+void AirwindowsEffect::Initialize(const OutputSettings* parameters)
 {
-	throw new std::exception("Airwindows effects are not initialized from the Terminal Synth libraries");
+	SignalBase::Initialize(parameters);
 }
 
-void AirwindowsEffect::UpdateParameter(int index, const SignalParameter* parameter)
+void AirwindowsEffect::UpdateParameter(int index, float value)
 {
-	// Synth Side
-	SignalBase::UpdateParameter(index, parameter);
-
 	// Airwindows Plugin Side
-	_effect->setParameter(index, parameter->GetValue());
-}
-
-std::string AirwindowsEffect::GetCategory() const
-{
-	return *_category;
-}
-
-std::string AirwindowsEffect::GetWhatText() const
-{
-	return *_whatText;
+	_effect->setParameter(index, value);
 }
 
 void AirwindowsEffect::SetFrame(PlaybackFrame* frame, float absoluteTime)
@@ -111,12 +65,15 @@ void AirwindowsEffect::SetFrame(PlaybackFrame* frame, float absoluteTime)
 	//					   Let's see how it sounds!
 	//
 
+	// Parameter Automation
+	SignalBase::SetFrame(frame, absoluteTime);
+
 	_input[0][0] = frame->GetLeft();
 	_input[1][0] = frame->GetRight();
 
 	_effect->processReplacing(_input, _output, 1);
 
-	frame->SetFrame(_output[0][0], _output[1][0]);
+	frame->SetFrame(_output[0][0], _output[1][0], frame->GetEnvelopeLevel());
 }
 
 bool AirwindowsEffect::HasOutput(float absoluteTime) const

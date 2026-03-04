@@ -2,17 +2,16 @@
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
-#include "SignalSettings.h"
 #include <queue>
 
-CombFilter::CombFilter(float delaySeconds, float gain, bool feedback) : SignalBase("Comb Filter")
+CombFilter::CombFilter(float delaySeconds, float gain, bool feedback)
 {
 	_bufferL = new std::queue<float>();
 	_bufferR = new std::queue<float>();
 
-	this->AddParameter("Delay", 0.01f, 1.0f, delaySeconds);
-	this->AddParameter("Gain", 0.0f, 1.0f, gain);
-	this->AddParameter("Feedback", 0.0f, 1.0f, feedback ? 1.0f : 0.0f);
+	_delaySeconds = delaySeconds;
+	_gain = gain;
+	_feedback = feedback;
 }
 
 CombFilter::~CombFilter()
@@ -21,9 +20,13 @@ CombFilter::~CombFilter()
 	delete _bufferR;
 }
 
-void CombFilter::Initialize(const SignalSettings* settings, const OutputSettings* parameters)
+void CombFilter::Initialize(const OutputSettings* parameters)
 {
-	SignalBase::Initialize(settings, parameters);
+	SignalBase::Initialize(parameters);
+
+	this->AddParameter("Delay", 0.01f, 1.0f, _delaySeconds);
+	this->AddParameter("Gain", 0.0f, 1.0f, _gain);
+	this->AddParameter("Feedback", 0.0f, 1.0f, _feedback ? 1.0f : 0.0f);
 
 	float delaySeconds = this->GetParameterValue(0);
 
@@ -64,7 +67,7 @@ void CombFilter::SetFrame(PlaybackFrame* frame, float absoluteTime)
 		_bufferR->push(outputR);
 	}
 
-	frame->SetFrame(outputL, outputR);
+	frame->SetFrame(outputL, outputR, frame->GetEnvelopeLevel());
 }
 
 bool CombFilter::HasOutput(float absoluteTime) const

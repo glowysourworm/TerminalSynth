@@ -189,6 +189,12 @@
     <ClCompile Include="SynthNoteCache.cpp">
       <Filter>Source Files\Synth</Filter>
     </ClCompile>
+    <ClCompile Include="SignalParameterAutomater.cpp">
+      <Filter>Source Files\Signal</Filter>
+    </ClCompile>
+    <ClCompile Include="SignalFactoryCore.cpp">
+      <Filter>Source Files\Signal</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WindowsKeyCodes.h">
@@ -409,6 +415,15 @@
     </ClInclude>
     <ClInclude Include="SignalParameterUI.h">
       <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="SignalParameterAutomater.h">
+      <Filter>Header Files\Signal</Filter>
+    </ClInclude>
+    <ClInclude Include="SignalFactoryCore.h">
+      <Filter>Header Files\Signal</Filter>
+    </ClInclude>
+    <ClInclude Include="AirwindowsEffectLoader.h">
+      <Filter>Header Files\SignalRegistry</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

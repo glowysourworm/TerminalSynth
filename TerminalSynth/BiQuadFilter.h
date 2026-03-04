@@ -72,11 +72,13 @@ public:
 	BiQuadFilter(FilterType filterType, unsigned int samplingRate);
 	BiQuadFilter(FilterType filterType, unsigned int samplingRate, float corner, float resonance);
 	BiQuadFilter(FilterType filterType, unsigned int samplingRate, float dbGain, float corner, float resonance);
-	~BiQuadFilter() override;
+	~BiQuadFilter();
 
-	void Initialize(const SignalSettings* settings, const OutputSettings* parameters) override;
+	void Initialize(const OutputSettings* parameters) override;
 	void SetFrame(PlaybackFrame* frame, float absoluteTime) override;
 	bool HasOutput(float absoluteTime) const override;
+
+	void UpdateParameter(int index, float value) override;
 
 private:
 
@@ -110,6 +112,12 @@ private:
 	float _b0;
 	float _b1;
 	float _b2;
+
+	// Needed pre-initialization
+	unsigned int _samplingRate;
+	float _corner;
+	float _resonance;
+	float _dbGain;
 };
 
 #endif

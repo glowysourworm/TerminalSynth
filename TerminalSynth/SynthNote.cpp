@@ -41,7 +41,7 @@ void SynthNote::GetSample(PlaybackFrame* frame, float absoluteTime)
 
 	float envelopeLevel = _envelope->GetEnvelopeLevel(absoluteTime);
 
-	frame->SetFrame(envelopeLevel * frame->GetLeft(), envelopeLevel * frame->GetRight());
+	frame->SetFrame(envelopeLevel * frame->GetLeft(), envelopeLevel * frame->GetRight(), frame->GetEnvelopeLevel());
 }
 
 void SynthNote::AddSample(PlaybackFrame* frame, float absoluteTime)
@@ -55,7 +55,7 @@ void SynthNote::AddSample(PlaybackFrame* frame, float absoluteTime)
 	_effectsChain->SetFrame(&noteFrame, absoluteTime);
 
 	// Add Output
-	frame->AddFrame(&noteFrame);
+	frame->AddFrame(noteFrame.GetLeft(), noteFrame.GetRight());
 }
 
 bool SynthNote::HasOutput(float absoluteTime)

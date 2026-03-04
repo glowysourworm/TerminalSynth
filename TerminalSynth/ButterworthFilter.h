@@ -7,20 +7,21 @@
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
-#include "SignalSettings.h"
 
 class ButterworthFilter : public SignalBase
 {
 public:
 
 	ButterworthFilter(int samplingRate, float gain);
-	~ButterworthFilter() override;
+	~ButterworthFilter();
 
-	void Initialize(const SignalSettings* configuration, const OutputSettings* parameters) override;
+	void Initialize(const OutputSettings* parameters) override;
 	void SetFrame(PlaybackFrame* frame, float absoluteTime) override;
 	bool HasOutput(float absoluteTime) const override;
 
 	void SetFilter(float cutoff, float resonance);
+
+	void UpdateParameter(int index, float value) override {};
 
 private:
 

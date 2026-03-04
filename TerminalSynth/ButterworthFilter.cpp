@@ -2,10 +2,9 @@
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
-#include "SignalSettings.h"
 #include <cmath>
 
-ButterworthFilter::ButterworthFilter(int samplingRate, float gain) : SignalBase("Butterworth Filter")
+ButterworthFilter::ButterworthFilter(int samplingRate, float gain)
 {
 	this->history1 = 0.f;
 	this->history2 = 0.f;
@@ -33,9 +32,9 @@ ButterworthFilter::~ButterworthFilter()
 	SignalBase::~SignalBase();
 }
 
-void ButterworthFilter::Initialize(const SignalSettings* configuration, const OutputSettings* parameters)
+void ButterworthFilter::Initialize(const OutputSettings* parameters)
 {
-	SignalBase::Initialize(configuration, parameters);
+	SignalBase::Initialize(parameters);
 }
 
 void ButterworthFilter::SetFrame(PlaybackFrame* frame, float absoluteTime)
@@ -43,7 +42,7 @@ void ButterworthFilter::SetFrame(PlaybackFrame* frame, float absoluteTime)
 	float outputLeft = this->Apply(frame->GetLeft(), absoluteTime);
 	float outputRight = this->Apply(frame->GetRight(), absoluteTime);
 
-	frame->SetFrame(outputLeft, outputRight);
+	frame->SetFrame(outputLeft, outputRight, frame->GetEnvelopeLevel());
 }
 
 bool ButterworthFilter::HasOutput(float absoluteTime) const

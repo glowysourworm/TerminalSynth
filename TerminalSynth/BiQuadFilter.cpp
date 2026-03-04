@@ -2,7 +2,6 @@
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
-#include "SignalSettings.h"
 #include <cmath>
 #include <exception>
 #include <numbers>
@@ -15,13 +14,14 @@ BiQuadFilter::BiQuadFilter(FilterType filterType, unsigned int samplingRate, flo
 	: BiQuadFilter(filterType, samplingRate, 1.0f, corner, resonance)
 {}
 
-BiQuadFilter::BiQuadFilter(FilterType filterType, unsigned int samplingRate, float dbGain, float corner, float resonance) : SignalBase("BiQuadFilter")
+BiQuadFilter::BiQuadFilter(FilterType filterType, unsigned int samplingRate, float dbGain, float corner, float resonance)
 {
 	_type = filterType;
 
-	this->AddParameter("GainDb", 0.01f, 3.0f, dbGain);					// [0,1] -> [0.01dB, 3dB]
-	this->AddParameter("Corner", 0.0f, samplingRate / 4.0f, corner);	// Set based on the sampling rate [0, F_s / 4]
-	this->AddParameter("Q", 0.01f, 1.0f, resonance);					// (see Bi-Quad equation sheet)
+	_samplingRate = samplingRate;
+	_corner = corner;
+	_resonance = resonance;
+	_dbGain = dbGain;
 
 	_a0 = 0;
 	_a1 = 0;
@@ -45,9 +45,13 @@ BiQuadFilter::~BiQuadFilter()
 	delete _output2;
 }
 
-void BiQuadFilter::Initialize(const SignalSettings* settings, const OutputSettings* parameters)
+void BiQuadFilter::Initialize(const OutputSettings* parameters)
 {
-	SignalBase::Initialize(settings, parameters);
+	SignalBase::Initialize(parameters);
+
+	this->AddParameter("GainDb", 0.01f, 3.0f, _dbGain);					// [0,1] -> [0.01dB, 3dB]
+	this->AddParameter("Corner", 0.0f, _samplingRate / 4.0f, _corner);	// Set based on the sampling rate [0, F_s / 4]
+	this->AddParameter("Q", 0.01f, 1.0f, _resonance);					// (see Bi-Quad equation sheet)
 
 	switch (_type)
 	{
@@ -86,7 +90,7 @@ void BiQuadFilter::SetFrame(PlaybackFrame* frame, float absoluteTime)
 	_input2->SetFrame(_input1);
 	_input1->SetFrame(frame);
 
-	frame->SetFrame(outputLeft, outputRight);
+	frame->SetFrame(outputLeft, outputRight, frame->GetEnvelopeLevel());
 
 	// Track Output
 	_output2->SetFrame(_output1);
@@ -96,6 +100,11 @@ void BiQuadFilter::SetFrame(PlaybackFrame* frame, float absoluteTime)
 bool BiQuadFilter::HasOutput(float absoluteTime) const
 {
 	return true;
+}
+
+void BiQuadFilter::UpdateParameter(int index, float value)
+{
+	// Doesn't support parameter automation (right now)
 }
 
 void BiQuadFilter::Set_LPF(unsigned int samplingRate)

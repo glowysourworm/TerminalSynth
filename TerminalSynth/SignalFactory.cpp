@@ -5,10 +5,9 @@
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalFactory.h"
-#include <cmath>
+#include "SignalFactoryCore.h"
 #include <cstdlib>
 #include <exception>
-#include <numbers>
 
 SignalFactory::SignalFactory(const OutputSettings* outputSettings)
 {
@@ -16,15 +15,18 @@ SignalFactory::SignalFactory(const OutputSettings* outputSettings)
 
 	_lowPassFilter = nullptr;
 	_combFilter = nullptr;
+
+	_core = new SignalFactoryCore(outputSettings->GetSamplingRate());
 }
 
 SignalFactory::~SignalFactory()
 {
 	delete _lowPassFilter;
 	delete _combFilter;
+	delete _core;
 }
 
-void SignalFactory::Reset(const OscillatorParameters& parameters)
+void SignalFactory::Reset(const OscillatorParameters* parameters)
 {
 	if (_lowPassFilter != nullptr)
 		delete _lowPassFilter;
@@ -32,8 +34,10 @@ void SignalFactory::Reset(const OscillatorParameters& parameters)
 	if (_combFilter != nullptr)
 		delete _combFilter;
 
+	_core->Reset(parameters);
+
 	// Synthesized Plucked String
-	float cornerFrequency = parameters.GetFrequency();				// [0, F_s]
+	float cornerFrequency = parameters->GetFrequency();				// [0, F_s]
 	float resonance = 0.01;
 
 	// Create Filters
@@ -42,8 +46,8 @@ void SignalFactory::Reset(const OscillatorParameters& parameters)
 
 	// Signal settings don't apply, here, since there are no other parameters to add to
 	// our local effects.
-	_lowPassFilter->Initialize(nullptr, _outputSettings);
-	_combFilter->Initialize(nullptr, _outputSettings);
+	_lowPassFilter->Initialize(_outputSettings);
+	_combFilter->Initialize(_outputSettings);
 }
 
 float SignalFactory::GetFrequency(unsigned int midiNote)
@@ -51,35 +55,38 @@ float SignalFactory::GetFrequency(unsigned int midiNote)
 	return TerminalSynth::GetMidiFrequency(midiNote);		// We need a namespace!
 }
 
-void SignalFactory::GenerateSample(const OscillatorParameters& parameters, PlaybackFrame& frame, float absoluteTime)
+void SignalFactory::GenerateSample(const OscillatorParameters* parameters, PlaybackFrame* frame, float absoluteTime)
 {
 	int samplingRate = _outputSettings->GetSamplingRate();
-	float signalHigh = parameters.GetSignalHigh();
-	float signalLow = parameters.GetSignalLow();
-	float frequency = parameters.GetFrequency();
+	float signalHigh = parameters->GetSignalHigh();
+	float signalLow = parameters->GetSignalLow();
+	float frequency = parameters->GetFrequency();
 	float monoSample = 0;
 
 	// Create Sample
-	switch (parameters.GetType())
+	switch (parameters->GetType())
 	{
 	case OscillatorType::BuiltIn:
 	{
-		switch (parameters.GetBuiltInType())
+		switch (parameters->GetBuiltInType())
 		{
 		case BuiltInOscillators::Sine:
-			monoSample = this->GenerateSineSample(parameters.GetFrequency(), parameters.GetSignalHigh(), parameters.GetSignalLow(), absoluteTime);
+			monoSample = this->GenerateSineSample(parameters->GetFrequency(), absoluteTime);
 			break;
 		case BuiltInOscillators::Square:
-			monoSample = this->GenerateSquareSample(parameters.GetFrequency(), parameters.GetSignalHigh(), parameters.GetSignalLow(), absoluteTime);
+			monoSample = this->GenerateSquareSample(parameters->GetFrequency(), absoluteTime);
 			break;
 		case BuiltInOscillators::Triangle:
-			monoSample = this->GenerateTriangleSample(parameters.GetFrequency(), parameters.GetSignalHigh(), parameters.GetSignalLow(), absoluteTime);
+			monoSample = this->GenerateTriangleSample(parameters->GetFrequency(), absoluteTime);
 			break;
 		case BuiltInOscillators::Sawtooth:
-			monoSample = this->GenerateSawtoothSample(parameters.GetFrequency(), parameters.GetSignalHigh(), parameters.GetSignalLow(), absoluteTime);
+			monoSample = this->GenerateSawtoothSample(parameters->GetFrequency(), absoluteTime);
 			break;
 		case BuiltInOscillators::SynthesizedStringPluck:
-			monoSample = this->GeneratePluckedStringSample(parameters.GetFrequency(), parameters.GetSignalHigh(), parameters.GetSignalLow(), absoluteTime);
+			monoSample = this->GeneratePluckedStringSample(parameters->GetFrequency(), parameters->GetSignalHigh(), parameters->GetSignalLow(), absoluteTime);
+			break;
+		case BuiltInOscillators::Random:
+			monoSample = this->GenerateRandomSample(parameters->GetFrequency(), absoluteTime);
 			break;
 		default:
 			throw new std::exception("Unhandled built in oscillator type");
@@ -87,81 +94,38 @@ void SignalFactory::GenerateSample(const OscillatorParameters& parameters, Playb
 	}
 	break;
 	case OscillatorType::SampleBased:
-		monoSample = this->GenerateSineSample(parameters.GetFrequency(), parameters.GetSignalHigh(), parameters.GetSignalLow(), absoluteTime);
+		monoSample = this->GenerateSineSample(parameters->GetFrequency(), absoluteTime);
 		break;
 	default:
 		throw new std::exception("Unhandled oscillator type");
 	}
 
-	frame.SetFrame(monoSample, monoSample);
+	frame->SetFrame(monoSample, monoSample, frame->GetEnvelopeLevel());
 }
 
-float SignalFactory::GenerateTriangleSample(float frequency, float signalHigh, float signalLow, float sampleTime)
+float SignalFactory::GenerateTriangleSample(float frequency, float sampleTime)
 {
-	float period = 1 / frequency;
-	float periodQuarter = 0.25f * period;
-	float high = signalHigh;
-	float low = signalLow;
-	float sample = 0;
-
-	// Using modulo arithmetic to get the relative period time
-	float periodTime = fmod(sampleTime, period);
-
-	// First Quadrant
-	if (periodTime < periodQuarter)
-	{
-		sample = (2.0 * (high - low) / period) * periodTime;
-	}
-
-	// Second Quadrant
-	else if (periodTime < (2.0 * periodQuarter))
-	{
-		sample = ((-2.0 * (high - low) / period) * (periodTime - (float)periodQuarter)) - low;
-	}
-
-	// Third Quadrant
-	else if (periodTime < 3.0 * periodQuarter)
-	{
-		sample = (-2.0 * (high - low) / period) * (periodTime - (2.0 * periodQuarter));
-	}
-
-	// Fourth Quadrant
-	else
-	{
-		sample = ((2.0 * (high - low) / period) * (periodTime - (3.0 * periodQuarter))) + low;
-	}
-
-	return sample;
+	return _core->GenerateTriangleSample(frequency, sampleTime);
 }
 
-float SignalFactory::GenerateSquareSample(float frequency, float signalHigh, float signalLow, float sampleTime)
+float SignalFactory::GenerateSquareSample(float frequency, float sampleTime)
 {
-	// Using modulo arithmetic to get the relative period time
-	float period = 1 / frequency;
-	float periodTime = fmod(sampleTime, period);
-	float sample = 0;
-
-	if (periodTime < period / 2.0)
-		sample = signalHigh;
-
-	else
-		sample = signalLow;
-
-	return sample;
+	return _core->GenerateSquareSample(frequency, sampleTime);
 }
 
-float SignalFactory::GenerateSawtoothSample(float frequency, float signalHigh, float signalLow, float sampleTime)
+float SignalFactory::GenerateSawtoothSample(float frequency, float sampleTime)
 {
-	// Using modulo arithmetic to get the relative period time
-	float period = 1 / frequency;
-	float periodTime = fmod(sampleTime, period);
-
-	return (((signalHigh - signalLow) / period) * periodTime) + signalLow;
+	return _core->GenerateSawtoothSample(frequency, sampleTime);
 }
 
-float SignalFactory::GenerateSineSample(float frequency, float signalHigh, float signalLow, float sampleTime)
+float SignalFactory::GenerateSineSample(float frequency, float sampleTime)
 {
-	return sinf(2.0 * std::numbers::pi * frequency * sampleTime);
+	return _core->GenerateSineSample(frequency, sampleTime);
+}
+
+float SignalFactory::GenerateRandomSample(float frequency, float absoluteTime)
+{
+	return _core->GenerateRandomSample(frequency, absoluteTime);
 }
 
 float SignalFactory::GeneratePluckedStringSample(float frequency, float signalHigh, float signalLow, float sampleTime)
@@ -187,12 +151,12 @@ float SignalFactory::GeneratePluckedStringSample(float frequency, float signalHi
 	}
 
 	// Process Sample
-	PlaybackFrame frame(0, 0);
+	PlaybackFrame frame(0, 0, 1);
 	_combFilter->SetFrame(&frame, sampleTime);
 	_lowPassFilter->SetFrame(&frame, sampleTime);
 
 	// Mix with input
-	frame.SetFrame(frame.GetLeft() + sample, frame.GetRight() + sample);
+	frame.SetFrame(frame.GetLeft() + sample, frame.GetRight() + sample, 1);
 
 	return frame.GetLeft();
 }

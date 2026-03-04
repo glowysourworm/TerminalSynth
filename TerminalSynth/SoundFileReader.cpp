@@ -66,7 +66,7 @@ PlaybackFrame* SoundFileReader::Read()
 			{
 				double buffer[1];
 				sf_read_double(_sndFile, buffer, 1);
-				result[index].SetFrame(buffer[0], buffer[0]);
+				result[index].SetFrame(buffer[0], buffer[0], 1.0f);
 			}
 
 			// STEREO
@@ -74,7 +74,7 @@ PlaybackFrame* SoundFileReader::Read()
 			{
 				double buffer[2];
 				sf_read_double(_sndFile, buffer, 2);
-				result[index].SetFrame(buffer[0], buffer[1]);
+				result[index].SetFrame(buffer[0], buffer[1], 1.0f);
 			}
 			else
 				throw new std::exception("Unhandled libsndfile format type:  WaveTableCache.cpp");
@@ -87,7 +87,7 @@ PlaybackFrame* SoundFileReader::Read()
 			{
 				float buffer[1];
 				sf_read_float(_sndFile, buffer, 1);
-				result[index].SetFrame(buffer[0], buffer[0]);
+				result[index].SetFrame(buffer[0], buffer[0], 1.0f);
 			}
 
 			// STEREO
@@ -95,7 +95,7 @@ PlaybackFrame* SoundFileReader::Read()
 			{
 				float buffer[2];
 				sf_read_float(_sndFile, buffer, 2);
-				result[index].SetFrame(buffer[0], buffer[1]);
+				result[index].SetFrame(buffer[0], buffer[1], 1.0f);
 			}
 			else
 				throw new std::exception("Unhandled libsndfile format type:  WaveTableCache.cpp");
@@ -108,7 +108,7 @@ PlaybackFrame* SoundFileReader::Read()
 			{
 				short buffer[1];
 				sf_readf_short(_sndFile, buffer, 1);
-				result[index].SetFrame(buffer[0] / (float)std::numeric_limits<short>::max(), buffer[0] / (float)std::numeric_limits<short>::max());
+				result[index].SetFrame(buffer[0] / (float)std::numeric_limits<short>::max(), buffer[0] / (float)std::numeric_limits<short>::max(), 1.0f);
 			}
 
 			// STEREO
@@ -116,7 +116,7 @@ PlaybackFrame* SoundFileReader::Read()
 			{
 				short buffer[2];
 				sf_readf_short(_sndFile, buffer, 2);
-				result[index].SetFrame(buffer[0] / (float)std::numeric_limits<short>::max(), buffer[1] / (float)std::numeric_limits<short>::max());
+				result[index].SetFrame(buffer[0] / (float)std::numeric_limits<short>::max(), buffer[1] / (float)std::numeric_limits<short>::max(), 1.0f);
 			}
 			else
 				throw new std::exception("Unhandled libsndfile format type:  WaveTableCache.cpp");

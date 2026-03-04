@@ -13,7 +13,8 @@ enum class BuiltInOscillators : int {
 	Square = 1,
 	Triangle = 2,
 	Sawtooth = 3,
-	SynthesizedStringPluck = 4
+	SynthesizedStringPluck = 4,
+	Random = 5
 };
 enum class ParameterAutomationType : int {
 	EnvelopeSweep = 0,
@@ -42,5 +43,7 @@ const int MIDI_PIANO_HIGH_NUMBER = 108;
 const int MIDI_PIANO_SIZE = MIDI_PIANO_HIGH_NUMBER - MIDI_PIANO_LOW_NUMBER + 1;
 const float SIGNAL_LOW = -1;
 const float SIGNAL_HIGH = 1;
+const float ENVELOPE_LOW = 0;
+const float ENVELOPE_HIGH = 1;
 
 #endif

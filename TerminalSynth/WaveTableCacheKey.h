@@ -39,7 +39,7 @@ public:
 		return hash((double)_parameters->GetFrequency() + (double)_parameters->GetBuiltInType());
 	}
 
-	OscillatorParameters GetParameters() const { return *_parameters; }
+	OscillatorParameters* GetParameters() const { return _parameters; }
 	unsigned int GetSampleRate() const { return _sampleRate; }
 	unsigned int GetNumberOfFrames() const { return _numberFrames; }
 	unsigned int GetMidiNote() const { return _midiNote; }

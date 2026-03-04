@@ -8,6 +8,8 @@
 #include "OscillatorParameters.h"
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
+#include "SignalFactoryCore.h"
+#include "SignalSettings.h"
 
 class SignalFactory
 {
@@ -21,26 +23,29 @@ public:
 	/// <summary>
 	/// Sets the signal factory for the specified oscillator parameters, and resets all filters
 	/// </summary>
-	void Reset(const OscillatorParameters& parameters);
+	void Reset(const OscillatorParameters* parameters);
 
 	/// <summary>
 	/// Generates a sample for the specified stream time
 	/// </summary>
-	void GenerateSample(const OscillatorParameters& parameters, PlaybackFrame& frame, float absoluteTime);
+	void GenerateSample(const OscillatorParameters* parameters, PlaybackFrame* frame, float absoluteTime);
 
 private:
 
-	float GenerateTriangleSample(float frequency, float signalHigh, float signalLow, float absoluteTime);
-	float GenerateSquareSample(float frequency, float signalHigh, float signalLow, float absoluteTime);
-	float GenerateSawtoothSample(float frequency, float signalHigh, float signalLow, float absoluteTime);
-	float GenerateSineSample(float frequency, float signalHigh, float signalLow, float absoluteTime);
-	float GeneratePluckedStringSample(float frequency, float signalHigh, float signalLow, float absoluteTime);
+	float GenerateTriangleSample(float frequency, float absoluteTime);
+	float GenerateSquareSample(float frequency, float absoluteTime);
+	float GenerateSawtoothSample(float frequency, float absoluteTime);
+	float GenerateSineSample(float frequency, float absoluteTime);
+	float GenerateRandomSample(float frequency, float absoluteTime);
+	float GeneratePluckedStringSample(float frequency, float signalLow, float signalHigh, float absoluteTime);
 
 private:
 
 	const OutputSettings* _outputSettings;
 	BiQuadFilter* _lowPassFilter;
 	CombFilter* _combFilter;
+
+	SignalFactoryCore* _core;
 };
 
 #endif

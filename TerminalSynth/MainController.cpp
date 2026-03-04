@@ -61,7 +61,7 @@ bool MainController::Initialize(SynthSettings* configuration, OutputSettings* pa
 	std::vector<SignalSettings> registryList;
 
 	// Airwindows Plugins:  Require sampling rate!
-	success &= effectRegistry->Initialize(parameters->GetSamplingRate(), registryList);
+	success &= effectRegistry->Initialize(parameters, registryList);
 
 	// -> Initialize(..) (completes the configuration's registry)
 	configuration->GetSoundSettings()->Initialize(registryList);
