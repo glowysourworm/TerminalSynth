@@ -69,7 +69,7 @@ public:
 		for (int index = 0; index < settings->GetParameterCount(); index++)
 		{
 			// -> override
-			this->UpdateParameter(index, settings->GetParameterValue(index));
+			this->UpdateParameter(index, settings->GetParameter(index));
 		}
 	}
 
@@ -131,9 +131,9 @@ public:
 	}
 
 	// Function should be called to allow override to process (this->Update(..))
-	virtual void UpdateParameter(int index, float value)
+	virtual void UpdateParameter(int index, const SignalParameter* parameter)
 	{
-		_settings->SetParameter(index, value);
+		_settings->UpdateParameter(index, parameter);
 	}
 
 protected:

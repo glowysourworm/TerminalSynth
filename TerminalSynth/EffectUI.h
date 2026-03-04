@@ -3,10 +3,14 @@
 #ifndef EFFECT_UI_H
 #define EFFECT_UI_H
 
+#include "CheckboxModelUI.h"
+#include "CheckboxUI.h"
 #include "SignalParameter.h"
+#include "SignalParameterUI.h"
 #include "SignalSettings.h"
 #include "SliderUI.h"
 #include "UIBase.h"
+#include "ValueCapture.h"
 #include <exception>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
@@ -57,7 +61,9 @@ private:
 	std::string* _name;
 	ftxui::Color* _labelColor;
 
-	std::vector<SliderUI*>* _parameterUIs;
+	SignalSettings* _model;										// Local copy
+
+	std::vector<SignalParameterUI*>* _parameterUIs;
 };
 
 EffectUI::EffectUI(const std::string& name,
@@ -65,19 +71,21 @@ EffectUI::EffectUI(const std::string& name,
 					const std::string& infoText,
 					const ftxui::Color& labelColor)
 {
-	_parameterUIs = new std::vector<SliderUI*>();
+	_parameterUIs = new std::vector<SignalParameterUI*>();
 	_category = new std::string(category);
 	_infoText = new std::string(infoText);
 	_labelColor = new ftxui::Color(labelColor);
+	_model = new SignalSettings();
 	_name = new std::string(name);
 }
 
 EffectUI::EffectUI(const SignalSettings& initialValue)
 {
-	_parameterUIs = new std::vector<SliderUI*>();
+	_parameterUIs = new std::vector<SignalParameterUI*>();
 	_category = new std::string(initialValue.GetCategory());
 	_infoText = new std::string(initialValue.GetInfoText());
 	_labelColor = new ftxui::Color(ftxui::Color::White);
+	_model = new SignalSettings(initialValue);
 	_name = new std::string(initialValue.GetName());
 }
 
@@ -88,6 +96,7 @@ EffectUI::~EffectUI()
 		delete _parameterUIs->at(index);
 	}
 
+	delete _model;
 	delete _parameterUIs;
 	delete _category;
 	delete _infoText;
@@ -98,6 +107,8 @@ EffectUI::~EffectUI()
 void EffectUI::Initialize(const SignalSettings& parameters)
 {
 	int maxLabelLength = -1;
+
+	_model->Update(&parameters, true);
 
 	// Parameters (measure)
 	for (int index = 0; index < parameters.GetParameterCount(); index++)
@@ -119,15 +130,11 @@ void EffectUI::Initialize(const SignalSettings& parameters)
 
 		std::string labelFormat = labelStr + ":" + whiteSpace + "  {:.2f}";
 
-		float initialValue = parameters.GetParameterValue(index);
-		float minValue = parameters.GetParameterMin(index);
-		float maxValue = parameters.GetParameterMax(index);
+		SignalParameterUI* parameterUI = new SignalParameterUI(*parameters.GetParameter(index), labelFormat);
 
-		SliderUI* sliderUI = new SliderUI(initialValue, minValue, maxValue, (maxValue - minValue) / 100.0f, labelStr, labelFormat, *_labelColor);
+		parameterUI->Initialize(*parameters.GetParameter(index));
 
-		sliderUI->Initialize(initialValue);
-
-		_parameterUIs->push_back(sliderUI);
+		_parameterUIs->push_back(parameterUI);
 	}
 
 	_component = ftxui::Container::Vertical({
@@ -139,6 +146,9 @@ void EffectUI::Initialize(const SignalSettings& parameters)
 	for (int index = 0; index < _parameterUIs->size(); index++)
 	{
 		_component->Add(_parameterUIs->at(index)->GetComponent());
+
+		if (index != _parameterUIs->size() - 1)
+			_component->Add(ftxui::Renderer([] {return ftxui::separator(); }));
 	}
 
 	_component->Add(ftxui::Renderer([&] {
@@ -158,6 +168,7 @@ ftxui::Component EffectUI::GetComponent()
 
 void EffectUI::ServicePendingAction()
 {
+
 }
 
 void EffectUI::UpdateComponent()
@@ -170,6 +181,7 @@ void EffectUI::UpdateComponent()
 
 void EffectUI::Tick()
 {
+	// Nothing in UI sub-functions
 }
 
 bool EffectUI::GetDirty() const
@@ -199,6 +211,7 @@ bool EffectUI::HasPendingAction() const
 
 void EffectUI::ClearPendingAction()
 {
+	
 }
 
 void EffectUI::ToUI(const SignalSettings& source)
@@ -227,25 +240,20 @@ void EffectUI::FromUI(SignalSettings* destination)
 
 	for (int index = 0; index < _parameterUIs->size(); index++)
 	{
-		// NEED ANOTHER STRING PARAMETER
-		SignalParameter parameter(_parameterUIs->at(index)->GetName(), 0.0f, 0.0f, 1.0f);
+		SignalParameter* parameter = _model->GetParameter(index);
 
-		float setting = 0;
-
-		// Get UI Setting
-		_parameterUIs->at(index)->FromUI(setting);
-
-		parameter.SetValue(setting);
+		// -> FromUI
+		_parameterUIs->at(index)->FromUI(parameter);
 
 		// Add / Update
 		if (destination->GetParameterCount() <= index)
-			destination->AddParameter(parameter);
+			destination->AddParameter(*parameter);
 
-		else if (destination->GetParameterName(index) != _parameterUIs->at(index)->GetName())
-			destination->AddParameter(parameter);
+		else if (destination->GetParameterName(index) != parameter->GetName())
+			destination->AddParameter(*parameter);
 
 		else
-			destination->SetParameter(index, setting);
+			destination->UpdateParameter(index, parameter);
 	}
 }
 

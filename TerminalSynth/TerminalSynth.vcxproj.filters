@@ -407,6 +407,9 @@
     <ClInclude Include="SoundSettings.h">
       <Filter>Header Files\Model</Filter>
     </ClInclude>
+    <ClInclude Include="SignalParameterUI.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="RtAudioUserData.h">

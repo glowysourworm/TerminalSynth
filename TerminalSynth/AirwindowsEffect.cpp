@@ -2,6 +2,7 @@
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
+#include "SignalParameter.h"
 #include "SignalSettings.h"
 #include <airwin_consolidated_base.h>
 #include <cctype>
@@ -75,13 +76,13 @@ void AirwindowsEffect::Initialize(const SignalSettings* configuration, const Out
 	throw new std::exception("Airwindows effects are not initialized from the Terminal Synth libraries");
 }
 
-void AirwindowsEffect::UpdateParameter(int index, float value)
+void AirwindowsEffect::UpdateParameter(int index, const SignalParameter* parameter)
 {
 	// Synth Side
-	SignalBase::UpdateParameter(index, value);
+	SignalBase::UpdateParameter(index, parameter);
 
 	// Airwindows Plugin Side
-	_effect->setParameter(index, value);
+	_effect->setParameter(index, parameter->GetValue());
 }
 
 std::string AirwindowsEffect::GetCategory() const

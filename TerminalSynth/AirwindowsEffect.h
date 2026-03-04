@@ -6,6 +6,7 @@
 #include "OutputSettings.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
+#include "SignalParameter.h"
 #include "SignalSettings.h"
 #include <airwin_consolidated_base.h>
 #include <string>
@@ -25,7 +26,7 @@ public:
 	void SetFrame(PlaybackFrame* frame, float absoluteTime) override;
 	bool HasOutput(float absoluteTime) const override;
 
-	void UpdateParameter(int index, float value) override;
+	void UpdateParameter(int index, const SignalParameter* parameter) override;
 
 	std::string GetCategory() const;
 	std::string GetWhatText() const;

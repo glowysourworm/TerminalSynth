@@ -310,6 +310,7 @@
     <ClInclude Include="ScrollViewerUI.h" />
     <ClInclude Include="SignalChain.h" />
     <ClInclude Include="SignalChainSettings.h" />
+    <ClInclude Include="SignalParameterUI.h" />
     <ClInclude Include="SoundSettings.h" />
     <ClInclude Include="SynthTabUI.h" />
     <ClInclude Include="SignalFactory.h" />

@@ -36,6 +36,10 @@ public:
 	bool HasPendingAction() const override;
 	void ClearPendingAction() override;
 
+public:
+
+	bool GetIsChecked() const { return *_value; }
+
 private:
 
 	ftxui::Component _component;

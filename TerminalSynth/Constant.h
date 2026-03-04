@@ -15,10 +15,16 @@ enum class BuiltInOscillators : int {
 	Sawtooth = 3,
 	SynthesizedStringPluck = 4
 };
-enum class EnvelopeFilterType : int {
-	Constant = 0,
-	Oscillator,
-	EnvelopeSweep
+enum class ParameterAutomationType : int {
+	EnvelopeSweep = 0,
+	Oscillator
+};
+enum class ParameterAutomationOscillator : int {
+	Sine = 0,
+	Square = 1,
+	Triangle = 2,
+	Sawtooth = 3,
+	Random = 4
 };
 
 namespace TerminalSynth

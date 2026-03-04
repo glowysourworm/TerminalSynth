@@ -36,7 +36,7 @@ public:
 
 		for (int index = 0; index < copy.GetParameterCount(); index++)
 		{
-			_parameters->push_back(new SignalParameter(copy.GetParameter(index)));
+			_parameters->push_back(new SignalParameter(*copy.GetParameter(index)));
 		}
 
 		_name = new std::string(copy.GetName());
@@ -65,7 +65,7 @@ public:
 	std::string GetInfoText() const { return *_infoText; }
 	bool GetIsAirwinEffect() const { return _isAirwinEffect; }
 	bool GetIsEnabled() const { return _isEnabled; }
-	SignalParameter GetParameter(int index) const { return *_parameters->at(index); }
+	SignalParameter* GetParameter(int index) const { return _parameters->at(index); }
 	float GetParameterValue(int index) const { return _parameters->at(index)->GetValue(); }
 	float GetParameterMin(int index) const { return _parameters->at(index)->GetMin(); }
 	float GetParameterMax(int index) const { return _parameters->at(index)->GetMax(); }
@@ -76,9 +76,9 @@ public:
 	{
 		_parameters->push_back(new SignalParameter(parameter));
 	}
-	void SetParameter(int index, float value)
+	void UpdateParameter(int index, const SignalParameter* value)
 	{
-		_parameters->at(index)->SetValue(value);
+		_parameters->at(index)->Update(value, false);				// Preserve name
 	}
 	void SetInfoText(const std::string& value)
 	{
@@ -141,12 +141,12 @@ public:
 			// Update (larger in size)
 			if (index >= _parameters->size())
 			{
-				_parameters->push_back(new SignalParameter(parameters->GetParameter(index)));			// MEMORY!
+				_parameters->push_back(new SignalParameter(*parameters->GetParameter(index)));			// MEMORY!
 				isDirty = true;
 			}
 
 			// Update (entries not aligned or matched)
-			else if (_parameters->at(index)->GetName() != parameters->GetParameter(index).GetName())
+			else if (_parameters->at(index)->GetName() != parameters->GetParameter(index)->GetName())
 			{
 				if (!overwrite)
 					throw new std::exception("Trying to overwrite protected parameter:  SignalSettings.h");
