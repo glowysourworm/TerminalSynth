@@ -6,7 +6,9 @@
 #include "AtomicLock.h"
 #include "AudioController.h"
 #include "BaseController.h"
+#include "IntervalTimer.h"
 #include "LoopTimer.h"
+#include "MainModelUI.h"
 #include "MainUI.h"
 #include "OutputSettings.h"
 #include "RtAudioUserData.h"
@@ -43,10 +45,14 @@ private:
 	SynthSettings* _configuration;
 
 	AudioController* _audioController;
-
 	LoopTimer* _uiTimer;
+	IntervalTimer* _uiDataFetchTimer;
+	IntervalTimer* _uiLockAcquireTimer;
+	IntervalTimer* _uiRenderTimer;
+	IntervalTimer* _uiSleepTimer;
 
 	MainUI* _mainUI;
+	MainModelUI* _mainModelUI;
 };
 
 #endif

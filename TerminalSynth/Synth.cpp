@@ -2,6 +2,7 @@
 #include "PlaybackFrame.h"
 #include "SignalChain.h"
 #include "SoundRegistry.h"
+#include "SoundSettings.h"
 #include "Synth.h"
 #include "SynthNotePool.h"
 #include "SynthSettings.h"
@@ -11,6 +12,7 @@ Synth::Synth(const SynthSettings* configuration, unsigned int numberOfChannels, 
 	_numberOfChannels = numberOfChannels;
 	_samplingRate = samplingRate;
 	_postProcessing = new SignalChain();
+	_pianoNotes = nullptr;
 }
 
 Synth::~Synth()
@@ -25,24 +27,24 @@ void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings*
 	_postProcessing->Initialize(effectRegistry, configuration->GetSoundSettings()->GetPostProcessing(), parameters);
 }
 
-void Synth::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration)
+void Synth::Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings)
 {
-	_postProcessing->Update(effectRegistry, configuration->GetSoundSettings()->GetPostProcessing());
+	_postProcessing->Update(effectRegistry, soundSettings->GetPostProcessing());
 	_pianoNotes->Update(effectRegistry, 
-						configuration->GetSoundSettings()->GetOscillatorParameters(), 
-						configuration->GetSoundSettings()->GetOscillatorEnvelope(),
-						configuration->GetSoundSettings()->GetSignalChain(),
+						soundSettings->GetOscillatorParameters(), 
+						soundSettings->GetOscillatorEnvelope(),
+						soundSettings->GetSignalChain(),
 						_samplingRate);
 }
 
-void Synth::Set(int midiNumber, bool pressed, double absoluteTime, const SynthSettings* configuration)
+void Synth::Set(int midiNumber, bool pressed, double absoluteTime)
 {
 	_pianoNotes->SetNote(midiNumber, pressed, absoluteTime);
 }
-bool Synth::GetSample(PlaybackFrame* frame, double absoluteTime, const SynthSettings* configuration)
+bool Synth::GetSample(PlaybackFrame* frame, double absoluteTime, const OutputSettings* outputSettings)
 {
-	float gain = configuration->GetOutputGain();
-	float leftRight = configuration->GetOutputLeftRight();
+	float gain = outputSettings->GetGain();
+	float leftRight = outputSettings->GetLeftRightBalance();
 
 	// Primary Synth Voice(s)
 	bool hasOutput = _pianoNotes->SetFrame(frame, absoluteTime, gain, leftRight);
@@ -52,17 +54,6 @@ bool Synth::GetSample(PlaybackFrame* frame, double absoluteTime, const SynthSett
 
 	//if (_postProcessing->HasOutput(absoluteTime))
 		_postProcessing->SetFrame(frame, absoluteTime);
-
-	//// Effect Chain
-	//bool reverbHasOutput = _reverb->HasOutput(absoluteTime) && configuration->GetHasReverb();
-	//bool delayHasOutput = _delay->HasOutput(absoluteTime) && configuration->GetHasDelay();
-
-	//// OUTPUT EFFECTS	
-	//if (reverbHasOutput)
-	//	_reverb->GetSample(frame, absoluteTime);
-
-	//if (delayHasOutput)
-	//	_delay->GetSample(frame, absoluteTime);
 
 	return hasOutput;
 }

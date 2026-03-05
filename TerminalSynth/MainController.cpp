@@ -1,8 +1,10 @@
 #include "AtomicLock.h"
 #include "AudioController.h"
 #include "BaseController.h"
+#include "IntervalTimer.h"
 #include "LoopTimer.h"
 #include "MainController.h"
+#include "MainModelUI.h"
 #include "MainUI.h"
 #include "OutputSettings.h"
 #include "RtAudioController.h"
@@ -23,19 +25,28 @@ MainController::MainController(AtomicLock* playbackLock) : BaseController(playba
 {
 	_configuration = nullptr;
 	_mainUI = nullptr;
+	_mainModelUI = nullptr;
 	_uiTimer = new LoopTimer(0.075);
+	_uiDataFetchTimer = new IntervalTimer();
+	_uiLockAcquireTimer = new IntervalTimer();
+	_uiRenderTimer = new IntervalTimer();
+	_uiSleepTimer = new IntervalTimer();
 	_audioController = new AudioController(playbackLock);
 	_userData = new RtAudioUserData();
-	
 }
 
 MainController::~MainController()
 {
 	delete _configuration;
 	delete _mainUI;
+	delete _mainModelUI;
 	delete _uiTimer;
+	delete _uiDataFetchTimer;
+	delete _uiLockAcquireTimer;
+	delete _uiRenderTimer;
+	delete _uiSleepTimer;
 	delete _audioController;
-	delete _userData;
+	delete _userData;	
 }
 
 /// <summary>
@@ -67,14 +78,15 @@ bool MainController::Initialize(SynthSettings* configuration, OutputSettings* pa
 	configuration->GetSoundSettings()->Initialize(registryList);
 
 	// -> Initilize(..) (the RT Audio playback can now be unblocked)
-	_userData->Initialize(configuration, effectRegistry);
+	_userData->Initialize(configuration, effectRegistry, parameters);
 
 	// Audio Controller (for callback)
 	success &= _audioController->Initialize(configuration, parameters, effectRegistry);
 
 	// Main UI Initialize
-	_mainUI = new MainUI(*configuration);
-	_mainUI->Initialize(*configuration);
+	_mainModelUI = new MainModelUI(configuration, parameters);
+	_mainUI = new MainUI(*_mainModelUI);
+	_mainUI->Initialize(*_mainModelUI);
 
 	return success;
 }
@@ -103,14 +115,6 @@ void MainController::Loop()
 	// https://arthursonzogni.com/FTXUI/doc/examples_2component_2custom_loop_8cpp-example.html#_a8
 	//
 
-	// We may use these on this thread since we're calling the audio controller from here. The
-	// callback from RT Audio WILL NOT SET this pointer's data!
-	//
-	OutputSettings* playbackParameters = RtAudioController::GetPlaybackParameters();
-
-	// Playback Parameters (to update)
-	float streamTime, audioTime, frontendTime, latency, left, right;
-
 	// Primary Loop!!! 
 	//
 	// Audio Thread:  The RT Audio callback will arrive on their background thread from the audio backend. We
@@ -118,10 +122,6 @@ void MainController::Loop()
 	//				  The SynthPlaybackDevice* will be updated, from the synth configuration, during the 
 	//				  callback. So, this must be synchronized somehow. Probably a std::atomic which could be
 	//				  shared inside the SynthSettings*
-	// 
-	// UI Thread:  Unfortunately, the UI had to be run on a separate thread; but that won't really matter. We
-	//			   can interrupt the thread to post UI updates. We're going to keep track of the UI timer here
-	//			   and interrupt it every ~10ms.
 	// 
 	// Synth Configuration: There must be an additional lock on the SynthSettings* during UI interaction.
 	//						This will be an std::atomic inside of the SynthSettings class; and must be
@@ -137,29 +137,17 @@ void MainController::Loop()
 	//
 	while (!loop.HasQuitted())
 	{
-		// Update Playback Parameters:
-		//
-		_audioController->GetUpdate(streamTime, audioTime, frontendTime, latency, left, right);
-		
-		// Apply update to our pointer to playback parameters
-		//
-		playbackParameters->UpdateRT(streamTime, _uiTimer->GetAvgMilli(), audioTime, frontendTime, latency);
-
-
 		// Design:		There is a long wait period for back and forth with the UI thread from
 		//				the audio thread. So, updating won't be very costly, or disruptive to
 		//				playback. 
 		// 
-		//				The shared pointer SynthSettings* is the primary configuration pointer
-		//				for the PlaybackDevice* to share with the front end UI. The AudioController*
-		//				is on the main thread except for the RTAudio callback - which has a very
-		//				high priority compared to the main thread.
+		//				The shared pointer RtAudioUserData* may be synchronized through the 
+		//				AtomicLock* (see below, and on AudioController* playback)
 		// 
-		//				The SynthSettings* pointer is only shared during the locked critical 
-		//				sections (see AtomicLock*) for the FromUI and ToUI calls, which force a 
-		//				synchronization wait loop for a small period of time using an std::atomic
-		//				semaphor.
-		//
+		//				The settings have been copied off to the UI portion and can be used
+		//				outside of the lock. The settings are propagated using the UIBase* 
+		//				component design, which is detailed in the procedure below. 
+		// 
 		// Procedure:
 		//
 		// 1) Allow one of our UIBase::Tick cycles to process
@@ -192,9 +180,24 @@ void MainController::Loop()
 		if (uiDirty)
 		{
 			// ~ CRITICAL SECTION ~ (Playback must synchronize here!)
+			_uiLockAcquireTimer->Reset();
 			this->PlaybackLock->AcquireLock();
+			_uiLockAcquireTimer->Mark();
 
-			_mainUI->FromUI(_configuration);
+			_uiDataFetchTimer->Reset();
+
+			// UI -> Model -> Configuration
+			_mainUI->FromUI(_mainModelUI);
+			_mainModelUI->FromUI(_configuration);	
+
+			// Also, need the Gain and L/R Balance
+			_userData->GetOutputSettings()->SetGain(_mainModelUI->GetOutputSettings()->GetGain());
+			_userData->GetOutputSettings()->SetLeftRightBalance(_mainModelUI->GetOutputSettings()->GetLeftRightBalance());
+
+			_uiDataFetchTimer->Mark();
+
+			// -> Forward dirty status to AudioController
+			_configuration->SetDirty();
 
 			this->PlaybackLock->Release();
 
@@ -204,8 +207,18 @@ void MainController::Loop()
 			//
 		}
 
-		// Update -> UI (OutputSettings*) (NOT SHARED) (Member functions all go through this thread for playback parameters)
-		_mainUI->ToUI(_configuration);
+		// *** NON-THERAD-SAFE *** (This should be safe outside of the lock for getting / setting simple data)
+		_userData->GetOutputSettings()->UpdateRT_UI(
+			_uiTimer->GetAvgMilli(),
+			_uiDataFetchTimer->AvgMicro(),
+			_uiLockAcquireTimer->AvgNano(),
+			_uiRenderTimer->AvgMilli(),
+			_uiSleepTimer->AvgMilli());
+
+		_mainModelUI->ToUI(_userData->GetOutputSettings());
+		// ***********************
+		
+		_mainUI->ToUI(_mainModelUI);
 		_mainUI->ClearDirty();
 
 		// This portion of the loop will run FTXUI, which does not depend on the data
@@ -213,14 +226,22 @@ void MainController::Loop()
 		//
 		// FTXUI: Use custom event to force one UI update
 		//
+		_uiRenderTimer->Reset();
+
 		screen.PostEvent(ftxui::Event::Custom);
 		loop.RunOnce();
+
+		_uiRenderTimer->Mark();
 		
 		// Sleep Cycle:  Sleep for the extra time to shoot for our target loop time
 		//
 		long sleepTime = fmax(fmin(LOOP_PERIOD_MICRO - _uiTimer->PeekMicro(), LOOP_PERIOD_MICRO), 0);
 
+		_uiSleepTimer->Reset();
+
 		if (sleepTime > 0.0)
 			std::this_thread::sleep_for(std::chrono::microseconds(sleepTime));
+
+		_uiSleepTimer->Mark();
 	}
 }

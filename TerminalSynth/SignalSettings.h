@@ -118,17 +118,14 @@ public:
 			isDirty = true;
 		}
 
-		isDirty |= *_name != parameters->GetName();
 		isDirty |= *_category != parameters->GetCategory();
 		isDirty |= *_infoText != parameters->GetInfoText();
 		isDirty |= _isAirwinEffect != parameters->GetIsAirwinEffect();
 		isDirty |= _isEnabled != parameters->GetIsEnabled();
 
-		_name->clear();
 		_category->clear();
 		_infoText->clear();
 
-		_name->append(parameters->GetName());
 		_category->append(parameters->GetCategory());
 		_infoText->append(parameters->GetInfoText());
 		

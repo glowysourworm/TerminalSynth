@@ -13,7 +13,7 @@
 /// </summary>
 SynthSettings* CreateConfiguration(OutputSettings* deviceSettings, const std::string& soundBankDirectory)
 {
-	SynthSettings* configuration = new SynthSettings(deviceSettings, soundBankDirectory);
+	SynthSettings* configuration = new SynthSettings(soundBankDirectory);
 
 	// Oversampling
 	configuration->SetOversamplingFactor(10);

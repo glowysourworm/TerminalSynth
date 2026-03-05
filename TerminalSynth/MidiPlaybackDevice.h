@@ -4,7 +4,6 @@
 #define MIDI_PLAYBACK_DEVICE_H
 
 #include "Accumulator.h"
-#include "SoundRegistry.h"
 #include "MidiEvent.h"
 #include "MidiEventList.h"
 #include "MidiFile.h"
@@ -12,6 +11,7 @@
 #include "PlaybackBuffer.h"
 #include "PlaybackDevice.h"
 #include "PlaybackFrame.h"
+#include "SoundRegistry.h"
 #include "Synth.h"
 #include "SynthSettings.h"
 #include <functional>
@@ -33,7 +33,7 @@ public:
 		TSignal* playbackBuffer,
 		unsigned int numberOfFrames,
 		double streamTime,
-		const SynthSettings* configuration) override;
+		const OutputSettings* outputSettings) override;
 
 	/// <summary>
 	/// Loads midi file and creates playback configuration
@@ -77,8 +77,6 @@ private:
 
 	Synth* _synth;
 	PlaybackFrame* _frame;
-	Accumulator<TSignal>* _outputLeft;
-	Accumulator<TSignal>* _outputRight;
 	unsigned int _numberOfChannels;
 	unsigned int _samplingRate;
 
@@ -100,8 +98,6 @@ MidiPlaybackDevice<TSignal>::MidiPlaybackDevice()
 	_synth = nullptr;
 	_isLoaded = false;
 	_initialized = false;
-	_outputLeft = new Accumulator<TSignal>(true);
-	_outputRight = new Accumulator<TSignal>(true);
 }
 
 template<SignalValue TSignal>
@@ -109,8 +105,6 @@ MidiPlaybackDevice<TSignal>::~MidiPlaybackDevice()
 {
 	delete _synth;
 	delete _frame;
-	delete _outputLeft;
-	delete _outputRight;
 }
 
 template<SignalValue TSignal>
@@ -132,7 +126,7 @@ bool MidiPlaybackDevice<TSignal>::Initialize(const SoundRegistry* effectRegistry
 template<SignalValue TSignal>
 bool MidiPlaybackDevice<TSignal>::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
-	_synth->Update(effectRegistry, configuration);
+	_synth->Update(effectRegistry, configuration->GetSoundSettings());
 
 	return true;
 }
@@ -187,7 +181,7 @@ int MidiPlaybackDevice<TSignal>::WritePlaybackBuffer(
 	TSignal* playbackBuffer,
 	unsigned int numberOfFrames, 
 	double streamTime, 
-	const SynthSettings* configuration)
+	const OutputSettings* outputSettings)
 {
 	if (!_initialized)
 		return -1;
@@ -211,23 +205,19 @@ int MidiPlaybackDevice<TSignal>::WritePlaybackBuffer(
 		double absoluteTime = streamTime + (frameIndex / (double)_samplingRate);
 
 		// Set Synth Midi Events
-		this->SetMidiSynth(absoluteTime, frameIndex, configuration);
+		//this->SetMidiSynth(absoluteTime, frameIndex, configuration);
 
 		// Clear Frame
 		_frame->Clear();
 
 		// Get Samples for N channels
-		_lastOutput = _synth->GetSample(_frame, absoluteTime, configuration);
+		_lastOutput = _synth->GetSample(_frame, absoluteTime, outputSettings);
 
 		// Interleved frames
 		// 
 		// Set output sample
 		outputBuffer[(2 * frameIndex)] = _frame->GetLeft();
 		outputBuffer[(2 * frameIndex) + 1] = _frame->GetRight();
-
-		// Keep accumulator value for output UI
-		_outputLeft->Add(_frame->GetLeft());
-		_outputRight->Add(_frame->GetRight());
 	}
 
 	return 0;

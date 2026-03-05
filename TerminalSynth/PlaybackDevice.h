@@ -49,7 +49,7 @@ public:
 	/// Tells the playback device to write its output to the playback buffer. The write should start at frame index 0, and
 	/// end at the frame index that coincides with the stream end time. The function should return non-zero for error indication.
 	/// </summary>
-	virtual int WritePlaybackBuffer(TSignal* playbackBuffer, unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration) = 0;
+	virtual int WritePlaybackBuffer(TSignal* playbackBuffer, unsigned int numberOfFrames, double streamTime, const OutputSettings* outputSettings) = 0;
 };
 
 

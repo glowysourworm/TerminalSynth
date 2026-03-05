@@ -3,8 +3,8 @@
 #ifndef OUTPUT_UI_H
 #define OUTPUT_UI_H
 
+#include "OutputSettings.h"
 #include "SliderUI.h"
-#include "SynthSettings.h"
 #include "UIBase.h"
 #include <exception>
 #include <ftxui/component/component.hpp>
@@ -13,23 +13,23 @@
 #include <ftxui/screen/color.hpp>
 #include <string>
 
-class OutputUI : public UIBase<SynthSettings>
+class OutputUI : public UIBase<OutputSettings>
 {
 public:
 	OutputUI(const std::string& title, const ftxui::Color& titleColor);
 	~OutputUI();
 
-	void Initialize(const SynthSettings& initialValue) override;
+	void Initialize(const OutputSettings& initialValue) override;
 	ftxui::Component GetComponent() override;
 
     void ServicePendingAction() override;
     void UpdateComponent() override;
     void Tick() override;
 
-	void ToUI(const SynthSettings& source) override;
-    void ToUI(const SynthSettings* source) override;
-	void FromUI(SynthSettings& destination) override;
-    void FromUI(SynthSettings* destination) override;
+	void ToUI(const OutputSettings& source) override;
+    void ToUI(const OutputSettings* source) override;
+	void FromUI(OutputSettings& destination) override;
+    void FromUI(OutputSettings* destination) override;
 
 	bool GetDirty() const override;
     void ClearDirty() override;
@@ -70,10 +70,10 @@ OutputUI::~OutputUI()
     delete _titleColor;
 }
 
-void OutputUI::Initialize(const SynthSettings& initialValue)
+void OutputUI::Initialize(const OutputSettings& initialValue)
 {
-    _gainUI->Initialize(initialValue.GetOutputGain());
-    _leftRightUI->Initialize(initialValue.GetOutputLeftRight());
+    _gainUI->Initialize(initialValue.GetGain());
+    _leftRightUI->Initialize(initialValue.GetLeftRightBalance());
 }
 
 ftxui::Component OutputUI::GetComponent()
@@ -139,21 +139,24 @@ void OutputUI::ClearPendingAction()
 {
 }
 
-void OutputUI::ToUI(const SynthSettings& source)
+void OutputUI::ToUI(const OutputSettings& source)
 {
     throw new std::exception("Please use the pointer version of this function ToUI");
 }
-void OutputUI::ToUI(const SynthSettings* source)
+void OutputUI::ToUI(const OutputSettings* source)
 {
-    _gainUI->ToUI(source->GetOutputGain());
-    _leftRightUI->ToUI(source->GetOutputLeftRight());
+    _gainUI->ToUI(source->GetGain());
+    _leftRightUI->ToUI(source->GetLeftRightBalance());
+
+    _left = source->GetLeftChannel();
+    _right = source->GetRightChannel();
 }
-void OutputUI::FromUI(SynthSettings& destination)
+void OutputUI::FromUI(OutputSettings& destination)
 {
     throw new std::exception("Please use the pointer version of this function FromUI");
 }
 
-void OutputUI::FromUI(SynthSettings* destination)
+void OutputUI::FromUI(OutputSettings* destination)
 {
     float gain;
     float leftRight;
@@ -161,8 +164,8 @@ void OutputUI::FromUI(SynthSettings* destination)
     _gainUI->FromUI(gain);
     _leftRightUI->FromUI(leftRight);
 
-    destination->SetOutputGain(gain);
-    destination->SetOutputLeftRight(leftRight);
+    destination->SetLeftRightBalance(leftRight);
+    destination->SetGain(gain);
 }
 
 #endif

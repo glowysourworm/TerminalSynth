@@ -38,11 +38,6 @@ public:
 	/// </summary>
 	void SetSynthMode();
 
-	/// <summary>
-	/// Simple output function (this will be replaced with an output processing stage)
-	/// </summary>
-	void GetUpdate(float& streamTime, float& audioTime, float& frontendTime, float& latency, float& left, float& right);
-
 public:
 
 	/// <summary>
@@ -65,10 +60,8 @@ private:
 
 	PlaybackClock* _streamClock;
 	LoopTimer* _audioTimer;
-	IntervalTimer* _synthIntervalTimer;
-
-	float _outputL;
-	float _outputR;
+	IntervalTimer* _audioSampleTimer;
+	IntervalTimer* _audioLockAcquireTimer;
 };
 
 #endif

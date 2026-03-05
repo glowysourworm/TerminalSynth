@@ -15,7 +15,7 @@
 #include "SignalNodeUI.h"
 #include "SignalSettings.h"
 #include "SoundSettings.h"
-#include "SynthSettings.h"
+#include "SynthTabModelUI.h"
 #include "UIBase.h"
 #include <exception>
 #include <ftxui/component/component.hpp>
@@ -26,24 +26,24 @@
 #include <string>
 #include <utility>
 
-class SynthTabUI : public UIBase<SoundSettings>
+class SynthTabUI : public UIBase<SynthTabModelUI>
 {
 public:
 
-	SynthTabUI(const SynthSettings& synthSettings);
+	SynthTabUI(const SynthTabModelUI& synthSettings);
 	~SynthTabUI();
 
-	void Initialize(const SoundSettings& initialValue) override;
+	void Initialize(const SynthTabModelUI& initialValue) override;
 	ftxui::Component GetComponent() override;
 
 	void ServicePendingAction() override;
 	void UpdateComponent() override;
 	void Tick() override;
 
-	void ToUI(const SoundSettings& source) override;
-	void ToUI(const SoundSettings* source) override;
-	void FromUI(SoundSettings& destination) override;
-	void FromUI(SoundSettings* destination) override;
+	void ToUI(const SynthTabModelUI& source) override;
+	void ToUI(const SynthTabModelUI* source) override;
+	void FromUI(SynthTabModelUI& destination) override;
+	void FromUI(SynthTabModelUI* destination) override;
 
 	bool HasPendingAction() const override;
 	void ClearPendingAction() override;
@@ -58,6 +58,8 @@ private:
 	ftxui::Component _signalEffectsContainer;
 	ftxui::Component _signalChainContainer;
 	ftxui::Component _editorContainer;
+
+	SynthTabModelUI* _model;
 
 	// Editors
 	OscillatorUI* _oscillatorUI;
@@ -82,9 +84,10 @@ private:
 	bool _isDirty;
 };
 
-SynthTabUI::SynthTabUI(const SynthSettings& synthSettings)
+SynthTabUI::SynthTabUI(const SynthTabModelUI& model)
 {
 	_isDirty = false;
+	_model = new SynthTabModelUI(model);
 	_activeEditorUI = new ActiveEditorUI();
 
 	SignalNodeModelUI envelopeModel("Envelope", true, false, false, false, 0);
@@ -94,7 +97,7 @@ SynthTabUI::SynthTabUI(const SynthSettings& synthSettings)
 	_postProcessingUI = new ScrollViewerUI<SignalNodeModelUI, SignalNodeUI>("Signal Effects", ftxui::Color::GreenYellow);
 
 	_envelopeUI = new EnvelopeUI();
-	_oscillatorUI = new OscillatorUI(synthSettings.GetSoundBankSettings(), ftxui::Color::White);
+	_oscillatorUI = new OscillatorUI(_model->GetSoundBankSettings(), ftxui::Color::White);
 	_envelopeSignalUI = new SignalNodeUI(envelopeModel);
 	_oscillatorSignalUI = new SignalNodeUI(oscillatorModel);
 
@@ -102,12 +105,12 @@ SynthTabUI::SynthTabUI(const SynthSettings& synthSettings)
 	_pluginModels = new std::map<std::string, CheckboxModelUI*>();
 	_effectUIs = new std::map<std::string, EffectUI*>();
 
-	_oscillatorUI->Initialize(*synthSettings.GetSoundSettings()->GetOscillatorParameters());
-	_envelopeUI->Initialize(*synthSettings.GetSoundSettings()->GetOscillatorEnvelope());
+	_oscillatorUI->Initialize(*_model->GetSoundSettings()->GetOscillatorParameters());
+	_envelopeUI->Initialize(*_model->GetSoundSettings()->GetOscillatorEnvelope());
 	_oscillatorSignalUI->Initialize(oscillatorModel);
 	_envelopeSignalUI->Initialize(envelopeModel);
 
-	SignalChainSettings* effectRegistry = synthSettings.GetSoundSettings()->GetEffectRegistry();
+	SignalChainSettings* effectRegistry = _model->GetSoundSettings()->GetEffectRegistry();
 
 	// Effect Registry
 	for (int index = 0; index < effectRegistry->GetCount(); index++)
@@ -169,10 +172,13 @@ SynthTabUI::~SynthTabUI()
 	// Signal Input
 	delete _oscillatorSignalUI;
 	delete _envelopeSignalUI;
+
+	// Model
+	delete _model;
 }
 
-void SynthTabUI::Initialize(const SoundSettings& initialValue)
-{
+void SynthTabUI::Initialize(const SynthTabModelUI& model)
+{	
 	_editorContainer = ftxui::Container::Vertical({});
 
 	_signalEffectsContainer = ftxui::Container::Vertical({
@@ -390,21 +396,21 @@ void SynthTabUI::Tick()
 	_pluginListUI->Tick();
 }
 
-void SynthTabUI::ToUI(const SoundSettings& source)
+void SynthTabUI::ToUI(const SynthTabModelUI& source)
 {
 	
 }
 
-void SynthTabUI::ToUI(const SoundSettings* source)
+void SynthTabUI::ToUI(const SynthTabModelUI* source)
 {
 }
 
-void SynthTabUI::FromUI(SoundSettings& destination)
+void SynthTabUI::FromUI(SynthTabModelUI& destination)
 {
 	throw new std::exception("Pleaes use the pointer version of this function FromUI(..)");
 }
 
-void SynthTabUI::FromUI(SoundSettings* destination)
+void SynthTabUI::FromUI(SynthTabModelUI* destination)
 {
 	// Effects (check for changes)
 	// 
@@ -420,38 +426,41 @@ void SynthTabUI::FromUI(SoundSettings* destination)
 		_postProcessingUI->FromUI(modelName, model);
 
 		// Add (if enabled)
-		if (!destination->GetPostProcessing()->Contains(modelName))
+		if (!_model->GetSoundSettings()->GetPostProcessing()->Contains(modelName))
 		{
 			// Effect Settings 
 			SignalSettings settings;
 			settings.SetIsEnabled(model->GetEnabled());
 			_effectUIs->at(modelName)->FromUI(settings);
-			destination->GetPostProcessing()->Add(settings);
+			_model->GetSoundSettings()->GetPostProcessing()->Add(settings);
 		}
 
 		// Update
 		else
 		{
 			// Effect Settings (already heaped)
-			SignalSettings* settings = destination->GetPostProcessing()->Get(modelName);
+			SignalSettings* settings = _model->GetSoundSettings()->GetPostProcessing()->Get(modelName);
 			settings->SetIsEnabled(model->GetEnabled());
 			_effectUIs->at(modelName)->FromUI(settings);
 		}
 	}
 
 	// Remove SignalChainSettings*
-	for (int index = destination->GetPostProcessing()->GetCount() - 1; index >= 0; index--)
+	for (int index = _model->GetSoundSettings()->GetPostProcessing()->GetCount() - 1; index >= 0; index--)
 	{
 		// Remove
 		if (index >= _postProcessingUI->GetUICount())
 		{
-			destination->GetPostProcessing()->RemoveAt(index);
+			_model->GetSoundSettings()->GetPostProcessing()->RemoveAt(index);
 		}
 	}
 
 	// Signal Input (settings)
-	_oscillatorUI->FromUI(destination->GetOscillatorParameters());
-	_envelopeUI->FromUI(destination->GetOscillatorEnvelope());
+	_oscillatorUI->FromUI(_model->GetSoundSettings()->GetOscillatorParameters());
+	_envelopeUI->FromUI(_model->GetSoundSettings()->GetOscillatorEnvelope());
+
+	// -> Update
+	_model->Update(destination->GetSoundSettings(), destination->GetSoundBankSettings());
 }
 
 bool SynthTabUI::HasPendingAction() const

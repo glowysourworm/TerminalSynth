@@ -25,6 +25,7 @@ public:
         _category = new std::string(category);
         _whatText = new std::string(whatText);
         _isMono = isMono;
+        _wasExcluded = unusedOrdering < 0;
         _numberOfParams = numberParams;
     }
     AirwinRegistryEntry(const AirwinRegistryEntry& copy)
@@ -34,6 +35,7 @@ public:
         _category = new std::string(copy.GetCategory());
         _whatText = new std::string(copy.GetWhatText());
         _isMono = copy.IsMono();
+        _wasExcluded = copy.GetWasExcluded();
         _numberOfParams = copy.GetNumberOfParams();
     }
     ~AirwinRegistryEntry()
@@ -50,6 +52,7 @@ public:
     std::string GetName() const { return *_name; }
     std::string GetCategory() const { return *_category; }
     std::string GetWhatText() const { return *_whatText; }
+    bool GetWasExcluded() const { return _wasExcluded; }
     bool IsMono() const { return _isMono; }
     int GetNumberOfParams() const { return _numberOfParams; }
     AudioEffectX* CreateEffect(float samplingRate) const { return _effectConstructor(samplingRate); }
@@ -64,6 +67,7 @@ private:
     std::string* _category;
     std::string* _whatText;
     bool _isMono;    
+    bool _wasExcluded;
     int _numberOfParams;
     AirwinEffectConstructor _effectConstructor;
 };

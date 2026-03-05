@@ -425,6 +425,12 @@
     <ClInclude Include="AirwindowsEffectLoader.h">
       <Filter>Header Files\SignalRegistry</Filter>
     </ClInclude>
+    <ClInclude Include="MainModelUI.h">
+      <Filter>Header Files\ModelUI</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthTabModelUI.h">
+      <Filter>Header Files\ModelUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="RtAudioUserData.h">

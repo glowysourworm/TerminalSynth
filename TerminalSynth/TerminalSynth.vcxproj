@@ -288,6 +288,7 @@
     <ClInclude Include="EqualizerOutput.h" />
     <ClInclude Include="IntervalTimer.h" />
     <ClInclude Include="MainController.h" />
+    <ClInclude Include="MainModelUI.h" />
     <ClInclude Include="MainUI.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="Binasc.h" />
@@ -317,6 +318,7 @@
     <ClInclude Include="SignalParameterAutomater.h" />
     <ClInclude Include="SignalParameterUI.h" />
     <ClInclude Include="SoundSettings.h" />
+    <ClInclude Include="SynthTabModelUI.h" />
     <ClInclude Include="SynthTabUI.h" />
     <ClInclude Include="SignalFactory.h" />
     <ClInclude Include="SignalBase.h" />

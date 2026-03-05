@@ -43,7 +43,7 @@ public:
 				// File Name
 				std::string fileName = copy.GetSoundFileName(_soundBanks->at(index), list->at(nameIndex));
 
-				_soundFileMap->insert(std::make_pair(list->at(nameIndex), fileName));
+				_soundFileMap->insert(std::make_pair(_soundBanks->at(index) + list->at(nameIndex), fileName));
 			}
 		}
 	}
@@ -76,6 +76,11 @@ public:
 	}
 	std::vector<std::string> GetSoundBanks() const { return *_soundBanks; }
 	std::vector<std::string> GetSoundNames(const std::string& soundBank) const { return *_soundBankMaps->at(soundBank); }
+
+	void Update(SoundBankSettings* destination)
+	{
+
+	}
 
 private:
 

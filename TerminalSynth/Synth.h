@@ -7,6 +7,7 @@
 #include "PlaybackFrame.h"
 #include "SignalChain.h"
 #include "SoundRegistry.h"
+#include "SoundSettings.h"
 #include "SynthNotePool.h"
 #include "SynthSettings.h"
 
@@ -24,15 +25,15 @@ public:
 	void Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters);
 
 	// Update Configuration
-	void Update(SoundRegistry* effectRegistry, const SynthSettings* configuration);
+	void Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings);
 
 	// Sets midi notes on / off
-	void Set(int midiNumber, bool pressed, double absoluteTime, const SynthSettings* configuration);
+	void Set(int midiNumber, bool pressed, double absoluteTime);
 
 	/// <summary>
 	/// Synthesizes a full output at the specified stream time. Returns true if there was output this call.
 	/// </summary>
-	bool GetSample(PlaybackFrame* frame, double absoluteTime, const SynthSettings* configuration);
+	bool GetSample(PlaybackFrame* frame, double absoluteTime, const OutputSettings* outputSettings);
 
 	/// <summary>
 	/// Gets rid of outdated cache. This should be done after the user has stopped playback for a short

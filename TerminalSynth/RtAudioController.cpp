@@ -193,7 +193,7 @@ bool RtAudioController::OpenStream(void* userData)
 							&options);
 
 		auto hostApi = RtAudioController::Instance->getCurrentApi();
-		auto deviceFormat = std::to_string(outputDevice.preferredSampleRate) + " (samples/sec), (32 bit float / channel), " + std::to_string(outputDevice.outputChannels) + " channels";
+		auto deviceFormat = std::to_string(outputDevice.preferredSampleRate) + " (smp/sec), " + std::to_string(outputDevice.outputChannels) + " channels";
 
 		// Set Playback Parameters:  These are created in int main(); but they're invalid until
 		//							 we set "initialized" to true, as long as the controller pattern

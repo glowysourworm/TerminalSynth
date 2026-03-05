@@ -1,11 +1,9 @@
 #pragma once
 
+#include "MainModelUI.h"
 #include "MainUI.h"
-#include "OutputUI.h"
-#include "SignalChainSettings.h"
 #include "SoundSettings.h"
 #include "SynthInformationUI.h"
-#include "SynthSettings.h"
 #include "SynthTabUI.h"
 #include <exception>
 #include <ftxui/component/component.hpp>
@@ -17,8 +15,10 @@
 #include <string>
 #include <vector>
 
-MainUI::MainUI(const SynthSettings& configuration)
+MainUI::MainUI(const MainModelUI& model)
 {
+	_model = new MainModelUI(model);
+
 	// Tab Headers
 	_tabHeaders = new std::vector<std::string>({
 		"Output",
@@ -26,10 +26,8 @@ MainUI::MainUI(const SynthSettings& configuration)
 		"Midi"
 	});
 
-	_signalChainSettings = configuration.GetSoundSettings()->GetSignalChain();
 	_synthInformationUI = new SynthInformationUI("Terminal Synth", ftxui::Color::GreenYellow);
-	_outputUI = new OutputUI("Output", ftxui::Color::Green);
-	_synthTabUI = new SynthTabUI(configuration);
+	_synthTabUI = new SynthTabUI(*model.GetSynthTabModelUI());
 
 	_scrollY = new float(0);
 	_tabIndex = new int(0);
@@ -42,18 +40,16 @@ MainUI::~MainUI()
 	delete _scrollY;
 	delete _tabIndex;
 	delete _synthInformationUI;
-	delete _outputUI;
 }
 
-void MainUI::Initialize(const SynthSettings& configuration)
+void MainUI::Initialize(const MainModelUI& model)
 {
-	_synthInformationUI->Initialize(*configuration.GetOutputSettings());
-	_outputUI->Initialize(configuration);
-	_synthTabUI->Initialize(*configuration.GetSoundSettings());	
+	_synthInformationUI->Initialize(*_model->GetOutputSettings());
+	_synthTabUI->Initialize(*_model->GetSynthTabModelUI());
 
 	// Airwin Registry List
 	std::vector<std::string> pluginList;
-	configuration.GetSoundSettings()->GetEffectRegistry()->GetList(pluginList);
+	_model->GetSynthTabModelUI()->GetSoundSettings()->GetEffectRegistry()->GetList(pluginList);
 
 	auto midiSettings = ftxui::Container::Horizontal({
 
@@ -63,8 +59,6 @@ void MainUI::Initialize(const SynthSettings& configuration)
 	_outputTab = ftxui::Container::Vertical({
 
 		_synthInformationUI->GetComponent() | ftxui::flex_grow,
-		_outputUI->GetComponent() | ftxui::flex_grow,
-
 	});
 
 	// Primary UI
@@ -72,15 +66,15 @@ void MainUI::Initialize(const SynthSettings& configuration)
 
 	_tabControl = ftxui::Container::Tab({
 
-		_outputTab | ftxui::flex_grow,
-		_synthTabUI->GetComponent() | ftxui::flex_grow,
-		midiSettings | ftxui::flex_grow,
+		_outputTab,
+		_synthTabUI->GetComponent(),
+		midiSettings,
 
-	}, _tabIndex) | ftxui::flex_grow;
+	}, _tabIndex);
 
 	_mainControl = ftxui::Container::Vertical({
 		_tabControlMenu,
-		_tabControl
+		_tabControl,
 	}) | ftxui::CatchEvent([&](ftxui::Event event) {
 
 		// Passthrough
@@ -103,7 +97,6 @@ void MainUI::ServicePendingAction()
 	if (*_tabIndex == 0)
 	{
 		_synthInformationUI->ServicePendingAction();
-		_outputUI->ServicePendingAction();
 	}
 
 	// Synth Tab
@@ -125,7 +118,6 @@ void MainUI::UpdateComponent()
 	if (*_tabIndex == 0)
 	{
 		_synthInformationUI->UpdateComponent();
-		_outputUI->UpdateComponent();
 	}
 
 	// Synth Tab
@@ -147,7 +139,6 @@ void MainUI::Tick()
 	if (*_tabIndex == 0)
 	{
 		_synthInformationUI->Tick();
-		_outputUI->Tick();
 	}
 
 	// Synth Tab
@@ -163,61 +154,47 @@ void MainUI::Tick()
 	}
 }
 
-void MainUI::FromUI(SynthSettings& synthSettings)
+void MainUI::FromUI(MainModelUI& destination)
 {
 	throw new std::exception("Please use the pointer version of this function FromUI");
 }
 
-void MainUI::FromUI(SynthSettings* synthSettings)
+void MainUI::FromUI(MainModelUI* destination)
 {
-	SoundSettings* soundSettings = synthSettings->GetSoundSettings();
-
-	// Signal Chain
-	_synthTabUI->FromUI(soundSettings);		// Nested setting changed
-
-	// Alert listeners that there has been a change to the UI (which there was already a dirty flag 
-	// to enter this function) (the controller is checking)
-	//
-	synthSettings->SetDirty();
-
-	// Output
-	_outputUI->FromUI(synthSettings);
+	// Synth Tab UI
+	_synthTabUI->FromUI(destination->GetSynthTabModelUI());
+	_synthInformationUI->FromUI(destination->GetOutputSettings());
 }
 
-void MainUI::ToUI(const SynthSettings& configuration)
+void MainUI::ToUI(const MainModelUI& source)
 {
 	throw new std::exception("Please use the pointer version of this function ToUI");
 }
 
-void MainUI::ToUI(const SynthSettings* configuration)
+void MainUI::ToUI(const MainModelUI* source)
 {
 	// Synth Information
-	_synthInformationUI->ToUI(configuration->GetOutputSettings());
-
-	// Synth Output Channels
-	_outputUI->ToUI(configuration);
+	_synthInformationUI->ToUI(source->GetOutputSettings());
 }
 
 bool MainUI::GetDirty() const
 {
-	return _synthTabUI->GetDirty() ||
-		   _outputUI->GetDirty();
+	return _synthTabUI->GetDirty() || _synthInformationUI->GetDirty();
 }
 
 void MainUI::ClearDirty()
 {
 	_synthTabUI->ClearDirty();
-	_outputUI->ClearDirty();
+	_synthInformationUI->ClearDirty();
 }
 
 bool MainUI::HasPendingAction() const
 {
-	return _synthTabUI->HasPendingAction() ||
-		   _outputUI->HasPendingAction();
+	return _synthTabUI->HasPendingAction() || _synthInformationUI->HasPendingAction();
 }
 
 void MainUI::ClearPendingAction()
 {
 	_synthTabUI->ClearPendingAction();
-	_outputUI->ClearPendingAction();
+	_synthInformationUI->ClearPendingAction();
 }

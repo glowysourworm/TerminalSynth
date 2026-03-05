@@ -10,6 +10,7 @@
 #include "SoundRegistry.h"
 #include "SynthPlaybackDevice.h"
 #include "SynthSettings.h"
+#include <cmath>
 #include <exception>
 #include <string>
 
@@ -20,12 +21,10 @@ AudioController::AudioController(AtomicLock* playbackLock) : BaseController(play
 
 	_synthDevice = new SynthPlaybackDevice<float>();
 	_midiDevice = new MidiPlaybackDevice<float>();
-	_audioTimer = new LoopTimer(0.001);
 	_streamClock = new PlaybackClock();
-	_synthIntervalTimer = new IntervalTimer();
-
-	_outputL = 0;
-	_outputR = 0;
+	_audioTimer = new LoopTimer(0.001);
+	_audioSampleTimer = new IntervalTimer();
+	_audioLockAcquireTimer = new IntervalTimer();
 }
 
 AudioController::~AudioController()
@@ -60,14 +59,21 @@ int AudioController::ProcessAudioCallback(float* outputBuffer, unsigned int numb
 	// Full Audio Loop Timer
 	_audioTimer->Mark();
 
-	// Frontend Processing Time (Start!)
-	_synthIntervalTimer->Reset();
-
 	SynthSettings* configuration = userData->GetSynthSettings();
 	SoundRegistry* effectRegistry = userData->GetEffectRegistry();
+	OutputSettings* outputSettings = userData->GetOutputSettings();
 
-	// std::atomic wait loop
+	// Some RT Updates
+	float avgAudioMilli = _audioTimer->GetAvgMilli();
+	float avgAudioSampleMicro = _audioSampleTimer->AvgMicro();
+	float avgAudioLockAcquireNano = _audioLockAcquireTimer->AvgNano();
+	float leftChannel;
+	float rightChannel;
+
+	// std::atomic wait loop (timing the lock acquire)
+	_audioLockAcquireTimer->Reset();
 	this->PlaybackLock->AcquireLock();
+	_audioLockAcquireTimer->Mark();
 
 	// Update Synth Device (DIRTY FLAG IS IN REAL TIME! WE NEED TO AVOID IT UNTIL THE USER HAS CHANGED A SYNTH SETTING!)
 	if (configuration->IsDirty())
@@ -93,25 +99,30 @@ int AudioController::ProcessAudioCallback(float* outputBuffer, unsigned int numb
 	// Optimize CPU
 	if (lastOutput || pressedKeys)
 	{
+		// Audio Sample Timer
+		_audioSampleTimer->Reset();
+
 		// Write playback buffer from synth device
-		rtAudioReturnValue = _midiMode ? _midiDevice->WritePlaybackBuffer(outputBuffer, numberOfFrames, streamTime, configuration) :
-										 _synthDevice->WritePlaybackBuffer(outputBuffer, numberOfFrames, streamTime, configuration);
+		rtAudioReturnValue = _midiMode ? _midiDevice->WritePlaybackBuffer(outputBuffer, numberOfFrames, streamTime, outputSettings) :
+										 _synthDevice->WritePlaybackBuffer(outputBuffer, numberOfFrames, streamTime, outputSettings);
+
+		_audioSampleTimer->Mark();
 
 		// Get output for the UI
-		_outputL = _synthDevice->GetOutputLeft();
-		_outputR = _synthDevice->GetOutputRight();
+		leftChannel = fabs(_synthDevice->GetOutputLeft());
+		rightChannel = fabs(_synthDevice->GetOutputRight());
 	}
 	else
 	{
-		_outputL = 0;
-		_outputR = 0;
+		leftChannel = 0;
+		rightChannel = 0;
 	}
+
+	// RT Update (Audio)
+	outputSettings->UpdateRT_Audio(streamTime, avgAudioMilli, avgAudioSampleMicro, avgAudioLockAcquireNano, 0, leftChannel, rightChannel);
 
 	// std::atomic end loop
 	this->PlaybackLock->Release();
-
-	// Frontend Processing Time (Mark.)
-	_synthIntervalTimer->Mark();
 
 	return rtAudioReturnValue;
 }
@@ -121,6 +132,8 @@ void AudioController::Start()
 	_streamClock->Reset();
 	_streamClock->Start();
 	_audioTimer->Reset();
+	_audioSampleTimer->Reset();
+	_audioLockAcquireTimer->Reset();
 }
 
 bool AudioController::Dispose()
@@ -128,29 +141,23 @@ bool AudioController::Dispose()
 	if (!_initialized)
 		throw new std::exception("Audio Controller not yet initialized!");
 
-	try
-	{
-		delete _synthDevice;
-		delete _midiDevice;
-		delete _streamClock;
-		delete _audioTimer;
+	delete _synthDevice;
+	delete _midiDevice;
+	delete _streamClock;
+	delete _audioTimer;
+	delete _audioSampleTimer;
+	delete _audioLockAcquireTimer;
 
-		_midiDevice = NULL;
-		_synthDevice = NULL;
-		_streamClock = NULL;
-		_audioTimer = NULL;
-		_synthIntervalTimer = NULL;
+	_midiDevice = nullptr;
+	_synthDevice = nullptr;
+	_streamClock = nullptr;
+	_audioTimer = nullptr;
+	_audioSampleTimer = nullptr;
+	_audioLockAcquireTimer = nullptr;
 
-		_initialized = false;
+	_initialized = false;
 
-		return true;
-	}
-	catch (std::exception ex)
-	{
-		return false;
-	}
-
-	return false;
+	return true;
 }
 
 void AudioController::SetMidiMode(const std::string& midiFile)
@@ -172,19 +179,4 @@ void AudioController::SetSynthMode()
 	_midiMode = false;
 
 	// Nothing else to do..
-}
-
-void AudioController::GetUpdate(float& streamTime, float& audioTime, float& frontendTime, float& latency, float& left, float& right)
-{
-	if (!_initialized)
-		throw new std::exception("Audio Controller not yet initialized!");
-
-	// These timers appear thread-safe (there may be un-ordered memory usage, but we do not write them)
-	//
-	streamTime = _streamClock->GetTime();
-	audioTime = _audioTimer->GetAvgMilli();
-	frontendTime = _synthIntervalTimer->AvgMilli();
-	latency = 0;
-	left = _outputL;
-	right = _outputR;
 }

@@ -31,7 +31,7 @@ public:
 		TSignal* playbackBuffer,
 		unsigned int numberOfFrames, 
 		double streamTime, 
-		const SynthSettings* configuration) override;
+		const OutputSettings* outputSettings) override;
 
 	bool GetLastOutput() const override;
 
@@ -45,8 +45,6 @@ private:
 
 	PlaybackFrame* _frame;
 	Synth* _synth;
-	Accumulator<TSignal>* _outputLeft;
-	Accumulator<TSignal>* _outputRight;
 	unsigned int _numberOfChannels;
 	unsigned int _samplingRate;
 	bool _lastOutput;
@@ -63,8 +61,6 @@ SynthPlaybackDevice<TSignal>::SynthPlaybackDevice()
 	_frame = nullptr;
 	_synth = nullptr;
 	_initialized = false;
-	_outputLeft = new Accumulator<TSignal>(true);
-	_outputRight = new Accumulator<TSignal>(true);
 }
 
 template<SignalValue TSignal>
@@ -72,8 +68,6 @@ SynthPlaybackDevice<TSignal>::~SynthPlaybackDevice()
 {
 	delete _synth;
 	delete _frame;
-	delete _outputLeft;
-	delete _outputRight;
 }
 
 template<SignalValue TSignal>
@@ -96,7 +90,7 @@ bool SynthPlaybackDevice<TSignal>::Initialize(const SoundRegistry* effectRegistr
 template<SignalValue TSignal>
 bool SynthPlaybackDevice<TSignal>::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
-	_synth->Update(effectRegistry, configuration);
+	_synth->Update(effectRegistry, configuration->GetSoundSettings());
 
 	return true;
 }
@@ -132,7 +126,7 @@ bool SynthPlaybackDevice<TSignal>::SetForPlayback(unsigned int numberOfFrames, d
 		int midiNote = configuration->GetMidiNote((WindowsKeyCodes)keyCode);
 
 		// Engage / Dis-Engage
-		_synth->Set(midiNote, isPressed, streamTime, configuration);
+		_synth->Set(midiNote, isPressed, streamTime);
 
 		pressedKeys |= isPressed;
 	}
@@ -147,7 +141,7 @@ bool SynthPlaybackDevice<TSignal>::SetForPlayback(unsigned int numberOfFrames, d
 }
 
 template<SignalValue TSignal>
-int SynthPlaybackDevice<TSignal>::WritePlaybackBuffer(TSignal* playbackBuffer, unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration)
+int SynthPlaybackDevice<TSignal>::WritePlaybackBuffer(TSignal* playbackBuffer, unsigned int numberOfFrames, double streamTime, const OutputSettings* outputSettings)
 {
 	if (!_initialized)
 		return -1;
@@ -163,15 +157,11 @@ int SynthPlaybackDevice<TSignal>::WritePlaybackBuffer(TSignal* playbackBuffer, u
 		_frame->Clear();
 
 		// Get Samples for N channels
-		_lastOutput = _synth->GetSample(_frame, absoluteTime, configuration);
+		_lastOutput = _synth->GetSample(_frame, absoluteTime, outputSettings);
 
 		// Interleved frames
 		outputBuffer[(2 * frameIndex)] = _frame->GetLeft();
 		outputBuffer[(2 * frameIndex) + 1] = _frame->GetRight();
-
-		// Keep accumulator value for output UI
-		_outputLeft->Add(_frame->GetLeft());
-		_outputRight->Add(_frame->GetRight());
 	}
 
 	return 0;
@@ -180,13 +170,13 @@ int SynthPlaybackDevice<TSignal>::WritePlaybackBuffer(TSignal* playbackBuffer, u
 template<SignalValue TSignal>
 TSignal SynthPlaybackDevice<TSignal>::GetOutputLeft() const
 {
-	return _outputLeft->GetAvg();
+	return _frame->GetLeft();
 }
 
 template<SignalValue TSignal>
 inline TSignal SynthPlaybackDevice<TSignal>::GetOutputRight() const
 {
-	return _outputRight->GetAvg();
+	return _frame->GetRight();
 }
 
 template<SignalValue TSignal>

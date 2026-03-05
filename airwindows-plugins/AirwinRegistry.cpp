@@ -1061,7 +1061,9 @@ void AirwinRegistry::GetPlugins(std::vector<std::string>& destination)
 {
     for (auto iter = _registry->begin(); iter != _registry->end(); ++iter)
     {
-        destination.push_back(iter->first);
+        // Non-Excluded
+        if (!iter->second->GetWasExcluded())
+            destination.push_back(iter->first);
     }
 }
 
@@ -1080,7 +1082,9 @@ void AirwinRegistry::GetCategoryList(std::vector<std::string>& destination, cons
 
     for (auto iter = _byCategory->at(category)->begin(); iter != _byCategory->at(category)->end(); ++iter)
     {
-        destination.push_back((*iter)->GetName());
+        // Non-Excluded
+        if (!(*iter)->GetWasExcluded())
+            destination.push_back((*iter)->GetName());
     }
 }
 

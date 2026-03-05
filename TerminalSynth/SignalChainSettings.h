@@ -112,7 +112,8 @@ public:
 			// Update (larger in size)
 			if (index >= _chain->size())
 			{
-				_chain->push_back(settings->Get(index));
+				// MEMORY! (local)
+				_chain->push_back(new SignalSettings(*settings->Get(index)));
 				isDirty = true;
 			}
 

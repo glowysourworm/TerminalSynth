@@ -3,35 +3,33 @@
 #ifndef MAIN_UI_H
 #define MAIN_UI_H
 
-#include "OutputUI.h"
-#include "SignalChainSettings.h"
+#include "MainModelUI.h"
 #include "SynthInformationUI.h"
-#include "SynthSettings.h"
 #include "SynthTabUI.h"
 #include "UIBase.h"
 #include <ftxui/component/component_base.hpp>
 #include <string>
 #include <vector>
 
-class MainUI : public UIBase<SynthSettings>
+class MainUI : public UIBase<MainModelUI>
 {
 public:
 
-	MainUI(const SynthSettings& configuration);
+	MainUI(const MainModelUI& model);
 	~MainUI();
 
-	void Initialize(const SynthSettings& initialValue) override;
+	void Initialize(const MainModelUI& initialValue) override;
 	ftxui::Component GetComponent() override;
 
 	void ServicePendingAction() override;
 	void UpdateComponent() override;
 	void Tick() override;
 
-	void FromUI(SynthSettings& configuration) override;
-	void FromUI(SynthSettings* configuration) override;
+	void FromUI(MainModelUI& destination) override;
+	void FromUI(MainModelUI* destination) override;
 
-	void ToUI(const SynthSettings& configuration) override;
-	void ToUI(const SynthSettings* configuration) override;
+	void ToUI(const MainModelUI& source) override;
+	void ToUI(const MainModelUI* source) override;
 
 	bool GetDirty() const override;
 	void ClearDirty() override;
@@ -53,18 +51,12 @@ private:
 	float* _scrollY;
 	int* _tabIndex;
 
-	// Map of effects that have been instantiated. This should contain all instances! The 
-	// SynthSettings* cannot contain any instance of SignalBase* because of circular
-	// references
-	SignalChainSettings* _signalChainSettings;
+	MainModelUI* _model;
 
 	SynthInformationUI* _synthInformationUI;
 	
 	// Synth Tab
 	SynthTabUI* _synthTabUI;
-	
-	// Output Tab
-	OutputUI* _outputUI;
 
 };
 
