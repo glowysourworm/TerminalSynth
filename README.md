@@ -3,7 +3,8 @@
 A console synthesizer implementation using FTXUI / RTAudio / Airwindows built in native C++ to
 play around with and understand real time audio. 
 
-![Alt text](https://github.com/glowysourworm/TerminalSynth/blob/master/screenshot.png)
+![Alt text](/screenshot.png)
+
 
 # Real Time (RT Audio / Port Audio / Windows APIs)
 
