@@ -87,13 +87,17 @@ int main(int argc, char* argv[], char* envp[])
 
 	// This pointer is shared (see controllers)
 	//
-	OutputSettings* parameters = RtAudioController::GetPlaybackParametersUnsafe();
-	SynthSettings* configuration = CreateConfiguration(parameters, soundBankDirectory);
-	SoundRegistry* registry = new SoundRegistry();											// NEEDS INITIALIZATION (W/ SAMPLING RATE)
 	AtomicLock* playbackLock = new AtomicLock();
 
 	// Manual keyboard input
 	MainController controller(playbackLock);
+
+	// Primary Shared Pointers:  The OutputSettings* are initialized and maintained by the MainController, with 
+	//							 the RtAudioController* providing the host api, and device info.
+	//
+	OutputSettings* parameters = new OutputSettings("", "", "", 0, 0, 0);
+	SynthSettings* configuration = CreateConfiguration(parameters, soundBankDirectory);
+	SoundRegistry* registry = new SoundRegistry();											// NEEDS INITIALIZATION (W/ SAMPLING RATE)
 
 	SetConsoleTitleA("Terminal Synth");
 

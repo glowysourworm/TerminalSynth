@@ -32,6 +32,7 @@ MainController::MainController(AtomicLock* playbackLock) : BaseController(playba
 	_uiRenderTimer = new IntervalTimer();
 	_uiSleepTimer = new IntervalTimer();
 	_audioController = new AudioController(playbackLock);
+	_rtAudioController = new RtAudioController();
 	_userData = new RtAudioUserData();
 }
 
@@ -46,6 +47,7 @@ MainController::~MainController()
 	delete _uiRenderTimer;
 	delete _uiSleepTimer;
 	delete _audioController;
+	delete _rtAudioController;
 	delete _userData;	
 }
 
@@ -57,15 +59,15 @@ bool MainController::Initialize(SynthSettings* configuration, OutputSettings* pa
 	_configuration = configuration;
 
 	// RT AUDIO
-	bool success = RtAudioController::Initialize(std::bind(&AudioController::ProcessAudioCallback,
-												_audioController,
-												std::placeholders::_1,
-												std::placeholders::_2,
-												std::placeholders::_3,
-												std::placeholders::_4));
+	bool success = _rtAudioController->Initialize(parameters, std::bind(&AudioController::ProcessAudioCallback,
+																_audioController,
+																std::placeholders::_1,
+																std::placeholders::_2,
+																std::placeholders::_3,
+																std::placeholders::_4));
 
 	// RT AUDIO -> Open Stream (SynthSettings*)(PlaybackParameteres*) (INITIALIZE!)
-	success &= RtAudioController::OpenStream((void*)_userData);
+	success &= _rtAudioController->OpenStream((void*)_userData);
 
 	// Synth Settings Effect Registry:  This will separate out the SignalBase* (which will not be present in the SynthSettings*) (linking issue)
 	//
@@ -102,7 +104,7 @@ void MainController::Start()
 bool MainController::Dispose()
 {
 	// Stops UI thread
-	return _audioController->Dispose();
+	return _audioController->Dispose() && _rtAudioController->Dispose();
 }
 
 void MainController::Loop()

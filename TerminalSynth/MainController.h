@@ -11,6 +11,7 @@
 #include "MainModelUI.h"
 #include "MainUI.h"
 #include "OutputSettings.h"
+#include "RtAudioController.h"
 #include "RtAudioUserData.h"
 #include "SoundRegistry.h"
 #include "SynthSettings.h"
@@ -39,6 +40,7 @@ private:
 
 	const long LOOP_PERIOD_MICRO = 10000;
 
+	RtAudioController* _rtAudioController;
 	RtAudioUserData* _userData;
 
 	// Primary Owner of SynthSettings*
