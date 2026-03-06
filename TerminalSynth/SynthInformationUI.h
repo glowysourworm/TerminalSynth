@@ -13,6 +13,7 @@
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
 #include <string>
+#include <vector>
 
 class SynthInformationUI : public UIBase<OutputSettings>
 {
@@ -94,7 +95,7 @@ SynthInformationUI::SynthInformationUI(const std::string& title, const ftxui::Co
 	_title = new std::string(title);
 	_titleColor = new ftxui::Color(titleColor);
 
-	_outputUI = new OutputUI("Output", ftxui::Color::Green);
+	_outputUI = new OutputUI("Output", ftxui::Color::GreenYellow);
 }
 SynthInformationUI::~SynthInformationUI()
 {

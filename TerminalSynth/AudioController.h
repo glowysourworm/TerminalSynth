@@ -48,7 +48,7 @@ public:
 	/// <param name="numberOfFrames">Number of (L/R) frames to process</param>
 	/// <param name="streamTime">Current stream time from RT Audio</param>
 	/// <param name="configuration">This should be the SynthSettings* which is provided on this thread to process, also.</param>
-	int ProcessAudioCallback(float* outputBuffer, unsigned int numberOfFrames, double streamTime, RtAudioUserData* userData);
+	int ProcessAudioCallback(float* outputBuffer, unsigned int numberOfFrames, double streamTime, double streamLatency, RtAudioUserData* userData);
 
 private:
 

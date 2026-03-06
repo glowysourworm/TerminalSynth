@@ -46,7 +46,7 @@ bool AudioController::Initialize(SynthSettings* configuration, OutputSettings* p
 	return _initialized;
 }
 
-int AudioController::ProcessAudioCallback(float* outputBuffer, unsigned int numberOfFrames, double streamTime, RtAudioUserData* userData)
+int AudioController::ProcessAudioCallback(float* outputBuffer, unsigned int numberOfFrames, double streamTime, double streamLatency, RtAudioUserData* userData)
 {
 	// Main Controller Initialization
 	if (!userData->IsInitialized())
@@ -120,6 +120,7 @@ int AudioController::ProcessAudioCallback(float* outputBuffer, unsigned int numb
 
 	// RT Update (Audio)
 	outputSettings->UpdateRT_Audio(streamTime, avgAudioMilli, avgAudioSampleMicro, avgAudioLockAcquireNano, 0, leftChannel, rightChannel);
+	outputSettings->SetStreamLatency(streamLatency);
 
 	// std::atomic end loop
 	this->PlaybackLock->Release();

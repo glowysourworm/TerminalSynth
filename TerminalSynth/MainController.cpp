@@ -18,6 +18,7 @@
 #include <ftxui/component/loop.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <functional>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -64,7 +65,8 @@ bool MainController::Initialize(SynthSettings* configuration, OutputSettings* pa
 																std::placeholders::_1,
 																std::placeholders::_2,
 																std::placeholders::_3,
-																std::placeholders::_4));
+																std::placeholders::_4,
+																std::placeholders::_5));
 
 	// RT AUDIO -> Open Stream (SynthSettings*)(PlaybackParameteres*) (INITIALIZE!)
 	success &= _rtAudioController->OpenStream((void*)_userData);
@@ -96,6 +98,7 @@ bool MainController::Initialize(SynthSettings* configuration, OutputSettings* pa
 void MainController::Start()
 {
 	_audioController->Start();
+	_rtAudioController->StartStream();
 
 	//...
 	this->Loop();
@@ -104,13 +107,16 @@ void MainController::Start()
 bool MainController::Dispose()
 {
 	// Stops UI thread
-	return _audioController->Dispose() && _rtAudioController->Dispose();
+	return _audioController->Dispose() && _rtAudioController->DisposeBackend();
 }
 
 void MainController::Loop()
 {
 	auto screen = ftxui::ScreenInteractive::TerminalOutput();
 	auto loop = ftxui::Loop(&screen, _mainUI->GetComponent());
+
+	// Store for detecting device change!
+	std::string currentDevice = _mainModelUI->GetOutputSettings()->GetDeviceName();
 
 	// FTXUI has an option to create an event loop (this will run their backend UI code)
 	//
@@ -207,6 +213,23 @@ void MainController::Loop()
 			//
 			// Dirty status has been forwarded to the SynthSettings* (see IsDirty)
 			//
+		}
+
+		// DEVICE CHANGE! (OutputSettings* was set for a new device)
+		if (_mainModelUI->GetOutputSettings()->GetDeviceName() != currentDevice)
+		{
+			// Stop / Re-Start Audio Stream
+			currentDevice = _mainModelUI->GetOutputSettings()->GetDeviceName();
+
+			if (_rtAudioController->IsStreamRunning())
+				_rtAudioController->StopStream();
+
+			if (_rtAudioController->IsStreamOpen())
+				_rtAudioController->CloseStream();
+
+			// Starts new stream with currently selected device (OutputSettings*)
+			_rtAudioController->OpenStream(_userData);
+			_rtAudioController->StartStream();
 		}
 
 		// *** NON-THERAD-SAFE *** (This should be safe outside of the lock for getting / setting simple data)

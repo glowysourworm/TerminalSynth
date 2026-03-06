@@ -6,6 +6,21 @@
 #include <functional>
 #include <string>
 
+RtAudioController::RtAudioController()
+{
+	_instance = nullptr;
+	_outputSettings = nullptr;
+	_initialized = false;
+	_audioCallback = nullptr;
+	_lastErrorType = RtAudioErrorType::RTAUDIO_UNKNOWN_ERROR;
+	_lastErrorText = new std::string("");
+}
+RtAudioController::~RtAudioController()
+{
+	DisposeBackend();
+
+	delete _lastErrorText;
+}
 int RtAudioController::AudioCallback(void* outputBuffer, void* inputBuffer, unsigned int nFrames, double streamTime, RtAudioStreamStatus status, void* userData)
 {
 	if (!_initialized)
@@ -16,7 +31,7 @@ int RtAudioController::AudioCallback(void* outputBuffer, void* inputBuffer, unsi
 
 	// Audio Callback:  Casting (void*) user data to our synth configuration! And, the output buffer!
 	//
-    return (*_audioCallback)((float*)outputBuffer, nFrames, streamTime, (RtAudioUserData*)userData);
+    return (*_audioCallback)((float*)outputBuffer, nFrames, streamTime, _instance->getStreamLatency(), (RtAudioUserData*)userData);
 }
 
 void RtAudioController::ErrorCallback(RtAudioErrorType type, const std::string& errorText)
@@ -24,29 +39,12 @@ void RtAudioController::ErrorCallback(RtAudioErrorType type, const std::string& 
 	if (!_initialized)
 		throw new std::exception("RT Audio Controller not initialzed! Backend thread still running!");
 
-	if (!this->IsStreamOpen())
-		throw new std::exception("RT Audio Controller stream not open! Backend thread still running!");
+	//if (!this->IsStreamOpen())
+	//	throw new std::exception("RT Audio Controller stream not open! Backend thread still running!");
 
 	_lastErrorText->clear();
 	_lastErrorText->append(errorText);
 	_lastErrorType = type;
-}
-
-RtAudioController::RtAudioController()
-{
-	_outputSettings = nullptr;
-	_initialized = false;
-
-	_audioCallback = nullptr;
-	_instance = nullptr;
-	_outputDevice = nullptr;
-
-	_lastErrorType = RtAudioErrorType::RTAUDIO_UNKNOWN_ERROR;
-	_lastErrorText = new std::string("");
-}
-RtAudioController::~RtAudioController()
-{
-	Dispose();
 }
 
 bool RtAudioController::Initialize(OutputSettings* outputSettings, const AudioCallbackDelegate& callback)
@@ -87,53 +85,61 @@ bool RtAudioController::Initialize(OutputSettings* outputSettings, const AudioCa
 		_outputSettings = outputSettings;
 		_lastErrorText->clear();
 
+		// Host API
+		_outputSettings->SetHostApi(_instance->getApiDisplayName(RtAudio::Api::WINDOWS_WASAPI));
+
+
+		// Output Device List
+		//
+		auto deviceIds = _instance->getDeviceIds();
+		auto selectedDevice = outputSettings->GetSelectedDevice();
+
+		for (int index = 0; index < deviceIds.size(); index++)
+		{
+			auto deviceInfo = _instance->getDeviceInfo(deviceIds[index]);
+
+			if (deviceInfo.outputChannels <= 0)
+				continue;
+
+			std::string deviceFormat;
+			std::string deviceParagraph;
+
+			GetDeviceFormatString(deviceInfo, deviceFormat);
+			GetDeviceFormatParagraph(deviceInfo, deviceParagraph);
+
+			_outputSettings->AddDevice(
+				deviceInfo.ID,
+				deviceFormat,
+				deviceParagraph,
+				deviceInfo.name,
+				deviceInfo.preferredSampleRate,
+				deviceInfo.outputChannels, 512, deviceInfo.isDefaultOutput);
+		}
+
 		// Initialized
 		_initialized = true;
 	}
 	catch (std::exception ex)
 	{
 		// Initialize Failure
-		_initialized = true;
+		_initialized = false;
 	}
 
 	return _initialized;
 }
 
-bool RtAudioController::Dispose()
+bool RtAudioController::DisposeBackend()
 {
 	if (!_initialized)
 		throw new std::exception("RT Audio Controller not initialzed! Must call Initialize() before disposing the stream");
 
 	try
 	{
-		if (_outputSettings != nullptr)
-		{
-			delete _outputSettings;
-			_outputSettings = nullptr;
-		}
-		if (_outputDevice != nullptr)
-		{
-			delete _outputDevice;
-			_outputDevice = nullptr;
-		}
-
 		if (_instance->isStreamRunning())
 			_instance->stopStream();
 
 		if (_instance->isStreamOpen())
 			_instance->closeStream();
-
-		// RESET 
-		delete _instance;
-		delete _audioCallback;
-		delete _lastErrorText;
-
-		_instance = nullptr;
-		_audioCallback = nullptr;
-		_lastErrorText = nullptr;
-
-		// Must Re-Initialize!
-		_initialized = false;
 
 		return true;
 	}
@@ -150,16 +156,13 @@ bool RtAudioController::OpenStream(void* userData)
 
 	try
 	{
-		RtAudio::StreamParameters outputParameters;
-
 		// Output Device
 		//
-		auto outputDeviceIndex = _instance->getDefaultOutputDevice();
-		auto outputDevice = _instance->getDeviceInfo(outputDeviceIndex);
-		_outputDevice = new RtAudio::DeviceInfo(outputDevice);
+		auto outputDevice = _outputSettings->GetSelectedDevice();
 		
-		outputParameters.deviceId = outputDevice.ID;
-		outputParameters.nChannels = outputDevice.outputChannels;
+		RtAudio::StreamParameters outputParameters;
+		outputParameters.deviceId = outputDevice->GetId();
+		outputParameters.nChannels = outputDevice->GetNumberOfChannels();
 		outputParameters.firstChannel = 0;
 
 		RtAudio::StreamOptions options;
@@ -167,7 +170,7 @@ bool RtAudioController::OpenStream(void* userData)
 		//options.flags |= RTAUDIO_SCHEDULE_REALTIME;					
 		options.numberOfBuffers = 4;						// Has to do with audio format!
 		//options.flags |= RTAUDIO_HOG_DEVICE;
-		options.flags |= RTAUDIO_MINIMIZE_LATENCY;
+		//options.flags |= RTAUDIO_MINIMIZE_LATENCY;
 		//options.flags |= RTAUDIO_NONINTERLEAVED; 
 
 
@@ -178,7 +181,6 @@ bool RtAudioController::OpenStream(void* userData)
 		//
 		//unsigned int outputBufferFrameSize = (unsigned int)(10.6667 * 0.001 * outputDevice.preferredSampleRate);
 		unsigned int outputBufferFrameSize = 32;
-		unsigned int frontendFrameSize = outputBufferFrameSize;
 
 		auto audioCallback = std::bind(&RtAudioController::AudioCallback, this,
 										std::placeholders::_1,
@@ -191,29 +193,23 @@ bool RtAudioController::OpenStream(void* userData)
 		_instance->openStream(&outputParameters,					// 
 							NULL,									// Duplex Mode (input parameters)
 							RTAUDIO_FLOAT32,						// RT Audio Format
-							outputDevice.preferredSampleRate,		// Device Sampling Rate
+							outputDevice->GetSamplingRate(),		// Device Sampling Rate
 							&outputBufferFrameSize,					// Device (preferred) Frame Size (RT Audio will adjust this)
 							audioCallback,							// Audio Callback
 							userData,								// void* shared data
 							&options);
-
-		auto hostApi = _instance->getCurrentApi();
-		auto deviceFormat = std::to_string(outputDevice.preferredSampleRate) + " (smp/sec), " + std::to_string(outputDevice.outputChannels) + " channels";
 
 		// Set Playback Parameters:  These are created in int main(); but they're invalid until
 		//							 we set "initialized" to true, as long as the controller pattern
 		//							 is strictly kept, you won't have a private pointer to them.
 		//
 		_outputSettings->UpdateDevice(
-						_instance->getApiDisplayName(hostApi),
-						deviceFormat,
-						outputDevice.name,
-						outputDevice.preferredSampleRate,
-						outputDevice.outputChannels,
-						outputBufferFrameSize);
+						outputDevice->GetDeviceName(),
+						_instance->getStreamSampleRate(),
+						outputBufferFrameSize,
+						true);
 
-		// Start Stream!
-		_instance->startStream();
+		_outputSettings->SetStreamLatency(_instance->getStreamLatency());
 	}
 	catch (std::exception ex)
 	{
@@ -243,6 +239,30 @@ bool RtAudioController::CloseStream()
 	}
 }
 
+bool RtAudioController::StartStream()
+{
+	if (!_initialized)
+		throw new std::exception("RT Audio Controller not initialzed! Must call Initialize() before opening the stream");
+
+	if (_instance->isStreamRunning())
+		throw new std::exception("RT Audio Controller stream already running!");
+
+	// Start Stream!
+	return _instance->startStream() == RtAudioErrorType::RTAUDIO_NO_ERROR;
+}
+
+bool RtAudioController::StopStream()
+{
+	if (!_initialized)
+		throw new std::exception("RT Audio Controller not initialzed! Must call Initialize() before opening the stream");
+
+	if (!_instance->isStreamRunning())
+		throw new std::exception("RT Audio Controller stream already stopped!");
+
+	// Stop Stream!
+	return _instance->stopStream() == RtAudioErrorType::RTAUDIO_NO_ERROR;
+}
+
 bool RtAudioController::IsStreamOpen()
 {
 	if (!_initialized)
@@ -257,4 +277,20 @@ bool RtAudioController::IsStreamRunning()
 		throw new std::exception("RT Audio Controller not initialzed! Must call Initialize() before opening the stream");
 
 	return _instance->isStreamRunning();
+}
+
+void RtAudioController::GetDeviceFormatString(const RtAudio::DeviceInfo& deviceInfo, std::string& destination) const
+{
+	destination.clear();
+	destination = std::to_string(deviceInfo.preferredSampleRate) + " (Hz), " + std::to_string(deviceInfo.outputChannels) + " Channels";
+}
+
+void RtAudioController::GetDeviceFormatParagraph(const RtAudio::DeviceInfo& deviceInfo, std::string& destination) const
+{
+	destination.clear();
+
+	destination += deviceInfo.name + "\n";
+	destination += "Sample Rate:	            " + std::to_string(deviceInfo.currentSampleRate) + "\n";
+	destination += "Sample Rate (preferred): " + std::to_string(deviceInfo.currentSampleRate) + "\n";
+	destination += "Number of Channels:      " + std::to_string(deviceInfo.outputChannels) + "\n";
 }

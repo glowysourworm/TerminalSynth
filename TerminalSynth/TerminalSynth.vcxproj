@@ -304,6 +304,7 @@
     <ClInclude Include="ModelUI.h" />
     <ClInclude Include="Options.h" />
     <ClInclude Include="OscillatorParameters.h" />
+    <ClInclude Include="OutputDeviceInfo.h" />
     <ClInclude Include="OutputUI.h" />
     <ClInclude Include="PlaybackClock.h" />
     <ClInclude Include="PlaybackDevice.h" />

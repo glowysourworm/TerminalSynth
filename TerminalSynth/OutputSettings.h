@@ -3,26 +3,20 @@
 #ifndef PLAYBACK_PARAMETERS_H
 #define PLAYBACK_PARAMETERS_H
 
+#include "OutputDeviceInfo.h"
+#include <exception>
 #include <string>
+#include <vector>
 
 class OutputSettings
 {
 public:
 
-	OutputSettings(
-		const char* hostApi, 
-		const char* deviceFormat, 
-		const char* deviceName, 
-		unsigned int samplingRate, 
-		unsigned int numberOfChannels, 
-		unsigned int outputBufferFrameSize)
+	OutputSettings()
 	{
-		_hostApi = new std::string(hostApi);
-		_deviceFormat = new std::string();
-		_deviceName = new std::string(deviceName);
-		_samplingRate = samplingRate;
-		_numberOfChannels = numberOfChannels;
-		_outputBufferFrameSize = outputBufferFrameSize;
+		_hostApi = new std::string("");
+		_selectedDevice = nullptr;
+		_devices = new std::vector<OutputDeviceInfo*>();
 
 		// RT Update (Audio)
 		_streamTime = 0;
@@ -47,11 +41,13 @@ public:
 	OutputSettings(const OutputSettings& copy)
 	{
 		_hostApi = new std::string(copy.GetHostApi());
-		_deviceFormat = new std::string(copy.GetDeviceFormat());
-		_deviceName = new std::string(copy.GetDeviceName());
-		_samplingRate = copy.GetSamplingRate();
-		_numberOfChannels = copy.GetNumberOfChannels();
-		_outputBufferFrameSize = copy.GetOutputBufferFrameSize();
+		_selectedDevice = copy.GetSelectedDevice() == nullptr ? nullptr : new OutputDeviceInfo(*copy.GetSelectedDevice());
+		_devices = new std::vector<OutputDeviceInfo*>();
+
+		for (int index = 0; index < copy.GetDeviceList()->size(); index++)
+		{
+			_devices->push_back(new OutputDeviceInfo(*copy.GetDeviceList()->at(index)));
+		}
 
 		// RT Update (Audio)
 		_streamTime = copy.GetStreamTime();
@@ -76,17 +72,27 @@ public:
 	~OutputSettings()
 	{
 		delete _hostApi;
-		delete _deviceFormat;
-		delete _deviceName;
+
+		for (int index = 0; index < _devices->size(); index++)
+		{
+			delete _devices->at(index);
+		}
+
+		delete _devices;
+
+		if (_selectedDevice != nullptr)
+			delete _selectedDevice;
 	}
 
-	std::string& GetHostApi() const { return *_hostApi; }
-	std::string& GetDeviceFormat() const { return *_deviceFormat; }
-	std::string& GetDeviceName() const { return *_deviceName; }
+	std::string GetHostApi() const { return *_hostApi; }
+	std::vector<OutputDeviceInfo*>* GetDeviceList() const { return _devices; }
+	OutputDeviceInfo* GetSelectedDevice() const { return _selectedDevice; }
 
-	unsigned int GetSamplingRate() const { return _samplingRate; }
-	unsigned int GetNumberOfChannels() const { return _numberOfChannels; }
-	unsigned int GetOutputBufferFrameSize() const { return _outputBufferFrameSize; }
+	unsigned int GetSamplingRate() const { return _selectedDevice->GetSamplingRate(); }
+	unsigned int GetNumberOfChannels() const { return _selectedDevice->GetNumberOfChannels(); }
+	unsigned int GetOutputBufferFrameSize() const { return _selectedDevice->GetBufferFrameSize(); }
+	std::string GetDeviceName() const { return _selectedDevice->GetDeviceName(); }
+	std::string GetDeviceFormat() const { return _selectedDevice->GetDeviceFormat(); }
 
 	float GetStreamTime() const { return _streamTime; }
 	float GetAvgAudioMilli() const { return _avgAudioMilli; }
@@ -105,22 +111,82 @@ public:
 	float GetRightChannel() const { return _rightChannel; }
 	float GetLeftRightBalance() const { return _leftRightBalance; }
 
+	void SetHostApi(const std::string& hostApi) 
+	{ 
+		_hostApi->clear();
+		_hostApi->append(hostApi);
+	}
+	void SetStreamLatency(float value) { _streamLatency = value; }
 	void SetGain(float value) { _gain = value; }
 	void SetLeftRightBalance(float value) { _leftRightBalance = value; }
 
-	void UpdateDevice(const std::string& hostApi, 
-					  const std::string& deviceFormat, 
-					  const std::string& deviceName, 
-					  unsigned int samplingRate, 
-					  unsigned int numberChannels, 
-					  unsigned int bufferFrameSize)
+	void AddDevice(unsigned int deviceId,
+				   const std::string& deviceFormat,
+				   const std::string& deviceFormatParagraph,
+				   const std::string& deviceName,
+				   unsigned int samplingRate,
+				   unsigned int numberChannels,
+				   unsigned int bufferFrameSize,
+				   bool selectDevice)
 	{
-		_hostApi = new std::string(hostApi);
-		_deviceFormat = new std::string(deviceFormat);
-		_deviceName = new std::string(deviceName);
-		_samplingRate = samplingRate;
-		_numberOfChannels = numberChannels;
-		_outputBufferFrameSize = bufferFrameSize;
+		// MEMORY! ~OutputSettings
+		OutputDeviceInfo* info = new OutputDeviceInfo(deviceId, deviceName, deviceFormat, deviceFormatParagraph, samplingRate, numberChannels, bufferFrameSize);
+
+		for (int index = 0; index < _devices->size(); index++)
+		{
+			if (*_devices->at(index) == *info)
+				throw new std::exception("Output device already exists:  OutputSettings.h");
+		}
+
+		_devices->push_back(info);
+		
+		if (selectDevice)
+			_selectedDevice = info;
+	}
+
+	bool ContainsDevice(const std::string& deviceName)
+	{
+		for (int index = 0; index < _devices->size(); index++)
+		{
+			if (_devices->at(index)->GetDeviceName() == deviceName)
+				return true;
+		}
+		return false;
+	}
+
+	void SelectDevice(const std::string& deviceName)
+	{
+		for (int index = 0; index < _devices->size(); index++)
+		{
+			if (_devices->at(index)->GetDeviceName() == deviceName)
+			{
+				_selectedDevice = _devices->at(index);
+				return;
+			}
+		}
+
+		throw new std::exception("Output device not found:  OutputSettings.h");
+	}
+
+	void UpdateDevice(const std::string& deviceName, 
+					  unsigned int currentSamplingRate, 
+					  unsigned int outputBufferSize,
+					  bool selectDevice)
+	{
+		for (int index = 0; index < _devices->size(); index++)
+		{
+			if (_devices->at(index)->GetDeviceName() == deviceName)
+			{
+				_devices->at(index)->Update(currentSamplingRate, outputBufferSize);
+
+				if (selectDevice)
+					_selectedDevice = _devices->at(index);
+
+				return;
+			}				
+		}
+
+		throw new std::exception("Output device not found:  OutputSettings.h");
 	}
 
 	/// <summary>
@@ -163,11 +229,8 @@ private:
 
 	// Device Settings
 	std::string* _hostApi;
-	std::string* _deviceFormat;
-	std::string* _deviceName;
-	unsigned int _samplingRate;
-	unsigned int _numberOfChannels;
-	unsigned int _outputBufferFrameSize;
+	OutputDeviceInfo* _selectedDevice;
+	std::vector<OutputDeviceInfo*>* _devices;
 
 	// RT Values (Audio)
 	float _streamTime;

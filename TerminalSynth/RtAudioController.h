@@ -19,7 +19,7 @@ public:
 	/// <summary>
 	/// Callback to process RT Audio data (which has a callback with extra variables we don't need)
 	/// </summary>
-	using AudioCallbackDelegate = std::function<int(float* outputBuffer, unsigned int numberFrames, double streamTime, RtAudioUserData* userData)>;
+	using AudioCallbackDelegate = std::function<int(float* outputBuffer, unsigned int numberFrames, double streamTime, double streamLatench, RtAudioUserData* userData)>;
 
 
 	/// <summary>
@@ -61,7 +61,7 @@ public:
 	/// <summary>
 	/// Disposes RT Audio:  Must be called to close / delete RT Audio + Stream
 	/// </summary>
-	bool Dispose();
+	bool DisposeBackend();
 
 	/// <summary>
 	/// Opens the RT Audio backend stream with specified user data
@@ -69,15 +69,23 @@ public:
 	/// <param name="userData">Arbitrary data sent along with the backend stream</param>
 	bool OpenStream(void* userData);
 	bool CloseStream();
+
+	bool StartStream();
+	bool StopStream();
+
 	bool IsStreamOpen();
 	bool IsStreamRunning();
+
+private:
+
+	void GetDeviceFormatString(const RtAudio::DeviceInfo& deviceInfo, std::string& destination) const;
+	void GetDeviceFormatParagraph(const RtAudio::DeviceInfo& deviceInfo, std::string& destination) const;
 
 private:
 
 	AudioCallbackDelegate* _audioCallback;
 
 	RtAudio* _instance;
-	RtAudio::DeviceInfo* _outputDevice;
 
 	RtAudioErrorType _lastErrorType;
 	std::string* _lastErrorText;

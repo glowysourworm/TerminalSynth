@@ -431,6 +431,9 @@
     <ClInclude Include="SynthTabModelUI.h">
       <Filter>Header Files\ModelUI</Filter>
     </ClInclude>
+    <ClInclude Include="OutputDeviceInfo.h">
+      <Filter>Header Files\Model</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="RtAudioUserData.h">

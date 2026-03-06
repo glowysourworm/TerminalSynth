@@ -95,7 +95,7 @@ int main(int argc, char* argv[], char* envp[])
 	// Primary Shared Pointers:  The OutputSettings* are initialized and maintained by the MainController, with 
 	//							 the RtAudioController* providing the host api, and device info.
 	//
-	OutputSettings* parameters = new OutputSettings("", "", "", 0, 0, 0);
+	OutputSettings* parameters = new OutputSettings();
 	SynthSettings* configuration = CreateConfiguration(parameters, soundBankDirectory);
 	SoundRegistry* registry = new SoundRegistry();											// NEEDS INITIALIZATION (W/ SAMPLING RATE)
 
