@@ -3,6 +3,7 @@
 #ifndef OUTPUT_UI_H
 #define OUTPUT_UI_H
 
+#include "OutputModelUI.h"
 #include "OutputSettings.h"
 #include "SliderUI.h"
 #include "UIBase.h"
@@ -10,28 +11,33 @@
 #include <exception>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
+#include <ftxui/component/component_options.hpp>
+#include <ftxui/dom/canvas.hpp>
+#include <ftxui/dom/direction.hpp>
 #include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/linear_gradient.hpp>
 #include <ftxui/screen/color.hpp>
 #include <string>
+#include <utility>
 #include <vector>
 
-class OutputUI : public UIBase<OutputSettings>
+class OutputUI : public UIBase<OutputModelUI>
 {
 public:
 	OutputUI(const std::string& title, const ftxui::Color& titleColor);
 	~OutputUI();
 
-	void Initialize(const OutputSettings& initialValue) override;
+	void Initialize(const OutputModelUI& initialValue) override;
 	ftxui::Component GetComponent() override;
 
     void ServicePendingAction() override;
     void UpdateComponent() override;
     void Tick() override;
 
-	void ToUI(const OutputSettings& source) override;
-    void ToUI(const OutputSettings* source) override;
-	void FromUI(OutputSettings& destination) override;
-    void FromUI(OutputSettings* destination) override;
+	void ToUI(const OutputModelUI& source) override;
+    void ToUI(const OutputModelUI* source) override;
+	void FromUI(OutputModelUI& destination) override;
+    void FromUI(OutputModelUI* destination) override;
 
 	bool GetDirty() const override;
     void ClearDirty() override;
@@ -49,8 +55,8 @@ private:
     ValueCapture<int>* _deviceSelectedIndex;
     std::vector<std::string>* _deviceList;
 
-	float _left;
-	float _right;
+    std::vector<float*>* _leftEQ;
+    std::vector<float*>* _rightEQ;
 
     std::string* _title;
     ftxui::Color* _titleColor;
@@ -65,8 +71,8 @@ OutputUI::OutputUI(const std::string& title, const ftxui::Color& titleColor)
     _deviceList = new std::vector<std::string>();
     _deviceSelectedIndex = new ValueCapture<int>(0);
 
-    _left = 0;
-    _right = 0;
+    _leftEQ = new std::vector<float*>();
+    _rightEQ = new std::vector<float*>();
 
     _title = new std::string(title);
     _titleColor = new ftxui::Color(titleColor);
@@ -74,27 +80,45 @@ OutputUI::OutputUI(const std::string& title, const ftxui::Color& titleColor)
 
 OutputUI::~OutputUI()
 {
+    for (int index = 0; index < _leftEQ->size(); index++)
+    {
+        delete _leftEQ->at(index);
+        delete _rightEQ->at(index);
+    }
+
     delete _gainUI;
     delete _leftRightUI;
     delete _deviceList;
     delete _deviceSelectedIndex;
     delete _title;
     delete _titleColor;
+    delete _leftEQ;
+    delete _rightEQ;
 }
 
-void OutputUI::Initialize(const OutputSettings& settings)
+void OutputUI::Initialize(const OutputModelUI& settings)
 {
-    _gainUI->Initialize(settings.GetGain());
-    _leftRightUI->Initialize(settings.GetLeftRightBalance());
+    const OutputSettings* outputSettings = settings.GetOutputSettings();
+
+    _gainUI->Initialize(outputSettings->GetGain());
+    _leftRightUI->Initialize(outputSettings->GetLeftRightBalance());
 
     // Device List
     _deviceList->clear();
-    for (int index = 0; index < settings.GetDeviceList()->size(); index++)
+    for (int index = 0; index < outputSettings->GetDeviceList()->size(); index++)
     {
-        _deviceList->push_back(settings.GetDeviceList()->at(index)->GetDeviceName());
+        _deviceList->push_back(outputSettings->GetDeviceList()->at(index)->GetDeviceName());
 
-        if (settings.GetSelectedDevice()->GetDeviceName() == settings.GetDeviceList()->at(index)->GetDeviceName())
+        if (outputSettings->GetSelectedDevice() != nullptr &&
+            outputSettings->GetSelectedDevice()->GetDeviceName() == outputSettings->GetDeviceList()->at(index)->GetDeviceName())
             _deviceSelectedIndex->SetValue(index);
+    }
+
+    // Equalizer
+    for (int index = 0; index < settings.GetEqualizerOutput()->size(); index++)
+    {
+        _leftEQ->push_back(new float(0));
+        _rightEQ->push_back(new float(0));
     }
 
     _deviceDropdown = ftxui::Dropdown(_deviceList, _deviceSelectedIndex->GetRef());
@@ -114,20 +138,40 @@ ftxui::Component OutputUI::GetComponent()
         _gainUI->GetRenderer(),
         _leftRightUI->GetRenderer(),
 
+        ftxui::Renderer([&] { return ftxui::separator(); }),
+
+        ftxui::Renderer([&] { return ftxui::text("EQ Output") | ftxui::color(*_titleColor); }),
         ftxui::Renderer([&] {
-            return ftxui::vbox({
-                ftxui::separator(),
-                ftxui::hbox({
-                    ftxui::text("Left ") | ftxui::center,
-                    ftxui::border(ftxui::gauge(_left) | ftxui::color(*_titleColor))
-                }),
-                ftxui::hbox({
-                    ftxui::text("Right") | ftxui::center,
-                    ftxui::border(ftxui::gauge(_right) | ftxui::color(*_titleColor))
-                })
-            });
-        })
-    });
+
+            return ftxui::canvas([&](ftxui::Canvas& canvas) {
+
+                // Split the X-Space into channels (L / R / Empty)
+                //
+                int marginX = 2;
+                int divX = (int)((canvas.width() - (2 * marginX)) / (double)(_leftEQ->size()));
+                int divXChannel = (int)(divX / 2.0f);
+                int divXPadding = 1;
+                int divCounter = 0;
+
+                for (int i = 0; i < _leftEQ->size(); i++)
+                {
+                    for (int k = divXPadding; k < divXChannel - divXPadding; k++)
+                    {
+                        int leftX = marginX + (i * divX) + k;
+                        int rightX = marginX + (i * divX) + divXChannel + k;
+
+                        
+
+                        canvas.DrawBlockLine(leftX, canvas.height(), leftX, (1 - *_leftEQ->at(i)) * canvas.height(), ftxui::Color::Blue);
+                        canvas.DrawBlockLine(rightX, canvas.height(), rightX, (1 - *_rightEQ->at(i)) * canvas.height(), ftxui::Color::BlueLight);
+                    }
+                }
+
+            }) | ftxui::bgcolor(ftxui::Color::RGBA(0, 0, 255, 50)) | ftxui::flex_grow;
+
+        }) | ftxui::flex_grow | ftxui::border
+
+    }) | ftxui::bgcolor(ftxui::Color::RGB(0,0,0));
 
     return componentUI;
 }
@@ -168,24 +212,27 @@ void OutputUI::ClearPendingAction()
 {
 }
 
-void OutputUI::ToUI(const OutputSettings& source)
+void OutputUI::ToUI(const OutputModelUI& source)
 {
     throw new std::exception("Please use the pointer version of this function ToUI");
 }
-void OutputUI::ToUI(const OutputSettings* source)
+void OutputUI::ToUI(const OutputModelUI* source)
 {
-    _gainUI->ToUI(source->GetGain());
-    _leftRightUI->ToUI(source->GetLeftRightBalance());
+    _gainUI->ToUI(source->GetOutputSettings()->GetGain());
+    _leftRightUI->ToUI(source->GetOutputSettings()->GetLeftRightBalance());
 
-    _left = source->GetLeftChannel();
-    _right = source->GetRightChannel();
+    for (int index = 0; index < source->GetEqualizerOutput()->size(); index++)
+    {
+        *(_leftEQ->at(index)) = source->GetEqualizerOutput()->at(index).GetLeft();
+        *(_rightEQ->at(index)) = source->GetEqualizerOutput()->at(index).GetRight();
+    }
 }
-void OutputUI::FromUI(OutputSettings& destination)
+void OutputUI::FromUI(OutputModelUI& destination)
 {
     throw new std::exception("Please use the pointer version of this function FromUI");
 }
 
-void OutputUI::FromUI(OutputSettings* destination)
+void OutputUI::FromUI(OutputModelUI* destination)
 {
     float gain;
     float leftRight;
@@ -193,12 +240,12 @@ void OutputUI::FromUI(OutputSettings* destination)
     _gainUI->FromUI(gain);
     _leftRightUI->FromUI(leftRight);
 
-    destination->SetLeftRightBalance(leftRight);
-    destination->SetGain(gain);
+    destination->GetOutputSettings()->SetLeftRightBalance(leftRight);
+    destination->GetOutputSettings()->SetGain(gain);
 
     // OUTPUT DEVICE!
     if (_deviceSelectedIndex->HasChanged())
-        destination->SelectDevice(_deviceList->at(_deviceSelectedIndex->GetValue()));
+        destination->GetOutputSettings()->SelectDevice(_deviceList->at(_deviceSelectedIndex->GetValue()));
 }
 
 #endif

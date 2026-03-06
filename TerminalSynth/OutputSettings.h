@@ -3,20 +3,30 @@
 #ifndef PLAYBACK_PARAMETERS_H
 #define PLAYBACK_PARAMETERS_H
 
+#include "EqualizerOutput.h"
 #include "OutputDeviceInfo.h"
+#include "PlaybackFrame.h"
 #include <exception>
 #include <string>
 #include <vector>
 
 class OutputSettings
 {
+private:
+
+	const int FFT_INPUT_SIZE = 1024;
+	const int FFT_OUTPUT_SIZE = 32;
+
 public:
 
 	OutputSettings()
 	{
-		_hostApi = new std::string("");
-		_selectedDevice = nullptr;
+		_hostApi = new std::string("");		
 		_devices = new std::vector<OutputDeviceInfo*>();
+
+		// Initialize!
+		_selectedDevice = nullptr;
+		_equalizer = nullptr;
 
 		// RT Update (Audio)
 		_streamTime = 0;
@@ -24,8 +34,6 @@ public:
 		_avgAudioSampleMicro = 0;
 		_avgAudioLockAcquireNano = 0;
 		_streamLatency = 0;
-		_leftChannel = 0;
-		_rightChannel = 0;
 
 		// RT Update (UI)
 		_avgUIMilli = 0;
@@ -41,7 +49,6 @@ public:
 	OutputSettings(const OutputSettings& copy)
 	{
 		_hostApi = new std::string(copy.GetHostApi());
-		_selectedDevice = copy.GetSelectedDevice() == nullptr ? nullptr : new OutputDeviceInfo(*copy.GetSelectedDevice());
 		_devices = new std::vector<OutputDeviceInfo*>();
 
 		for (int index = 0; index < copy.GetDeviceList()->size(); index++)
@@ -49,14 +56,16 @@ public:
 			_devices->push_back(new OutputDeviceInfo(*copy.GetDeviceList()->at(index)));
 		}
 
+		// Initialize!
+		_selectedDevice = copy.GetSelectedDevice() == nullptr ? nullptr : new OutputDeviceInfo(*copy.GetSelectedDevice());
+		_equalizer = copy.GetEqualizer() == nullptr ? nullptr : new EqualizerOutput(*copy.GetEqualizer());
+
 		// RT Update (Audio)
 		_streamTime = copy.GetStreamTime();
 		_avgAudioMilli = copy.GetAvgAudioMilli();
 		_avgAudioSampleMicro = copy.GetAvgAudioSampleMicro();
 		_avgAudioLockAcquireNano = copy.GetAvgAudioLockAcquireNano();
 		_streamLatency = copy.GetStreamLatency();
-		_leftChannel = copy.GetLeftChannel();
-		_rightChannel = copy.GetRightChannel();
 
 		// RT Update (UI)
 		_avgUIMilli = copy.GetAvgUIMilli();
@@ -82,6 +91,9 @@ public:
 
 		if (_selectedDevice != nullptr)
 			delete _selectedDevice;
+
+		if (_equalizer != nullptr)
+			delete _equalizer;
 	}
 
 	std::string GetHostApi() const { return *_hostApi; }
@@ -107,9 +119,9 @@ public:
 	float GetAvgUISleepMilli() const { return _avgUISleepMilli; }
 
 	float GetGain() const { return _gain; }
-	float GetLeftChannel() const { return _leftChannel; }
-	float GetRightChannel() const { return _rightChannel; }
 	float GetLeftRightBalance() const { return _leftRightBalance; }
+
+	EqualizerOutput* GetEqualizer() const { return _equalizer; }
 
 	void SetHostApi(const std::string& hostApi) 
 	{ 
@@ -141,7 +153,13 @@ public:
 		_devices->push_back(info);
 		
 		if (selectDevice)
+		{
+			if (_equalizer != nullptr)
+				delete _equalizer;
+
 			_selectedDevice = info;
+			_equalizer = new EqualizerOutput(FFT_INPUT_SIZE, FFT_OUTPUT_SIZE, info->GetSamplingRate());
+		}
 	}
 
 	bool ContainsDevice(const std::string& deviceName)
@@ -160,7 +178,11 @@ public:
 		{
 			if (_devices->at(index)->GetDeviceName() == deviceName)
 			{
+				if (_equalizer != nullptr)
+					delete _equalizer;
+
 				_selectedDevice = _devices->at(index);
+				_equalizer = new EqualizerOutput(FFT_INPUT_SIZE, FFT_OUTPUT_SIZE, _selectedDevice->GetSamplingRate());
 				return;
 			}
 		}
@@ -180,8 +202,13 @@ public:
 				_devices->at(index)->Update(currentSamplingRate, outputBufferSize);
 
 				if (selectDevice)
-					_selectedDevice = _devices->at(index);
+				{
+					if (_equalizer != nullptr)
+						delete _equalizer;
 
+					_selectedDevice = _devices->at(index);
+					_equalizer = new EqualizerOutput(FFT_INPUT_SIZE, FFT_OUTPUT_SIZE, _selectedDevice->GetSamplingRate());
+				}
 				return;
 			}				
 		}
@@ -196,17 +223,13 @@ public:
 						float avgAudioMilli,
 						float avgAudioSampleMicro,
 						float avgAudioLockAcquireNano,
-						long latency,
-						float leftChannel,
-						float rightChannel)
+						long latency)
 	{
 		_streamTime = streamTime;
 		_avgAudioMilli = avgAudioMilli;
 		_avgAudioSampleMicro = avgAudioSampleMicro;
 		_avgAudioLockAcquireNano = avgAudioLockAcquireNano;
 		_streamLatency = latency;
-		_leftChannel = leftChannel;
-		_rightChannel = rightChannel;
 	}
 
 	/// <summary>
@@ -218,6 +241,34 @@ public:
 					 float avgUIRenderingMilli,
 					 float avgUISleepMilli)
 	{
+		_avgUIMilli = avgUIMilli;
+		_avgUIDataFetchMicro = avgUIDataFetchMicro;
+		_avgUILockAcqcuireNano = avgUILockAcqcuireNano;
+		_avgUIRenderingMilli = avgUIRenderingMilli;
+		_avgUISleepMilli = avgUISleepMilli;
+	}
+
+	/// <summary>
+	/// This function does not apply the next sample to the equalizer; and will forcedly set
+	/// all variables. This should be used for straight copying without memory allocation.
+	/// </summary>
+	void UpdateAllForUI(float streamTime,
+		float avgAudioMilli,
+		float avgAudioSampleMicro,
+		float avgAudioLockAcquireNano,
+		long latency,
+		float avgUIMilli,
+		float avgUIDataFetchMicro,
+		float avgUILockAcqcuireNano,
+		float avgUIRenderingMilli,
+		float avgUISleepMilli)
+	{
+		_streamTime = streamTime;
+		_avgAudioMilli = avgAudioMilli;
+		_avgAudioSampleMicro = avgAudioSampleMicro;
+		_avgAudioLockAcquireNano = avgAudioLockAcquireNano;
+		_streamLatency = latency;
+
 		_avgUIMilli = avgUIMilli;
 		_avgUIDataFetchMicro = avgUIDataFetchMicro;
 		_avgUILockAcqcuireNano = avgUILockAcqcuireNano;
@@ -251,8 +302,7 @@ private:
 	float _leftRightBalance;
 
 	// Output
-	float _leftChannel;
-	float _rightChannel;
+	EqualizerOutput* _equalizer;
 };
 
 #endif

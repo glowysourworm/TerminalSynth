@@ -434,6 +434,12 @@
     <ClInclude Include="OutputDeviceInfo.h">
       <Filter>Header Files\Model</Filter>
     </ClInclude>
+    <ClInclude Include="Algorithm.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="OutputModelUI.h">
+      <Filter>Header Files\ModelUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="RtAudioUserData.h">

@@ -116,7 +116,7 @@ void MainController::Loop()
 	auto loop = ftxui::Loop(&screen, _mainUI->GetComponent());
 
 	// Store for detecting device change!
-	std::string currentDevice = _mainModelUI->GetOutputSettings()->GetDeviceName();
+	std::string currentDevice = _mainModelUI->GetOutputModelUI()->GetOutputSettings()->GetDeviceName();
 
 	// FTXUI has an option to create an event loop (this will run their backend UI code)
 	//
@@ -199,8 +199,8 @@ void MainController::Loop()
 			_mainModelUI->FromUI(_configuration);	
 
 			// Also, need the Gain and L/R Balance
-			_userData->GetOutputSettings()->SetGain(_mainModelUI->GetOutputSettings()->GetGain());
-			_userData->GetOutputSettings()->SetLeftRightBalance(_mainModelUI->GetOutputSettings()->GetLeftRightBalance());
+			_userData->GetOutputSettings()->SetGain(_mainModelUI->GetOutputModelUI()->GetOutputSettings()->GetGain());
+			_userData->GetOutputSettings()->SetLeftRightBalance(_mainModelUI->GetOutputModelUI()->GetOutputSettings()->GetLeftRightBalance());
 
 			_uiDataFetchTimer->Mark();
 
@@ -216,10 +216,10 @@ void MainController::Loop()
 		}
 
 		// DEVICE CHANGE! (OutputSettings* was set for a new device)
-		if (_mainModelUI->GetOutputSettings()->GetDeviceName() != currentDevice)
+		if (_mainModelUI->GetOutputModelUI()->GetOutputSettings()->GetDeviceName() != currentDevice)
 		{
 			// Stop / Re-Start Audio Stream
-			currentDevice = _mainModelUI->GetOutputSettings()->GetDeviceName();
+			currentDevice = _mainModelUI->GetOutputModelUI()->GetOutputSettings()->GetDeviceName();
 
 			if (_rtAudioController->IsStreamRunning())
 				_rtAudioController->StopStream();

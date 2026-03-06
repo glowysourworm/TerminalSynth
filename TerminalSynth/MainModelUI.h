@@ -4,6 +4,7 @@
 #define MAIN_MODEL_UI_H
 
 #include "ModelUI.h"
+#include "OutputModelUI.h"
 #include "OutputSettings.h"
 #include "SynthSettings.h"
 #include "SynthTabModelUI.h"
@@ -24,36 +25,41 @@ public:
 	void ToUI(OutputSettings* source);
 
 	SynthTabModelUI* GetSynthTabModelUI() const;
-	OutputSettings* GetOutputSettings() const;
+	OutputModelUI* GetOutputModelUI() const;
 
 private:
 
 	std::string* _name;
-
+	
 	SynthTabModelUI* _synthTabModelUI;
-
-	OutputSettings* _outputSettings;
+	OutputModelUI* _outputModelUI;
 };
 
 MainModelUI::MainModelUI(const SynthSettings* synthSettings, const OutputSettings* outputSettings)
 {
 	_name = new std::string("Terminal Synth");
 	_synthTabModelUI = new SynthTabModelUI(synthSettings->GetSoundSettings(), synthSettings->GetSoundBankSettings());
-	_outputSettings = new OutputSettings(*outputSettings);
+	_outputModelUI = new OutputModelUI(outputSettings);
+
+	// Running Initialization Cycle (this may need redesign if the UI grows any bigger)
+	_outputModelUI->ToUI(outputSettings);
 }
 
 MainModelUI::MainModelUI(const MainModelUI& copy)
 {
 	_name = new std::string(copy.GetName());
 	_synthTabModelUI = new SynthTabModelUI(*copy.GetSynthTabModelUI());
-	_outputSettings = new OutputSettings(*copy.GetOutputSettings());
+	_outputModelUI = new OutputModelUI(*copy.GetOutputModelUI());
+
+	// Running Initialization Cycle (this may need redesign if the UI grows any bigger)
+	_outputModelUI->ToUI(copy.GetOutputModelUI()->GetOutputSettings());
 }
 
 MainModelUI::~MainModelUI()
 {
 	delete _name;
 	delete _synthTabModelUI;
-	delete _outputSettings;
+	delete _outputModelUI;
 }
 
 SynthTabModelUI* MainModelUI::GetSynthTabModelUI() const
@@ -61,9 +67,9 @@ SynthTabModelUI* MainModelUI::GetSynthTabModelUI() const
 	return _synthTabModelUI;
 }
 
-OutputSettings* MainModelUI::GetOutputSettings() const
+OutputModelUI* MainModelUI::GetOutputModelUI() const
 {
-	return _outputSettings;
+	return _outputModelUI;
 }
 
 std::string MainModelUI::GetName() const
@@ -82,21 +88,7 @@ void MainModelUI::FromUI(SynthSettings* destination)
 }
 void MainModelUI::ToUI(OutputSettings* source)
 {
-	_outputSettings->UpdateRT_Audio(
-		source->GetStreamTime(), 
-		source->GetAvgAudioMilli(),
-		source->GetAvgAudioSampleMicro(),
-		source->GetAvgAudioLockAcquireNano(),
-		source->GetStreamLatency(),
-		source->GetLeftChannel(),
-		source->GetRightChannel());
-
-	_outputSettings->UpdateRT_UI(
-		source->GetAvgUIMilli(),
-		source->GetAvgUIDataFetchMicro(),
-		source->GetAvgUILockAqcuireNano(),
-		source->GetAvgUIRenderingMilli(),
-		source->GetAvgUISleepMilli());
+	_outputModelUI->ToUI(source);
 }
 
 #endif

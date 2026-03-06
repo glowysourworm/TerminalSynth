@@ -6,6 +6,7 @@
 #include "PlaybackBuffer.h"
 #include <cmath>
 #include <cstdlib>
+#include <queue>
 
 template<SignalValue TSignal>
 class Accumulator
@@ -40,57 +41,65 @@ public:
 
 	void Reset();
 
+	int GetWindowLength() const { return _windowLength; }
+
 private:
 
 	TSignal _last;
-	TSignal _lastWindowed;
 	TSignal _average;
 	TSignal _total;
 	int _counter;
 	int _windowLength;
 	bool _useAbsoluteValue;
 
+	// Needed for finite windowed average
+	std::queue<TSignal>* _samples;
 };
 
 template<SignalValue TSignal>
 Accumulator<TSignal>::Accumulator(bool useAbsoluteValue)
 {
 	_last = 0;
-	_lastWindowed = 0;
 	_average = 0;
 	_total = 0;
 	_counter = 0;
 	_windowLength = -1;
 	_useAbsoluteValue = useAbsoluteValue;
+	_samples = new std::queue<TSignal>();
 }
 
 template<SignalValue TSignal>
 Accumulator<TSignal>::Accumulator(bool useAbsoluteValue, int windowLength)
 {
 	_last = 0;
-	_lastWindowed = 0;
 	_average = 0;
 	_total = 0;
 	_counter = 0;
 	_windowLength = windowLength;
 	_useAbsoluteValue = useAbsoluteValue;
+	_samples = new std::queue<TSignal>();
 }
 
 template<SignalValue TSignal>
 Accumulator<TSignal>::~Accumulator()
 {
+	delete _samples;
 }
 
 template<SignalValue TSignal>
 void Accumulator<TSignal>::ResetFor(bool useAbsoluteValue, int windowLength)
 {
 	_last = 0;
-	_lastWindowed = 0;
 	_average = 0;
 	_total = 0;
 	_counter = 0;
 	_windowLength = windowLength;
 	_useAbsoluteValue = useAbsoluteValue;
+
+	while (!_samples->empty())
+	{
+		_samples->pop();
+	}
 }
 
 template<SignalValue TSignal>
@@ -101,8 +110,14 @@ void Accumulator<TSignal>::Add(TSignal value)
 	// Windowed
 	if (_windowLength > 0 && _counter >= _windowLength)
 	{
-		_average += (1 / (double)(_counter)) * (useValue - _lastWindowed);
-		_lastWindowed = useValue;
+		_average += (1 / (double)(_counter)) * (useValue - _samples->front());
+		_samples->pop();
+		_samples->push(useValue);
+	}
+	else if (_windowLength > 0)
+	{
+		_counter++;
+		_samples->push(useValue);
 	}
 
 	// Cummulative

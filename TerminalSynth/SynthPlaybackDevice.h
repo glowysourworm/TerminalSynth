@@ -159,6 +159,9 @@ int SynthPlaybackDevice<TSignal>::WritePlaybackBuffer(TSignal* playbackBuffer, u
 		// Get Samples for N channels
 		_lastOutput = _synth->GetSample(_frame, absoluteTime, outputSettings);
 
+		// Equalizer Output
+		outputSettings->GetEqualizer()->AddSample(_frame->GetLeft(), _frame->GetRight());
+
 		// Interleved frames
 		outputBuffer[(2 * frameIndex)] = _frame->GetLeft();
 		outputBuffer[(2 * frameIndex) + 1] = _frame->GetRight();

@@ -3,6 +3,7 @@
 #ifndef SYNTH_INFORMATION_UI_H
 #define SYNTH_INFORMATION_UI_H
 
+#include "OutputModelUI.h"
 #include "OutputSettings.h"
 #include "OutputUI.h"
 #include "UIBase.h"
@@ -13,25 +14,24 @@
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
 #include <string>
-#include <vector>
 
-class SynthInformationUI : public UIBase<OutputSettings>
+class SynthInformationUI : public UIBase<OutputModelUI>
 {
 public:
 	SynthInformationUI(const std::string& title, const ftxui::Color& titleColor);
 	~SynthInformationUI();
 
-	void Initialize(const OutputSettings& settings) override;
+	void Initialize(const OutputModelUI& settings) override;
 	ftxui::Component GetComponent() override;
 
 	void ServicePendingAction() override;
 	void UpdateComponent() override;
 	void Tick() override;
 
-	void ToUI(const OutputSettings& source) override;
-	void ToUI(const OutputSettings* source) override;
-	void FromUI(OutputSettings& destination) override;
-	void FromUI(OutputSettings* destination) override;
+	void ToUI(const OutputModelUI& source) override;
+	void ToUI(const OutputModelUI* source) override;
+	void FromUI(OutputModelUI& destination) override;
+	void FromUI(OutputModelUI* destination) override;
 
 	bool HasPendingAction() const override;
 	void ClearPendingAction() override;
@@ -124,7 +124,7 @@ SynthInformationUI::~SynthInformationUI()
 
 	delete _outputUI;
 }
-void SynthInformationUI::Initialize(const OutputSettings& settings)
+void SynthInformationUI::Initialize(const OutputModelUI& settings)
 {
 	_outputUI->Initialize(settings);
 
@@ -233,65 +233,67 @@ void SynthInformationUI::UpdateComponent()
 void SynthInformationUI::Tick()
 {
 }
-void SynthInformationUI::ToUI(const OutputSettings& source)
+void SynthInformationUI::ToUI(const OutputModelUI& source)
 {
 	throw new std::exception("Pleaes use the pointer version of this function ToUI(..)");
 }
-void SynthInformationUI::ToUI(const OutputSettings* source)
+void SynthInformationUI::ToUI(const OutputModelUI* source)
 {
+	const OutputSettings* outputSettings = source->GetOutputSettings();
+
 	_hostApi->clear();
-	_hostApi->append(source->GetHostApi());
+	_hostApi->append(outputSettings->GetHostApi());
 
 	_deviceName->clear();
-	_deviceName->append(source->GetDeviceName());
+	_deviceName->append(outputSettings->GetDeviceName());
 
 	_streamFormat->clear();
-	_streamFormat->append(source->GetDeviceFormat());
+	_streamFormat->append(outputSettings->GetDeviceFormat());
 
 	_streamBufferSize->clear();
-	_streamBufferSize->append(std::format("{} (frames)", source->GetOutputBufferFrameSize()));
+	_streamBufferSize->append(std::format("{} (frames)", outputSettings->GetOutputBufferFrameSize()));
 
 	_samplingRate->clear();
-	_samplingRate->append(std::to_string(source->GetSamplingRate()));
+	_samplingRate->append(std::to_string(outputSettings->GetSamplingRate()));
 
 	_streamTime->clear();
-	_streamTime->append(std::format("{:.3f}", source->GetStreamTime()));
+	_streamTime->append(std::format("{:.3f}", outputSettings->GetStreamTime()));
 
 	_averageAudioMilli->clear();
-	_averageAudioMilli->append(std::format("{:.3f}", source->GetAvgAudioMilli()));
+	_averageAudioMilli->append(std::format("{:.3f}", outputSettings->GetAvgAudioMilli()));
 
 	_averageAudioSampleMicro->clear();
-	_averageAudioSampleMicro->append(std::format("{:.3f}", source->GetAvgAudioSampleMicro()));
+	_averageAudioSampleMicro->append(std::format("{:.3f}", outputSettings->GetAvgAudioSampleMicro()));
 
 	_averageAudioLockAcquireNano->clear();
-	_averageAudioLockAcquireNano->append(std::format("{:.3f}", source->GetAvgAudioLockAcquireNano()));
+	_averageAudioLockAcquireNano->append(std::format("{:.3f}", outputSettings->GetAvgAudioLockAcquireNano()));
 
 	_streamLatency->clear();
-	_streamLatency->append(std::to_string(source->GetStreamLatency()));
+	_streamLatency->append(std::to_string(outputSettings->GetStreamLatency()));
 
 	_averageUIMilli->clear();
-	_averageUIMilli->append(std::format("{:.3f}", source->GetAvgUIMilli()));
+	_averageUIMilli->append(std::format("{:.3f}", outputSettings->GetAvgUIMilli()));
 
 	_averageUIDataFetchMicro->clear();
-	_averageUIDataFetchMicro->append(std::format("{:.3f}", source->GetAvgUIDataFetchMicro()));
+	_averageUIDataFetchMicro->append(std::format("{:.3f}", outputSettings->GetAvgUIDataFetchMicro()));
 
 	_averageUILockAcqcuireNano->clear();
-	_averageUILockAcqcuireNano->append(std::format("{:.3f}", source->GetAvgUILockAqcuireNano()));
+	_averageUILockAcqcuireNano->append(std::format("{:.3f}", outputSettings->GetAvgUILockAqcuireNano()));
 
 	_averageUIRenderingMilli->clear();
-	_averageUIRenderingMilli->append(std::format("{:.3f}", source->GetAvgUIRenderingMilli()));
+	_averageUIRenderingMilli->append(std::format("{:.3f}", outputSettings->GetAvgUIRenderingMilli()));
 
 	_averageUISleepMilli->clear();
-	_averageUISleepMilli->append(std::format("{:.3f}", source->GetAvgUISleepMilli()));
+	_averageUISleepMilli->append(std::format("{:.3f}", outputSettings->GetAvgUISleepMilli()));
 
 	_outputUI->ToUI(source);
 }
-void SynthInformationUI::FromUI(OutputSettings& destination)
+void SynthInformationUI::FromUI(OutputModelUI& destination)
 {
 	_outputUI->FromUI(destination);
 }
 
-void SynthInformationUI::FromUI(OutputSettings* destination)
+void SynthInformationUI::FromUI(OutputModelUI* destination)
 {
 	_outputUI->FromUI(destination);
 }

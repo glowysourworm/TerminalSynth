@@ -97,8 +97,8 @@ int AudioController::ProcessAudioCallback(float* outputBuffer, unsigned int numb
 								   _synthDevice->SetForPlayback(numberOfFrames, streamTime, configuration);
 
 	// Optimize CPU
-	if (lastOutput || pressedKeys)
-	{
+	//if (lastOutput || pressedKeys)
+	//{
 		// Audio Sample Timer
 		_audioSampleTimer->Reset();
 
@@ -107,19 +107,10 @@ int AudioController::ProcessAudioCallback(float* outputBuffer, unsigned int numb
 										 _synthDevice->WritePlaybackBuffer(outputBuffer, numberOfFrames, streamTime, outputSettings);
 
 		_audioSampleTimer->Mark();
-
-		// Get output for the UI
-		leftChannel = fabs(_synthDevice->GetOutputLeft());
-		rightChannel = fabs(_synthDevice->GetOutputRight());
-	}
-	else
-	{
-		leftChannel = 0;
-		rightChannel = 0;
-	}
+	//}
 
 	// RT Update (Audio)
-	outputSettings->UpdateRT_Audio(streamTime, avgAudioMilli, avgAudioSampleMicro, avgAudioLockAcquireNano, 0, leftChannel, rightChannel);
+	outputSettings->UpdateRT_Audio(streamTime, avgAudioMilli, avgAudioSampleMicro, avgAudioLockAcquireNano, 0);
 	outputSettings->SetStreamLatency(streamLatency);
 
 	// std::atomic end loop

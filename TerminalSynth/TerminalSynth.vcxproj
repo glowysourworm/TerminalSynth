@@ -286,6 +286,7 @@
     <ClInclude Include="CheckboxUI.h" />
     <ClInclude Include="EnvelopeUI.h" />
     <ClInclude Include="EqualizerOutput.h" />
+    <ClInclude Include="Algorithm.h" />
     <ClInclude Include="IntervalTimer.h" />
     <ClInclude Include="MainController.h" />
     <ClInclude Include="MainModelUI.h" />
@@ -305,6 +306,7 @@
     <ClInclude Include="Options.h" />
     <ClInclude Include="OscillatorParameters.h" />
     <ClInclude Include="OutputDeviceInfo.h" />
+    <ClInclude Include="OutputModelUI.h" />
     <ClInclude Include="OutputUI.h" />
     <ClInclude Include="PlaybackClock.h" />
     <ClInclude Include="PlaybackDevice.h" />

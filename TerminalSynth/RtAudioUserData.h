@@ -1,6 +1,7 @@
 #ifndef RT_AUDIO_USER_DATA_H
 #define RT_AUDIO_USER_DATA_H
 
+#include "EqualizerOutput.h"
 #include "OutputSettings.h"
 #include "SoundRegistry.h"
 #include "SynthSettings.h"
@@ -30,6 +31,7 @@ public:
 	SynthSettings* GetSynthSettings() const { return _synthSettings; }
 	SoundRegistry* GetEffectRegistry() const { return _effectRegistry; }
 	OutputSettings* GetOutputSettings() const { return _outputSettings; }
+	EqualizerOutput* GetEqualizer() const { return _outputSettings->GetEqualizer(); }
 
 	bool IsInitialized() const { return _initialized; }
 

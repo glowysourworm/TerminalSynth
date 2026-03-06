@@ -44,7 +44,7 @@ MainUI::~MainUI()
 
 void MainUI::Initialize(const MainModelUI& model)
 {
-	_synthInformationUI->Initialize(*_model->GetOutputSettings());
+	_synthInformationUI->Initialize(*_model->GetOutputModelUI());
 	_synthTabUI->Initialize(*_model->GetSynthTabModelUI());
 
 	// Airwin Registry List
@@ -163,7 +163,7 @@ void MainUI::FromUI(MainModelUI* destination)
 {
 	// Synth Tab UI
 	_synthTabUI->FromUI(destination->GetSynthTabModelUI());
-	_synthInformationUI->FromUI(destination->GetOutputSettings());
+	_synthInformationUI->FromUI(destination->GetOutputModelUI());
 }
 
 void MainUI::ToUI(const MainModelUI& source)
@@ -174,7 +174,7 @@ void MainUI::ToUI(const MainModelUI& source)
 void MainUI::ToUI(const MainModelUI* source)
 {
 	// Synth Information
-	_synthInformationUI->ToUI(source->GetOutputSettings());
+	_synthInformationUI->ToUI(source->GetOutputModelUI());
 }
 
 bool MainUI::GetDirty() const
