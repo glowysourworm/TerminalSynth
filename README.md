@@ -5,6 +5,8 @@ play around with and understand real time audio.
 
 ![Alt text](/screenshot.png)
 
+![Alt text](/screenshot-synth.png)
+
 
 # Real Time (RT Audio / Port Audio / Windows APIs)
 
