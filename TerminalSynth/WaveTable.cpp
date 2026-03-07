@@ -101,8 +101,8 @@ float WaveTable::GetLinearSpline(double zeroTime, double absoluteTime, bool chan
 	double y1 = channelLeft ? _frames[frame1Index].GetLeft() : _frames[frame1Index].GetRight();
 
 	// Anti-Aliasing (restart the wave period)
-	if (frame1Index < frame0Index)
-		return y0;
+	//if (frame1Index < frame0Index)
+	//	return y0;
 
 	// Can't interpolate (no need to interpolate)
 	if (y0 == y1)
@@ -110,7 +110,7 @@ float WaveTable::GetLinearSpline(double zeroTime, double absoluteTime, bool chan
 
 	// These time coordinates are calculated in system time (but just for the duration of one buffer length!)
 	double x0 = frame0Index / (double)_samplingRate;
-	double x1 = frame1Index / (double)_samplingRate;
+	double x1 = frame1Index < frame0Index ? (x0 + _frameLength / (double)_samplingRate) : frame1Index / (double)_samplingRate;	// Wrap-around check
 	
 	// y = m * x + b
 	//
