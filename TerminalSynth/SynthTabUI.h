@@ -17,6 +17,7 @@
 #include "SoundSettings.h"
 #include "SynthTabModelUI.h"
 #include "UIBase.h"
+#include "ValueCapture.h"
 #include <exception>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
@@ -25,6 +26,7 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <vector>
 
 class SynthTabUI : public UIBase<SynthTabModelUI>
 {
@@ -53,6 +55,10 @@ public:
 
 private:
 
+	void OnChangeCategory();
+
+private:
+
 	ftxui::Component _component;
 	ftxui::Component _signalInputContainer;
 	ftxui::Component _signalEffectsContainer;
@@ -72,6 +78,12 @@ private:
 
 	std::map<std::string, SignalNodeModelUI*>* _postProcessingModels;
 	std::map<std::string, CheckboxModelUI*>* _pluginModels;
+
+	// Effect Cateogies
+	std::vector<std::string>* _effectCategories;
+	std::map<std::string, std::vector<std::string>*>* _effectsByCategory;
+
+	ValueCapture<int>* _effectCategorySelectedIndex;
 
 	// Static Signal Chain Elements
 	SignalNodeUI* _oscillatorSignalUI;
@@ -93,13 +105,18 @@ SynthTabUI::SynthTabUI(const SynthTabModelUI& model)
 	SignalNodeModelUI envelopeModel("Envelope", true, false, false, false, 0);
 	SignalNodeModelUI oscillatorModel("Oscillator", true, false, false, false, 0);
 
-	_pluginListUI = new ScrollViewerUI<CheckboxModelUI, CheckboxUI>("Airwin Plugins (airwin@github.com)", ftxui::Color::BlueLight, 0.005);
-	_postProcessingUI = new ScrollViewerUI<SignalNodeModelUI, SignalNodeUI>("Signal Effects", ftxui::Color::GreenYellow);
+	_pluginListUI = new ScrollViewerUI<CheckboxModelUI, CheckboxUI>(0.005);
+	_postProcessingUI = new ScrollViewerUI<SignalNodeModelUI, SignalNodeUI>();
 
 	_envelopeUI = new EnvelopeUI();
 	_oscillatorUI = new OscillatorUI(_model->GetSoundBankSettings(), ftxui::Color::White);
 	_envelopeSignalUI = new SignalNodeUI(envelopeModel);
 	_oscillatorSignalUI = new SignalNodeUI(oscillatorModel);
+
+	_effectCategories = new std::vector<std::string>();
+	_effectsByCategory = new std::map<std::string, std::vector<std::string>*>();
+
+	_effectCategorySelectedIndex = new ValueCapture<int>(0);
 
 	_postProcessingModels = new std::map<std::string, SignalNodeModelUI*>();
 	_pluginModels = new std::map<std::string, CheckboxModelUI*>();
@@ -117,6 +134,16 @@ SynthTabUI::SynthTabUI(const SynthTabModelUI& model)
 	{
 		auto element = effectRegistry->Get(index);
 
+		// New Category
+		if (!_effectsByCategory->contains(element->GetCategory()))
+		{
+			_effectCategories->push_back(element->GetCategory());
+			_effectsByCategory->insert(std::make_pair(element->GetCategory(), new std::vector<std::string>()));		// MEMORY! ~SynthTabUI
+		}
+
+		// List By Category
+		_effectsByCategory->at(element->GetCategory())->push_back(element->GetName());
+
 		// (MEMORY!) ~SynthTabUI
 		EffectUI* effectUI = new EffectUI(element->GetName(), element->GetCategory(), element->GetInfoText(), ftxui::Color::White);
 
@@ -126,8 +153,9 @@ SynthTabUI::SynthTabUI(const SynthTabModelUI& model)
 		// (MEMORY!) ~SynthTabUI
 		CheckboxModelUI* checkboxModelUI = new CheckboxModelUI(element->GetName(), false, index);
 
-		// Plugin List UI
-		_pluginListUI->AddUI(*checkboxModelUI);
+		// Plugin List UI (FIRST CATEGORY)
+		if (_effectCategories->at(0) == element->GetCategory())
+			_pluginListUI->AddUI(*checkboxModelUI);
 
 		effectUI->Initialize(*element);
 
@@ -155,10 +183,21 @@ SynthTabUI::~SynthTabUI()
 		delete iter->second;
 	}
 
+	for (auto iter = _effectsByCategory->begin(); iter != _effectsByCategory->end(); ++iter)
+	{
+		// std::vector*
+		delete iter->second;
+	}
+
 	// Collections
 	delete _effectUIs;
 	delete _postProcessingModels;
 	delete _pluginModels;
+
+	delete _effectCategories;
+	delete _effectsByCategory;
+
+	delete _effectCategorySelectedIndex;
 
 	// Editors
 	delete _oscillatorUI;
@@ -179,14 +218,19 @@ SynthTabUI::~SynthTabUI()
 
 void SynthTabUI::Initialize(const SynthTabModelUI& model)
 {	
+	auto categoryDropdown = ftxui::Dropdown(_effectCategories, _effectCategorySelectedIndex->GetRef());
+
 	_editorContainer = ftxui::Container::Vertical({});
 
 	_signalEffectsContainer = ftxui::Container::Vertical({
 
+		ftxui::Renderer([&] {return ftxui::text("Signal Effects") | ftxui::color(ftxui::Color::GreenYellow); }),
+		ftxui::Renderer([&] {return ftxui::separator(); }),
+
 		// Signal Effects (ScrollViewerUI)
 		_postProcessingUI->GetComponent() | ftxui::yflex_shrink
 
-	});
+	}) | ftxui::border;
 
 	// Signal Chain
 	_signalInputContainer = ftxui::Container::Vertical({
@@ -210,7 +254,18 @@ void SynthTabUI::Initialize(const SynthTabModelUI& model)
 	_component = ftxui::Container::Horizontal({
 
 		// Airwin Plugin Effects
-		_pluginListUI->GetComponent(),
+		ftxui::Container::Vertical({
+			
+			ftxui::Renderer([] { return ftxui::text("Airwin Plugins (airwin@github.com)") | ftxui::color(ftxui::Color::BlueLight); }),
+			ftxui::Renderer([] {return ftxui::separator(); }),
+
+			categoryDropdown,
+
+			ftxui::Renderer([] {return ftxui::separator(); }),
+
+			_pluginListUI->GetComponent() | ftxui::yflex_shrink
+
+		}) | ftxui::border,
 
 		_signalChainContainer | ftxui::yflex_grow,
 
@@ -228,6 +283,15 @@ ftxui::Component SynthTabUI::GetComponent()
 
 void SynthTabUI::ServicePendingAction()
 {
+	// Category Selector
+	if (_effectCategorySelectedIndex->HasChanged())
+	{
+		OnChangeCategory();
+
+		// Clear Pending
+		_effectCategorySelectedIndex->Clear();
+	}
+
 	// Envelope / Oscillator Signal Nodes
 	if (_oscillatorSignalUI->HasPendingAction())
 	{
@@ -265,11 +329,11 @@ void SynthTabUI::ServicePendingAction()
 			if (model->GetIsChecked() != previousValue)
 			{
 				// Add
-				if (model->GetIsChecked())
+				if (model->GetIsChecked() && !_postProcessingUI->Contains(modelName))
 					_postProcessingUI->AddUI(*_postProcessingModels->at(modelName));
 
 				// Remove
-				else
+				else if (_postProcessingUI->Contains(modelName))
 					_postProcessingUI->RemoveUI(*_postProcessingModels->at(modelName));
 
 				// Check Active Editor
@@ -322,12 +386,14 @@ void SynthTabUI::ServicePendingAction()
 					CheckboxModelUI* model = _pluginModels->at(modelName);
 
 					// -> RemoveUI
-					_postProcessingUI->RemoveUI(*signalNodeModelUI);
+					if (_postProcessingUI->Contains(modelName))
+						_postProcessingUI->RemoveUI(*signalNodeModelUI);
 
 					model->SetIsChecked(false);
 
 					// Update Plugin List
-					_pluginListUI->ToUI(model->GetName(), model);
+					if (_pluginListUI->Contains(modelName))
+						_pluginListUI->ToUI(model->GetName(), model);
 
 					// Check Active Editor
 					if (_activeEditorUI->GetEffect() == _effectUIs->at(modelName))
@@ -359,6 +425,40 @@ void SynthTabUI::ServicePendingAction()
 
 		// Notify Parent (this may not be cleared for several 100 iterations)
 		_postProcessingUI->ClearPendingAction();
+	}
+}
+
+void SynthTabUI::OnChangeCategory()
+{
+	std::string currentCategory = _effectCategories->at(_effectCategorySelectedIndex->GetValue());
+
+	// Set Plugin List (for current category)
+	//
+	for (auto iter = _pluginModels->begin(); iter != _pluginModels->end(); ++iter)
+	{
+		SignalSettings effectSettings;
+		CheckboxModelUI* model = iter->second;
+		std::string modelName = iter->first;
+		
+		// Get Effect Category
+		_effectUIs->at(modelName)->FromUI(effectSettings);
+		
+		// Remove
+		if (currentCategory != effectSettings.GetCategory() && _pluginListUI->Contains(modelName))
+			_pluginListUI->RemoveUI(*model);
+
+		// Add
+		else if (currentCategory == effectSettings.GetCategory())
+			_pluginListUI->AddUI(*model);
+
+		//model->SetIsChecked(false);
+
+		// Check Active Editor
+		//if (_activeEditorUI->GetEffect() == _effectUIs->at(modelName))
+		//{
+		//	_activeEditorUI->SetEffect(nullptr);
+		//	_editorContainer->DetachAllChildren();
+		//}
 	}
 }
 
@@ -471,6 +571,9 @@ bool SynthTabUI::HasPendingAction() const
 	//
 	bool hasPendingAction = false;
 
+	// Category Chooser
+	hasPendingAction |= _effectCategorySelectedIndex->HasChanged();
+
 	// Plugin List
 	hasPendingAction |= _pluginListUI->HasPendingAction();
 
@@ -491,6 +594,9 @@ bool SynthTabUI::HasPendingAction() const
 
 void SynthTabUI::ClearPendingAction()
 {
+	// Category Chooser
+	_effectCategorySelectedIndex->Clear();
+
 	// Plugin List (checkbox change)
 	_pluginListUI->ClearPendingAction();
 

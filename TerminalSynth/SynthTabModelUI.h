@@ -8,6 +8,7 @@
 #include "SoundBankSettings.h"
 #include "SoundSettings.h"
 #include <string>
+#include <vector>
 
 class SynthTabModelUI : public ModelUI
 {

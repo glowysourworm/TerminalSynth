@@ -4,7 +4,6 @@
 IntervalTimer::IntervalTimer()
 {
 	_stopWatch = new StopWatch();
-	_stopWatch->mark();
 
 	_lastSeconds = 0;
 	_lastMilli = 0;
@@ -26,27 +25,30 @@ IntervalTimer::~IntervalTimer()
 
 void IntervalTimer::Mark()
 {
-    _lastSeconds = _stopWatch->peek();
+	// Calculate Delta
+	_lastSeconds = _stopWatch->peek();
 	_lastMilli = _stopWatch->peekMilli();
 	_lastMicro = _stopWatch->peekMicro();
 	_lastNano = _stopWatch->peekNano();
 
-	_stopWatch->mark();
-
 	_avgSeconds += (_lastSeconds - _avgSeconds) / (_counter + 1);
 	_avgMilli += (_lastMilli - _avgMilli) / (_counter + 1);
 	_avgMicro += (_lastMicro - _avgMicro) / (_counter + 1);
-	_avgNano += (_lastNano - _avgNano) / (_counter++ + 1);
+	_avgNano += (_lastNano - _avgNano) / (_counter + 1);
+
+	_counter++;
+
+	_stopWatch->mark();
 }
 
 void IntervalTimer::Reset()
 {
-	_stopWatch->mark();
-
 	_lastSeconds = 0;
 	_lastMilli = 0;
 	_lastMicro = 0;
 	_lastNano = 0;
+
+	_stopWatch->mark();
 }
 
 void IntervalTimer::ClearAll()

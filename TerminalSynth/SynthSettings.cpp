@@ -99,13 +99,13 @@ void SynthSettings::Save(std::ostream& stream)
 {
 	// Save:  KeyMap, User Sound Settings
 
-	// Stream << KeyMap*
+	// Key Map
 	_keyMap->Save(stream);
 	
-	// Stream << User Sound Settings Count
+	// User List Count
 	stream << _soundSettingsList->size();
 
-	// Stream << User Sound Settings Instances
+	// User List
 	for (int index = 0; index < _soundSettingsList->size(); index++)
 	{
 		_soundSettingsList->at(index)->Save(stream);
@@ -126,16 +126,16 @@ void SynthSettings::Read(std::istream& stream)
 	// Read:  KeyMap, User Sound Settings
 	size_t listSize = 0;
 
-	// Stream >> SynthNoteMap*
+	// Key Map
 	SynthNoteMap keyMap;
 	keyMap.Read(stream);
 
 	_keyMap = new SynthNoteMap(keyMap);
 
-	// Stream >> User Sound Settings Count
+	// User List Count
 	stream >> listSize;
 
-	// Stream >> User Sound Settings Instances
+	// User List
 	for (int index = 0; index < listSize; index++)
 	{
 		SoundSettings settings;

@@ -55,6 +55,16 @@ public:
 		stream >> _sustainPeak;
 	}
 
+	bool IsEqual(const Envelope* other)
+	{
+		return _attack == other->GetAttack() &&
+			_decay == other->GetDecay() &&
+			_sustain == other->GetSustain() &&
+			_release == other->GetRelease() &&
+			_attackPeak == other->GetAttackPeak() &&
+			_sustainPeak == other->GetSustainPeak();
+	}
+
 private:
 
 	bool Compare(const Envelope& envelope);

@@ -9,6 +9,7 @@
 #include "SynthSettings.h"
 #include "SynthTabModelUI.h"
 #include <string>
+#include <vector>
 
 class MainModelUI : public ModelUI
 {
@@ -22,10 +23,12 @@ public:
 	int GetOrder() const override;
 
 	void FromUI(SynthSettings* destination);
-	void ToUI(OutputSettings* source);
+	void ToUI(const SynthSettings* synthSettings, const OutputSettings* outputSettings);
 
 	SynthTabModelUI* GetSynthTabModelUI() const;
 	OutputModelUI* GetOutputModelUI() const;
+
+	bool HaveSoundSettingsChanged() const;
 
 private:
 
@@ -33,6 +36,8 @@ private:
 	
 	SynthTabModelUI* _synthTabModelUI;
 	OutputModelUI* _outputModelUI;
+
+	bool _haveSoundSettingsChanged;
 };
 
 MainModelUI::MainModelUI(const SynthSettings* synthSettings, const OutputSettings* outputSettings)
@@ -43,6 +48,8 @@ MainModelUI::MainModelUI(const SynthSettings* synthSettings, const OutputSetting
 
 	// Running Initialization Cycle (this may need redesign if the UI grows any bigger)
 	_outputModelUI->ToUI(outputSettings);
+
+	_haveSoundSettingsChanged = false;
 }
 
 MainModelUI::MainModelUI(const MainModelUI& copy)
@@ -53,6 +60,8 @@ MainModelUI::MainModelUI(const MainModelUI& copy)
 
 	// Running Initialization Cycle (this may need redesign if the UI grows any bigger)
 	_outputModelUI->ToUI(copy.GetOutputModelUI()->GetOutputSettings());
+
+	_haveSoundSettingsChanged = false;
 }
 
 MainModelUI::~MainModelUI()
@@ -72,6 +81,11 @@ OutputModelUI* MainModelUI::GetOutputModelUI() const
 	return _outputModelUI;
 }
 
+bool MainModelUI::HaveSoundSettingsChanged() const
+{
+	return _haveSoundSettingsChanged;
+}
+
 std::string MainModelUI::GetName() const
 {
 	return *_name;
@@ -86,9 +100,11 @@ void MainModelUI::FromUI(SynthSettings* destination)
 {
 	_synthTabModelUI->Update(destination->GetDefaultSoundSettings(), destination->GetSoundBankSettings());
 }
-void MainModelUI::ToUI(OutputSettings* source)
+void MainModelUI::ToUI(const SynthSettings* synthSettings, const OutputSettings* outputSettings)
 {
-	_outputModelUI->ToUI(source);
+	_outputModelUI->ToUI(outputSettings);
+
+	_haveSoundSettingsChanged = _synthTabModelUI->GetSoundSettings()->IsEqual(synthSettings->GetCurrentSoundSettings());
 }
 
 #endif

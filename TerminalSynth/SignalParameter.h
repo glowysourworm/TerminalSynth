@@ -136,6 +136,20 @@ public:
 		_automationOscillator = (ParameterAutomationOscillator)automationOscillator;
 	}
 
+	bool IsEqual(const SignalParameter* other)
+	{
+		return *_name == other->GetName() &&
+			_value == other->GetValue() &&
+			_min == other->GetMin() &&
+			_max == other->GetMax() &&
+			_automationEnabled == other->GetAutomationEnabled() &&
+			_automationType == other->GetAutomationType() &&
+			_automationOscillator == other->GetAutomationOscillator() &&
+			_automationOscillatorFrequency == other->GetAutomationFrequency() &&
+			_automationLow == other->GetAutomationLow() &&
+			_automationHigh == other->GetAutomationHigh();
+	}
+
 private:
 
 	std::string* _name;

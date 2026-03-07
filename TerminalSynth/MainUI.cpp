@@ -47,6 +47,8 @@ void MainUI::Initialize(const MainModelUI& model)
 	_synthInformationUI->Initialize(*_model->GetOutputModelUI());
 	_synthTabUI->Initialize(*_model->GetSynthTabModelUI());
 
+	_buttonColor = ftxui::Color::RGBA(0, 0, 255, 50);
+
 	// Airwin Registry List
 	std::vector<std::string> pluginList;
 	_model->GetSynthTabModelUI()->GetEffectRegistry()->GetList(pluginList);
@@ -75,6 +77,13 @@ void MainUI::Initialize(const MainModelUI& model)
 	_mainControl = ftxui::Container::Vertical({
 		_tabControlMenu,
 		_tabControl,
+
+		//ftxui::Button("Save", [&] {
+
+
+
+		//}) | ftxui::bgcolor(_buttonColor) | ftxui::align_right
+
 	}) | ftxui::CatchEvent([&](ftxui::Event event) {
 
 		// Passthrough
@@ -175,6 +184,12 @@ void MainUI::ToUI(const MainModelUI* source)
 {
 	// Synth Information
 	_synthInformationUI->ToUI(source->GetOutputModelUI());
+
+	if (source->HaveSoundSettingsChanged())
+		_buttonColor = ftxui::Color::Red;
+
+	else
+		_buttonColor = ftxui::Color::RGBA(0, 0, 255, 50);
 }
 
 bool MainUI::GetDirty() const

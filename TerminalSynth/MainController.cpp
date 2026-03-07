@@ -114,7 +114,7 @@ void MainController::Loop()
 {
 	auto screen = ftxui::ScreenInteractive::TerminalOutput();
 	auto loop = ftxui::Loop(&screen, _mainUI->GetComponent());
-
+	
 	// Store for detecting device change!
 	std::string currentDevice = _mainModelUI->GetOutputModelUI()->GetOutputSettings()->GetDeviceName();
 
@@ -165,7 +165,7 @@ void MainController::Loop()
 		// 5) Allow one cycle of the FTXUI loop to tick (after our preparation)
 		// 6) Sleep the UI thread to comprise approx 10ms - 15ms (using a interval timer if necessary)
 		//
-		_uiTimer->Mark();
+		_uiTimer->Reset();
 
 		// One UIBase* Cycle
 		_mainUI->Tick();
@@ -240,7 +240,7 @@ void MainController::Loop()
 			_uiRenderTimer->AvgMilli(),
 			_uiSleepTimer->AvgMilli());
 
-		_mainModelUI->ToUI(_userData->GetOutputSettings());
+		_mainModelUI->ToUI(_userData->GetSynthSettings(), _userData->GetOutputSettings());
 		// ***********************
 		
 		_mainUI->ToUI(_mainModelUI);
@@ -253,6 +253,7 @@ void MainController::Loop()
 		//
 		_uiRenderTimer->Reset();
 
+		// Force a refresh (there could be a way to optimize this for CPU usage)
 		screen.PostEvent(ftxui::Event::Custom);
 		loop.RunOnce();
 
@@ -268,5 +269,7 @@ void MainController::Loop()
 			std::this_thread::sleep_for(std::chrono::microseconds(sleepTime));
 
 		_uiSleepTimer->Mark();
+
+		_uiTimer->Mark();
 	}
 }

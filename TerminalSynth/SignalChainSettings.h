@@ -183,6 +183,20 @@ public:
 		}
 	}
 
+	bool IsEqual(const SignalChainSettings* other)
+	{
+		if (_chain->size() != other->GetCount())
+			return false;
+
+		for (int index = 0; index < _chain->size(); index++)
+		{
+			if (!_chain->at(index)->IsEqual(other->Get(index)))
+				return false;
+		}
+
+		return true;
+	}
+
 private:
 
 	// Signal chain effects settings in post processing, synth note signal chain, or as part of the registry

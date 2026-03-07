@@ -8,6 +8,7 @@
 #include "SynthTabUI.h"
 #include "UIBase.h"
 #include <ftxui/component/component_base.hpp>
+#include <ftxui/screen/color.hpp>
 #include <string>
 #include <vector>
 
@@ -44,6 +45,7 @@ private:
 	ftxui::Component _mainControl;
 	ftxui::Component _tabControl;							// Shared Pointer (std::shared_pointer)
 	ftxui::Component _tabControlMenu;
+	ftxui::Color _buttonColor;
 
 	// Output Tab
 	ftxui::Component _outputTab;

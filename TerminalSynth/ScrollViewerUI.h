@@ -5,7 +5,6 @@
 
 #include "ModelUI.h"
 #include "UIBase.h"
-#include <algorithm>
 #include <cmath>
 #include <concepts>
 #include <exception>
@@ -21,7 +20,6 @@
 #include <map>
 #include <string>
 #include <utility>
-#include <vector>
 
 /// <summary>
 /// Concept for enforcing a constraint on the UI model classes. They must inherit from
@@ -48,7 +46,7 @@ class ScrollViewerUI
 {
 public:
 
-	ScrollViewerUI(const std::string& title, const ftxui::Color& titleColor, float scrollDeltaY = 0.05);
+	ScrollViewerUI(float scrollDeltaY = 0.05);
 	~ScrollViewerUI();
 
 	ftxui::Component GetComponent();
@@ -76,6 +74,7 @@ public:
 	void FromUI(const std::string& name, TModel* destination);
 	void ToUI(const std::string& name, const TModel& source);
 	void ToUI(const std::string& name, const TModel* source);
+	bool Contains(const std::string& name);
 	int GetUICount() const;
 	std::string GetName(int index) const;
 	T* GetUI(const std::string& name) const;
@@ -105,9 +104,6 @@ private:
 	ftxui::Component _component;
 	ftxui::Component _listComponent;
 
-	std::string* _title;
-	ftxui::Color* _titleColor;
-
 	bool* _isMouseOver;
 	float* _scrollY;
 	float _scrollDeltaY;
@@ -118,7 +114,7 @@ private:
 };
 
 template<class TModel, IsUIBase<TModel> T>
-ScrollViewerUI<TModel, T>::ScrollViewerUI(const std::string& title, const ftxui::Color& titleColor, float scrollDeltaY)
+ScrollViewerUI<TModel, T>::ScrollViewerUI(float scrollDeltaY)
 {
 	_scrollY = new float(0);
 	_scrollDeltaY = scrollDeltaY;
@@ -126,9 +122,6 @@ ScrollViewerUI<TModel, T>::ScrollViewerUI(const std::string& title, const ftxui:
 	_uiComponents = new std::map<std::string, T*>();
 	_uiModels = new std::map<std::string, TModel*>();
 	//_uiModelOrders = new std::map<int, TModel*>();
-
-	_title = new std::string(title);
-	_titleColor = new ftxui::Color(titleColor);
 
 	// Slider bound to the position of the list
 	ftxui::SliderOption<float> sliderOptions;
@@ -148,20 +141,14 @@ ScrollViewerUI<TModel, T>::ScrollViewerUI(const std::string& title, const ftxui:
 
 	_listComponent = ftxui::Container::Vertical({});
 
-	_component = ftxui::Container::Vertical(
-	{
-		ftxui::Renderer([&] { return ftxui::text(*_title) | ftxui::color(*_titleColor); }),
-		ftxui::Renderer([&] { return ftxui::separator(); }),
+	_component = ftxui::Container::Horizontal({
 
-		ftxui::Container::Horizontal({
+		// Must render the list to add the focused relative position offset
+		ftxui::Renderer(_listComponent, [&] {
+			return _listComponent->Render() | ftxui::focusPositionRelative(0, *_scrollY) | ftxui::yframe;
+		}) | ftxui::flex_grow,
 
-			// Must render the list to add the focused relative position offset
-			ftxui::Renderer(_listComponent, [&] {
-				return _listComponent->Render() | ftxui::focusPositionRelative(0, *_scrollY) | ftxui::yframe;
-			}) | ftxui::flex_grow,
-
-			scrollBarY | ftxui::yframe | ftxui::align_right
-		})
+		scrollBarY | ftxui::yframe | ftxui::align_right
 
 	}) | ftxui::CatchEvent([&](ftxui::Event event)
 	{
@@ -183,7 +170,7 @@ ScrollViewerUI<TModel, T>::ScrollViewerUI(const std::string& title, const ftxui:
 		// Cancel keyboard events
 		return true;
 
-	}) | ftxui::Hoverable(_isMouseOver) | ftxui::border;
+	}) | ftxui::Hoverable(_isMouseOver) /* | ftxui::border  */;
 }
 
 template<class TModel, IsUIBase<TModel> T>
@@ -198,8 +185,6 @@ ScrollViewerUI<TModel, T>::~ScrollViewerUI()
 		delete iter->second;
 	}
 
-	delete _title;
-	delete _titleColor;
 	delete _isMouseOver;
 	delete _scrollY;
 	delete _uiComponents;
@@ -303,6 +288,11 @@ template<class TModel, IsUIBase<TModel> T>
 void ScrollViewerUI<TModel, T>::ToUI(const std::string& name, const TModel* source)
 {
 	_uiComponents->at(name)->ToUI(source);
+}
+template<class TModel, IsUIBase<TModel> T>
+bool ScrollViewerUI<TModel, T>::Contains(const std::string& name)
+{
+	return _uiComponents->contains(name);
 }
 template<class TModel, IsUIBase<TModel> T>
 int ScrollViewerUI<TModel, T>::GetUICount() const

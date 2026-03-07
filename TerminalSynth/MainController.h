@@ -38,7 +38,7 @@ private:
 
 private:
 
-	const long LOOP_PERIOD_MICRO = 10000;
+	const long LOOP_PERIOD_MICRO = 15000;
 
 	RtAudioController* _rtAudioController;
 	RtAudioUserData* _userData;

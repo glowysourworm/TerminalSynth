@@ -214,6 +214,24 @@ public:
 		}
 	}
 
+	bool IsEqual(const SignalSettings* other)
+	{
+		if (_parameters->size() != other->GetParameterCount())
+			return false;
+
+		for (int index = 0; index < _parameters->size(); index++)
+		{
+			if (!_parameters->at(index)->IsEqual(other->GetParameter(index)))
+				return false;
+		}
+
+		return *_name == other->GetName() &&
+			*_category == other->GetCategory() &&
+			*_infoText == other->GetInfoText() &&
+			_isEnabled == other->GetIsEnabled() &&
+			_isAirwinEffect == other->GetIsAirwinEffect();
+	}
+
 private:
 
 	std::string* _name;

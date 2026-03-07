@@ -66,6 +66,17 @@ public:
 
 public:
 
+	bool IsEqual(const SoundSettings* other) const
+	{
+		return *_name == other->GetName() &&
+			_oscillatorParameters->IsEqual(other->GetOscillatorParameters()) &&
+			_oscillatorEnvelope->IsEqual(other->GetOscillatorEnvelope()) &&
+			_postProcessing->IsEqual(other->GetPostProcessing()) &&
+			_signalProcessing->IsEqual(other->GetSignalChain());
+	}
+
+public:
+
 	void Save(std::ostream& stream)
 	{
 		// Name

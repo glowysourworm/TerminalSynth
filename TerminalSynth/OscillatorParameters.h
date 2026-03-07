@@ -182,6 +182,20 @@ public:
 		_builtInType = (BuiltInOscillators)builtInType;
 	}
 
+public:
+
+	bool IsEqual(const OscillatorParameters* other) const
+	{
+		return *_soundBank == other->GetSoundBank() &&
+			*_soundName == other->GetSoundName() &&
+			_frequency == other->GetFrequency() &&
+			_octave == other->GetOctave() &&
+			_signalLow == other->GetSignalLow() &&
+			_signalHigh == other->GetSignalHigh() &&
+			_type == other->GetType() &&
+			_builtInType == other->GetBuiltInType();
+	}
+
 private:
 
 	bool IsEqual(const OscillatorParameters& other)
