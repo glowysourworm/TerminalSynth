@@ -48,6 +48,50 @@ public:
             destination->at(k + (N / 2)) = even[k] - t;
         }
     }
+
+    /// <summary>
+    /// Multiplies the input vector by a Guassian window function. https://en.wikipedia.org/wiki/Window_function
+    /// </summary>
+    /// <param name="sigma">Standard deviation, should be less than 0.5 for this function</param>
+    /// <param name="destination">Pointer to a vector of signal numbers with an even length</param>
+    static void GaussianWindow(double sigma, std::vector<double>* destination)
+    {
+        const size_t N = destination->size();
+
+        if (sigma > 0.5)
+            throw new std::exception("Must use a value of sigma less than or equal to 0.5 for the GuassianWindow algorithm");
+
+        if (N % 2 != 0)
+            throw new std::exception("Must use an even size array for the GuassianWindow algorithm");
+
+        size_t Nover2 = N / 2;
+
+        for (int n = 0; n < N; n++)
+        {
+            double windowValue = std::exp(-0.5 * std::pow((n - (Nover2)) / (sigma * Nover2), 2));
+
+            destination->at(n) *= windowValue;
+        }
+    }
+
+    /// <summary>
+    /// Generates a Guassian window function value. https://en.wikipedia.org/wiki/Window_function
+    /// </summary>
+    /// <param name="sigma">Standard deviation, should be less than 0.5 for this function</param>
+    /// <param name="n">Current index of the signal vector</param>
+    /// <param name="N">Length signal vector. MUST BE MULTIPLE OF 2!</param>
+    static double GaussianWindow(double sigma, size_t n, size_t N)
+    {
+        if (sigma > 0.5)
+            throw new std::exception("Must use a value of sigma less than or equal to 0.5 for the GuassianWindow algorithm");
+
+        if (N % 2 != 0)
+            throw new std::exception("Must use an even size array for the GuassianWindow algorithm");
+
+        size_t Nover2 = N / 2;
+
+        return std::exp(-0.5 * std::pow((n - (Nover2)) / (sigma * Nover2), 2));
+    }
 };
 
 #endif

@@ -160,10 +160,18 @@ ftxui::Component OutputUI::GetComponent()
                         int leftX = marginX + (i * divX) + k;
                         int rightX = marginX + (i * divX) + divXChannel + k;
 
-                        
+                        float colorMult = 255 / (float)canvas.height();
 
-                        canvas.DrawBlockLine(leftX, canvas.height(), leftX, (1 - *_leftEQ->at(i)) * canvas.height(), ftxui::Color::Blue);
-                        canvas.DrawBlockLine(rightX, canvas.height(), rightX, (1 - *_rightEQ->at(i)) * canvas.height(), ftxui::Color::BlueLight);
+                        for (int j = 0; j < canvas.height(); j++)
+                        {
+                            // Left Channel
+                            if (j > (1 - *_leftEQ->at(i)) * canvas.height())
+                                canvas.DrawBlock(leftX, j, true, ftxui::Color::RGB(255 - (j * colorMult), 0, j * colorMult));
+
+                            // Right Channel
+                            if (j > (1 - *_rightEQ->at(i)) * canvas.height())
+                                canvas.DrawBlock(rightX, j, true, ftxui::Color::RGB(255 - (j * colorMult), 0, j * colorMult));
+                        }
                     }
                 }
 

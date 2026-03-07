@@ -6,6 +6,7 @@
 #include "Accumulator.h"
 #include "Algorithm.h"
 #include "PlaybackFrame.h"
+#include <cmath>
 #include <complex>
 #include <exception>
 #include <vector>
@@ -93,8 +94,10 @@ public:
 
 	void AddSample(double left, double right)
 	{
-		_leftFFT->at(_cursor) = std::complex<double>(left, 0);
-		_rightFFT->at(_cursor) = std::complex<double>(right, 0);
+		double windowValue = Algorithm::GaussianWindow(0.4, _cursor, _leftFFT->size());
+
+		_leftFFT->at(_cursor) = std::complex<double>(windowValue * left, 0);
+		_rightFFT->at(_cursor) = std::complex<double>(windowValue * right, 0);
 
 		_cursor++;
 
@@ -110,6 +113,8 @@ public:
 			int bucketSize =  _leftFFT->size() / _leftAccumulators->size();
 			double leftSum = 0;
 			double rightSum = 0;
+			double leftTotalSum = 0;
+			double rightTotalSum = 0;
 
 			// Set Output Accumulators
 			for (int inputIndex = 0; inputIndex < _leftFFT->size(); inputIndex++)
@@ -120,6 +125,9 @@ public:
 					_leftAccumulators->at(outputIndex)->Add(leftSum / bucketSize);
 					_rightAccumulators->at(outputIndex)->Add(rightSum / bucketSize);
 
+					leftTotalSum += _leftAccumulators->at(outputIndex)->GetAvg();
+					rightTotalSum += _rightAccumulators->at(outputIndex)->GetAvg();
+
 					leftSum = 0;
 					rightSum = 0;
 
@@ -129,17 +137,17 @@ public:
 
 				auto leftComplex = _leftFFT->at(inputIndex);
 				auto rightComplex = _rightFFT->at(inputIndex);
-
-				leftSum += (leftComplex * std::conj(leftComplex)).real();
-				rightSum += (rightComplex * std::conj(rightComplex)).real();
+				
+				leftSum += std::sqrt((leftComplex * std::conj(leftComplex)).real());
+				rightSum += std::sqrt((rightComplex * std::conj(rightComplex)).real());
 			}
 
 			// Set Output
 			for (int outputIndex = 0; outputIndex < _leftAccumulators->size(); outputIndex++)
 			{
 				// Set output with accumulator windowed average
-				_output->at(outputIndex).SetFrame(_leftAccumulators->at(outputIndex)->GetAvg(), 
-												  _rightAccumulators->at(outputIndex)->GetAvg(), 0);
+				_output->at(outputIndex).SetFrame(_leftAccumulators->at(outputIndex)->GetAvg() /* / fmax(leftTotalSum, 1) */,
+												  _rightAccumulators->at(outputIndex)->GetAvg() /* / fmax(rightTotalSum, 1) */ , 0);
 			}
 		}
 	}
