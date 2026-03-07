@@ -1,16 +1,25 @@
 #include "Constant.h"
+#include "SignalChainSettings.h"
 #include "SoundBankSettings.h"
 #include "SoundSettings.h"
 #include "SynthNoteMap.h"
 #include "SynthSettings.h"
 #include "WindowsKeyCodes.h"
+#include <istream>
+#include <ostream>
 #include <string>
+#include <vector>
 
 SynthSettings::SynthSettings(const std::string& soundBankDirectory)
 {
 	_keyMap = new SynthNoteMap();
-	_soundSettings = new SoundSettings();
+	_defaultSoundSettings = new SoundSettings("Default");
+	_currentSoundSettings = _defaultSoundSettings;						// DO NOT DELETE!
 	_soundBankSettings = new SoundBankSettings(soundBankDirectory);		// May fail during a try / catch. Settings will be empty, but useable.
+
+	_soundSettingsList = new std::vector<SoundSettings*>();
+
+	_effectRegistry = new SignalChainSettings();
 
 	_midiLow = MIDI_PIANO_LOW_NUMBER;
 	_midiHigh = MIDI_PIANO_HIGH_NUMBER;
@@ -23,7 +32,18 @@ SynthSettings::SynthSettings(const SynthSettings& copy)
 {
 	_keyMap = new SynthNoteMap(copy.GetNoteMap());
 	_soundBankSettings = new SoundBankSettings(*copy.GetSoundBankSettings());
-	_soundSettings = new SoundSettings(*copy.GetSoundSettings());
+	_defaultSoundSettings = new SoundSettings(*copy.GetDefaultSoundSettings());
+	_currentSoundSettings = copy.GetCurrentSoundSettings();							// DO NOT DELETE!
+
+	_soundSettingsList = new std::vector<SoundSettings*>();
+	for (int index = 0; index < copy.GetSoundSettingsCount(); index++)
+	{
+		// MEMORY! ~SynthSettings, ~SoundSettings
+		_soundSettingsList->push_back(new SoundSettings(*copy.GetSoundSettings(index)));
+	}
+
+
+	_effectRegistry = new SignalChainSettings(*copy.GetEffectRegistry());
 
 	_midiLow = copy.GetMidiLow();
 	_midiHigh = copy.GetMidiHigh();
@@ -33,8 +53,16 @@ SynthSettings::SynthSettings(const SynthSettings& copy)
 }
 SynthSettings::~SynthSettings()
 {
+	for (int index = 0; index < _soundSettingsList->size(); index++)
+	{
+		// MEMORY! ~SoundSettings
+		delete _soundSettingsList->at(index);
+	}
+
+	delete _effectRegistry;
 	delete _keyMap;
-	delete _soundSettings;
+	delete _defaultSoundSettings;
+	delete _soundSettingsList;
 	delete _soundBankSettings;
 }
 bool SynthSettings::IsDirty() const
@@ -59,9 +87,62 @@ SoundBankSettings* SynthSettings::GetSoundBankSettings() const
 {
 	return _soundBankSettings;
 }
-SoundSettings* SynthSettings::GetSoundSettings() const
+SoundSettings* SynthSettings::GetDefaultSoundSettings() const
 {
-	return _soundSettings;
+	return _defaultSoundSettings;
+}
+SoundSettings* SynthSettings::GetCurrentSoundSettings() const
+{
+	return _currentSoundSettings;
+}
+void SynthSettings::Save(std::ostream& stream)
+{
+	// Save:  KeyMap, User Sound Settings
+
+	// Stream << KeyMap*
+	_keyMap->Save(stream);
+	
+	// Stream << User Sound Settings Count
+	stream << _soundSettingsList->size();
+
+	// Stream << User Sound Settings Instances
+	for (int index = 0; index < _soundSettingsList->size(); index++)
+	{
+		_soundSettingsList->at(index)->Save(stream);
+	}
+}
+void SynthSettings::Read(std::istream& stream)
+{
+	if (_keyMap != nullptr)
+		delete _keyMap;
+
+	for (int index = 0; index < _soundSettingsList->size(); index++)
+	{
+		delete _soundSettingsList->at(index);
+	}
+
+	_soundSettingsList->clear();
+
+	// Read:  KeyMap, User Sound Settings
+	size_t listSize = 0;
+
+	// Stream >> SynthNoteMap*
+	SynthNoteMap keyMap;
+	keyMap.Read(stream);
+
+	_keyMap = new SynthNoteMap(keyMap);
+
+	// Stream >> User Sound Settings Count
+	stream >> listSize;
+
+	// Stream >> User Sound Settings Instances
+	for (int index = 0; index < listSize; index++)
+	{
+		SoundSettings settings;
+		settings.Read(stream);
+
+		_soundSettingsList->push_back(new SoundSettings(settings));
+	}
 }
 void SynthSettings::IterateKeymap(SynthNoteMap::KeymapIterationCallback callback) const
 {
@@ -115,9 +196,44 @@ void SynthSettings::SetMidiNote(WindowsKeyCodes keyCode, int midiNote)
 	_keyMap->Add(keyCode, midiNote);
 	_isDirty = true;
 }
+void SynthSettings::SaveCurrentSoundSettings(const std::string& name)
+{
+	SoundSettings* userSettings = new SoundSettings(name);
+
+	// Copy from current settings
+	userSettings->Update(_currentSoundSettings);
+
+	// Store these and save to file (also)
+	_soundSettingsList->push_back(userSettings);
+
+	_isDirty = true;
+}
 void SynthSettings::SetOversamplingFactor(float value)
 {
 	_oversamplingFactor = value;
 	_isDirty = true;
+}
+
+SignalChainSettings* SynthSettings::GetEffectRegistry() const
+{
+	return _effectRegistry;
+}
+
+int SynthSettings::GetSoundSettingsCount() const
+{
+	return _soundSettingsList->size();
+}
+
+SoundSettings* SynthSettings::GetSoundSettings(int index) const
+{
+	return _soundSettingsList->at(index);
+}
+
+void SynthSettings::GetSoundSettingsList(std::vector<std::string>& destination)
+{
+	for (int index = 0; index < _soundSettingsList->size(); index++)
+	{
+		destination.push_back(_soundSettingsList->at(index)->GetName());
+	}
 }
 

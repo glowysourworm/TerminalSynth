@@ -6,16 +6,19 @@
 #include "Envelope.h"
 #include "OscillatorParameters.h"
 #include "SignalChainSettings.h"
-#include "SignalSettings.h"
-#include <vector>
+#include <istream>
+#include <ostream>
+#include <string>
 
 class SoundSettings
 {
 public:
 
-	SoundSettings()
+	SoundSettings() : SoundSettings("No Name")
+	{ }
+	SoundSettings(const std::string& name)
 	{
-		_completeList = new SignalChainSettings();
+		_name = new std::string(name);
 		_postProcessing = new SignalChainSettings();
 		_signalProcessing = new SignalChainSettings();
 		_oscillatorParameters = new OscillatorParameters();
@@ -23,7 +26,7 @@ public:
 	}
 	SoundSettings(const SoundSettings& copy)
 	{
-		_completeList = new SignalChainSettings(*copy.GetEffectRegistry());
+		_name = new std::string(copy.GetName());
 		_postProcessing = new SignalChainSettings(*copy.GetPostProcessing());
 		_signalProcessing = new SignalChainSettings(*copy.GetSignalChain());
 		_oscillatorParameters = new OscillatorParameters(*copy.GetOscillatorParameters());
@@ -31,25 +34,18 @@ public:
 	}
 	~SoundSettings()
 	{
+		delete _name;
 		delete _signalProcessing;
 		delete _postProcessing;
-		delete _completeList;
 		delete _oscillatorParameters;
 		delete _oscillatorEnvelope;
 	}
 
-	void Initialize(const std::vector<SignalSettings>& signalChainRegistry)
-	{
-		for (int index = 0; index < signalChainRegistry.size(); index++)
-		{
-			_completeList->Add(signalChainRegistry.at(index));
-		}
-	}
+	std::string GetName() const { return *_name; }
 
 	OscillatorParameters* GetOscillatorParameters() const { return _oscillatorParameters; }
 	Envelope* GetOscillatorEnvelope() const { return _oscillatorEnvelope; }
 
-	SignalChainSettings* GetEffectRegistry() const { return _completeList; }
 	SignalChainSettings* GetSignalChain() const { return _signalProcessing; }
 	SignalChainSettings* GetPostProcessing() const { return _postProcessing; }
 
@@ -62,24 +58,58 @@ public:
 
 		isDirty |= _oscillatorParameters->Update(settings->GetOscillatorParameters());
 		isDirty |= _oscillatorEnvelope->Update(settings->GetOscillatorEnvelope());
-		isDirty |= _completeList->Update(settings->GetEffectRegistry(), false);
 		isDirty |= _postProcessing->Update(settings->GetPostProcessing(), true);			// overwrite
 		isDirty |= _signalProcessing->Update(settings->GetSignalChain(), true);				// overwrite
 
 		return isDirty;
 	}
 
+public:
+
+	void Save(std::ostream& stream)
+	{
+		// Name
+		stream << *_name;
+
+		// Oscillator Parameters
+		_oscillatorParameters->Save(stream);
+
+		// Envelope
+		_oscillatorEnvelope->Save(stream);
+
+		// Post Processing
+		_postProcessing->Save(stream);
+
+		// Signal Processing
+		_signalProcessing->Save(stream);
+	}
+	void Read(std::istream& stream)
+	{
+		// Name
+		stream >> *_name;
+
+		// Oscillator Parameters
+		_oscillatorParameters->Read(stream);
+
+		// Envelope
+		_oscillatorEnvelope->Read(stream);
+
+		// Post Processing
+		_postProcessing->Read(stream);
+
+		// Signal Processing
+		_signalProcessing->Read(stream);
+	}
+
 private:
+
+	std::string* _name;
 
 	// Oscillator
 	OscillatorParameters* _oscillatorParameters;
 
 	// Envelope
 	Envelope* _oscillatorEnvelope;
-
-	// Effect Registry:  There was a circular reference coupling SignalBase* to SynthSettings*. So, this list is just 
-	//					 loose strings for having a lookup. This is the complete list of SignalSettings*.
-	SignalChainSettings* _completeList;
 
 	// Current included SignalBase* effects in post processing
 	SignalChainSettings* _postProcessing;

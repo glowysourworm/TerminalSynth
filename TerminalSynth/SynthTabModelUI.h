@@ -4,6 +4,7 @@
 #define SYNTH_TAB_MODEL_UI_H
 
 #include "ModelUI.h"
+#include "SignalChainSettings.h"
 #include "SoundBankSettings.h"
 #include "SoundSettings.h"
 #include <string>
@@ -12,7 +13,7 @@ class SynthTabModelUI : public ModelUI
 {
 public:
 
-	SynthTabModelUI(const SoundSettings* soundSettings, const SoundBankSettings* soundBankSettings);
+	SynthTabModelUI(const SignalChainSettings* effectRegistry, const SoundSettings* soundSettings, const SoundBankSettings* soundBankSettings);
 	SynthTabModelUI(const SynthTabModelUI& copy);
 	~SynthTabModelUI();
 
@@ -23,6 +24,7 @@ public:
 
 	SoundSettings* GetSoundSettings() const;
 	SoundBankSettings* GetSoundBankSettings() const;
+	const SignalChainSettings* GetEffectRegistry() const;
 
 private:
 
@@ -30,19 +32,25 @@ private:
 
 	SoundSettings* _soundSettings;
 	SoundBankSettings* _soundBankSettings;
+
+	// DO NOT DELETE!
+	const SignalChainSettings* _effectRegistry;
 };
 
-SynthTabModelUI::SynthTabModelUI(const SoundSettings* soundSettings, const SoundBankSettings* soundBankSettings)
+SynthTabModelUI::SynthTabModelUI(const SignalChainSettings* effectRegistry, const SoundSettings* soundSettings, const SoundBankSettings* soundBankSettings)
 {
 	_name = new std::string("Synth Tab");
 	_soundSettings = new SoundSettings(*soundSettings);
 	_soundBankSettings = new SoundBankSettings(*soundBankSettings);
+	_effectRegistry = effectRegistry;
 }
 
 SynthTabModelUI::SynthTabModelUI(const SynthTabModelUI& copy)
 {
+	_name = new std::string("Synth Tab");
 	_soundSettings = new SoundSettings(*copy.GetSoundSettings());
 	_soundBankSettings = new SoundBankSettings(*copy.GetSoundBankSettings());
+	_effectRegistry = copy.GetEffectRegistry();
 }
 
 SynthTabModelUI::~SynthTabModelUI()
@@ -77,6 +85,11 @@ SoundSettings* SynthTabModelUI::GetSoundSettings() const
 SoundBankSettings* SynthTabModelUI::GetSoundBankSettings() const
 {
 	return _soundBankSettings;
+}
+
+const SignalChainSettings* SynthTabModelUI::GetEffectRegistry() const
+{
+	return _effectRegistry;
 }
 
 #endif

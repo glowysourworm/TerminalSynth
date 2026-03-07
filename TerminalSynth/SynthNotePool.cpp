@@ -26,14 +26,14 @@ SynthNotePool::SynthNotePool(const SoundRegistry* effectRegistry, const SynthSet
 	_disengagedNotes = new std::map<SynthNote*, SynthNote*>();
 	_waveTableCache = new WaveTableCache();
 	_synthNoteCache = new SynthNoteCache();
-	_envelope = new Envelope(*configuration->GetSoundSettings()->GetOscillatorEnvelope());
-	_oscillatorParameters = new OscillatorParameters(*configuration->GetSoundSettings()->GetOscillatorParameters());
+	_envelope = new Envelope(*configuration->GetDefaultSoundSettings()->GetOscillatorEnvelope());
+	_oscillatorParameters = new OscillatorParameters(*configuration->GetDefaultSoundSettings()->GetOscillatorParameters());
 	_hasStaleParameters = false;
 	_signalChain = new SignalChain();
 
 	// Initialize (CHECK SOUND BANKS!) (NO LOGGING!)
 	_waveTableCache->Initialize(configuration, settings);
-	_signalChain->Initialize(effectRegistry, configuration->GetSoundSettings()->GetSignalChain(), settings);
+	_signalChain->Initialize(effectRegistry, configuration->GetDefaultSoundSettings()->GetSignalChain(), settings);
 }
 
 SynthNotePool::~SynthNotePool()

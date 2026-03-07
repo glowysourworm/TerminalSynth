@@ -5,6 +5,8 @@
 
 #include "Constant.h"
 #include "Utility.h"
+#include <istream>
+#include <ostream>
 #include <string>
 #include <type_traits>
 
@@ -147,6 +149,37 @@ public:
 	bool operator!=(const OscillatorParameters& parameters)
 	{
 		return !IsEqual(parameters);
+	}
+
+public:
+
+	void Save(std::ostream& stream)
+	{
+		stream << *_soundBank;
+		stream << *_soundName;
+		stream << _frequency;
+		stream << _octave;
+		stream << _signalLow;
+		stream << _signalHigh;
+		stream << (int)_type;
+		stream << (int)_builtInType;
+
+	}
+	void Read(std::istream& stream)
+	{
+		int type, builtInType;
+
+		stream >> *_soundBank;
+		stream >> *_soundName;
+		stream >> _frequency;
+		stream >> _octave;
+		stream >> _signalLow;
+		stream >> _signalHigh;
+		stream >> type;
+		stream >> builtInType;
+
+		_type = (OscillatorType)type;
+		_builtInType = (BuiltInOscillators)builtInType;
 	}
 
 private:

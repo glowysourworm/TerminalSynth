@@ -1,7 +1,9 @@
 #include "SynthNoteMap.h"
 #include "WindowsKeyCodes.h"
 #include <exception>
+#include <istream>
 #include <map>
+#include <ostream>
 #include <utility>
 
 SynthNoteMap::SynthNoteMap()
@@ -53,6 +55,50 @@ int SynthNoteMap::GetMidiNote(WindowsKeyCodes keyCode) const
 bool SynthNoteMap::HasMidiNote(WindowsKeyCodes keyCode) const
 {
 	return _keyCodeMap->contains(keyCode);
+}
+
+void SynthNoteMap::Save(std::ostream& stream)
+{
+	// Size
+	stream << _keyCodeMap->size();
+
+	for (auto iter = _keyCodeMap->begin(); iter != _keyCodeMap->end(); ++iter)
+	{
+		// Windows Key Codes
+		stream << (int)iter->first;
+
+		// Midi Number
+		stream << iter->second;
+	}
+}
+
+void SynthNoteMap::Read(std::istream& stream)
+{
+	delete _keyCodeMap;
+	delete _keyCodeReverseMap;
+
+	_keyCodeMap = new std::map<WindowsKeyCodes, int>();
+	_keyCodeReverseMap = new std::map<int, WindowsKeyCodes>();
+
+	size_t length = 0;
+
+	// Size
+	stream >> length;
+
+	for (int index = 0; index < length; index++)
+	{
+		int keyCode;
+		int midiNumber;
+
+		// Windows Key Codes
+		stream >> keyCode;
+
+		// Midi Number
+		stream >> midiNumber;
+
+		_keyCodeMap->insert(std::make_pair((WindowsKeyCodes)keyCode, midiNumber));
+		_keyCodeReverseMap->insert(std::make_pair(midiNumber, (WindowsKeyCodes)keyCode));
+	}
 }
 
 void SynthNoteMap::Iterate(KeymapIterationCallback callback) const

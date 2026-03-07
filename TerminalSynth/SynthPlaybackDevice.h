@@ -90,7 +90,7 @@ bool SynthPlaybackDevice<TSignal>::Initialize(const SoundRegistry* effectRegistr
 template<SignalValue TSignal>
 bool SynthPlaybackDevice<TSignal>::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
-	_synth->Update(effectRegistry, configuration->GetSoundSettings());
+	_synth->Update(effectRegistry, configuration->GetDefaultSoundSettings());
 
 	return true;
 }

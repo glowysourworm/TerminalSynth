@@ -5,7 +5,9 @@
 
 #include "SignalSettings.h"
 #include <exception>
+#include <istream>
 #include <iterator>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -142,6 +144,43 @@ public:
 		}
 
 		return isDirty;
+	}
+
+public:
+
+	void Save(std::ostream& stream)
+	{
+		// Length
+		stream << _chain->size();
+
+		for (int index = 0; index < _chain->size(); index++)
+		{
+			// SignalSettings -> Save
+			_chain->at(index)->Save(stream);
+		}
+	}
+	void Read(std::istream& stream)
+	{
+		for (int index = 0; index < _chain->size(); index++)
+		{
+			delete _chain->at(index);
+		}
+
+		_chain->clear();
+
+		size_t length = 0;
+
+		// Length
+		stream >> length;
+
+		for (int index = 0; index < _chain->size(); index++)
+		{
+			// Signal Settings -> Read
+			SignalSettings settings;
+			settings.Read(stream);
+			
+			_chain->push_back(new SignalSettings(settings));
+		}
 	}
 
 private:

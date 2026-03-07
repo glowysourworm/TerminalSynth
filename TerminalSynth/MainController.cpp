@@ -79,7 +79,7 @@ bool MainController::Initialize(SynthSettings* configuration, OutputSettings* pa
 	success &= effectRegistry->Initialize(parameters, registryList);
 
 	// -> Initialize(..) (completes the configuration's registry)
-	configuration->GetSoundSettings()->Initialize(registryList);
+	configuration->GetEffectRegistry()->Initialize(registryList);
 
 	// -> Initilize(..) (the RT Audio playback can now be unblocked)
 	_userData->Initialize(configuration, effectRegistry, parameters);

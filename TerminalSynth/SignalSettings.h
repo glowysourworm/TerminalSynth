@@ -5,6 +5,8 @@
 
 #include "SignalParameter.h"
 #include <exception>
+#include <istream>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -167,6 +169,49 @@ public:
 		}
 
 		return isDirty;
+	}
+
+public:
+
+	void Save(std::ostream& stream)
+	{
+		stream << *_name;
+		stream << *_category;
+		stream << *_infoText;
+		stream << _isEnabled;
+		stream << _isAirwinEffect;
+		stream << _parameters->size();
+
+		for (int index = 0; index < _parameters->size(); index++)
+		{
+			_parameters->at(index)->Save(stream);
+		}
+	}
+	void Read(std::istream& stream)
+	{
+		for (int index = 0; index < _parameters->size(); index++)
+		{
+			delete _parameters->at(index);
+		}
+
+		_parameters->clear();
+
+		size_t length = 0;
+
+		stream >> *_name;
+		stream >> *_category;
+		stream >> *_infoText;
+		stream >> _isEnabled;
+		stream >> _isAirwinEffect;
+		stream >> length;
+
+		for (int index = 0; index < length; index++)
+		{
+			SignalParameter parameter;
+			parameter.Read(stream);
+
+			_parameters->push_back(new SignalParameter(parameter));
+		}
 	}
 
 private:

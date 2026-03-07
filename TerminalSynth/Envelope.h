@@ -1,4 +1,6 @@
 #pragma once
+#include <istream>
+#include <ostream>
 
 #ifndef ENVELOPE_H
 #define ENVELOPE_H
@@ -31,6 +33,27 @@ public:
 
 	bool operator!=(const Envelope& envelope);
 	bool operator==(const Envelope& envelope);
+
+public:
+
+	void Save(std::ostream& stream)
+	{
+		stream << _attack;
+		stream << _decay;
+		stream << _sustain;
+		stream << _release;
+		stream << _attackPeak;
+		stream << _sustainPeak;
+	}
+	void Read(std::istream& stream) 
+	{
+		stream >> _attack;
+		stream >> _decay;
+		stream >> _sustain;
+		stream >> _release;
+		stream >> _attackPeak;
+		stream >> _sustainPeak;
+	}
 
 private:
 

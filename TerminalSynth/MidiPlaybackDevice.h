@@ -126,7 +126,7 @@ bool MidiPlaybackDevice<TSignal>::Initialize(const SoundRegistry* effectRegistry
 template<SignalValue TSignal>
 bool MidiPlaybackDevice<TSignal>::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
-	_synth->Update(effectRegistry, configuration->GetSoundSettings());
+	_synth->Update(effectRegistry, configuration->GetDefaultSoundSettings());
 
 	return true;
 }

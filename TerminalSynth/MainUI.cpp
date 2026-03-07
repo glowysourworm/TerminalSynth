@@ -49,7 +49,7 @@ void MainUI::Initialize(const MainModelUI& model)
 
 	// Airwin Registry List
 	std::vector<std::string> pluginList;
-	_model->GetSynthTabModelUI()->GetSoundSettings()->GetEffectRegistry()->GetList(pluginList);
+	_model->GetSynthTabModelUI()->GetEffectRegistry()->GetList(pluginList);
 
 	auto midiSettings = ftxui::Container::Horizontal({
 

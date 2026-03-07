@@ -5,7 +5,9 @@
 
 #include "WindowsKeyCodes.h"
 #include <functional>
+#include <istream>
 #include <map>
+#include <ostream>
 
 class SynthNoteMap
 {
@@ -22,6 +24,9 @@ public:
 	WindowsKeyCodes GetKeyCode(int midiNote) const;
 	int GetMidiNote(WindowsKeyCodes keyCode) const;
 	bool HasMidiNote(WindowsKeyCodes keyCode) const;
+
+	void Save(std::ostream& stream);
+	void Read(std::istream& stream);
 
 	/// <summary>
 	/// Iterates the keymap with the provided callback

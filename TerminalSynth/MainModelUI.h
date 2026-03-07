@@ -38,7 +38,7 @@ private:
 MainModelUI::MainModelUI(const SynthSettings* synthSettings, const OutputSettings* outputSettings)
 {
 	_name = new std::string("Terminal Synth");
-	_synthTabModelUI = new SynthTabModelUI(synthSettings->GetSoundSettings(), synthSettings->GetSoundBankSettings());
+	_synthTabModelUI = new SynthTabModelUI(synthSettings->GetEffectRegistry(), synthSettings->GetDefaultSoundSettings(), synthSettings->GetSoundBankSettings());
 	_outputModelUI = new OutputModelUI(outputSettings);
 
 	// Running Initialization Cycle (this may need redesign if the UI grows any bigger)
@@ -84,7 +84,7 @@ int MainModelUI::GetOrder() const
 
 void MainModelUI::FromUI(SynthSettings* destination)
 {
-	_synthTabModelUI->Update(destination->GetSoundSettings(), destination->GetSoundBankSettings());
+	_synthTabModelUI->Update(destination->GetDefaultSoundSettings(), destination->GetSoundBankSettings());
 }
 void MainModelUI::ToUI(OutputSettings* source)
 {

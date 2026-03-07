@@ -5,12 +5,16 @@
 
 #include "Constant.h"
 #include <exception>
+#include <istream>
+#include <ostream>
 #include <string>
 
 class SignalParameter
 {
 public:
 
+	SignalParameter() : SignalParameter("No Name", 0,0,0)
+	{}
 	SignalParameter(const std::string& name, float initialValue, float min, float max)
 	{
 		_name = new std::string(name);
@@ -96,6 +100,40 @@ public:
 		_value = parameter->GetValue();
 
 		return isDirty;
+	}
+
+public:
+
+	void Save(std::ostream& stream)
+	{
+		stream << *_name;
+		stream << _value;
+		stream << _min;
+		stream << _max;
+		stream << _automationEnabled;
+		stream << (int)_automationType;
+		stream << (int)_automationOscillator;
+		stream << _automationOscillatorFrequency;
+		stream << _automationLow;
+		stream << _automationHigh;
+	}
+	void Read(std::istream& stream)
+	{
+		int automationType, automationOscillator;
+
+		stream >> *_name;
+		stream >> _value;
+		stream >> _min;
+		stream >> _max;
+		stream >> _automationEnabled;
+		stream >> automationType;
+		stream >> automationOscillator;
+		stream >> _automationOscillatorFrequency;
+		stream >> _automationLow;
+		stream >> _automationHigh;
+
+		_automationType = (ParameterAutomationType)automationType;
+		_automationOscillator = (ParameterAutomationOscillator)automationOscillator;
 	}
 
 private:

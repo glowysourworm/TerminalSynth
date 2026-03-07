@@ -24,7 +24,7 @@ Synth::~Synth()
 void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
 {
 	_pianoNotes = new SynthNotePool(effectRegistry, configuration, parameters, 10);
-	_postProcessing->Initialize(effectRegistry, configuration->GetSoundSettings()->GetPostProcessing(), parameters);
+	_postProcessing->Initialize(effectRegistry, configuration->GetDefaultSoundSettings()->GetPostProcessing(), parameters);
 }
 
 void Synth::Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings)
