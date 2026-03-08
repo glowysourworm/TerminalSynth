@@ -5,63 +5,64 @@
 
 #include "AtomicLock.h"
 #include "BaseController.h"
-#include "IntervalTimer.h"
-#include "LoopTimer.h"
-#include "MidiPlaybackDevice.h"
 #include "OutputSettings.h"
-#include "PlaybackClock.h"
 #include "RtAudioUserData.h"
 #include "SoundRegistry.h"
-#include "SynthPlaybackDevice.h"
 #include "SynthSettings.h"
+#include <exception>
+#include <functional>
 #include <string>
 
+/// <summary>
+/// Static functions for RT Audio callbacks; and the container for the RtAudio* instance
+/// </summary>
 class AudioController : public BaseController
 {
 public:
 
-	AudioController(AtomicLock* playbackLock);
-	~AudioController();
-
-	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry) override;
-	bool Dispose() override;
-	void Start() override;
-
 	/// <summary>
-	/// Switches between midi / regular mode
-	/// a file to load. 
+	/// Callback to process RT Audio data (which has a callback with extra variables we don't need)
 	/// </summary>
-	void SetMidiMode(const std::string& midiFile);
-
-	/// <summary>
-	/// Switches between midi / synth mode
-	/// </summary>
-	void SetSynthMode();
+	using AudioCallbackDelegate = std::function<int(float* outputBuffer, unsigned int numberFrames, double streamTime, double streamLatench, RtAudioUserData* userData)>;
 
 public:
 
+	AudioController(AtomicLock* playbackLock) : BaseController(playbackLock) {};
+	~AudioController() {};
+
+	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry) override
+	{
+		throw new std::exception("Please use the Initialize function with the audio callback");
+	}
+
 	/// <summary>
-	/// Processes audio from the RT Audio backend - which fills the output buffer with the provided
-	/// number of samples (interleved frames).
+	/// Initialization function for the synth backend. This must be called before starting the player!
 	/// </summary>
-	/// <param name="outputBuffer">RT Audio buffer</param>
-	/// <param name="numberOfFrames">Number of (L/R) frames to process</param>
-	/// <param name="streamTime">Current stream time from RT Audio</param>
-	/// <param name="configuration">This should be the SynthSettings* which is provided on this thread to process, also.</param>
-	int ProcessAudioCallback(float* outputBuffer, unsigned int numberOfFrames, double streamTime, double streamLatency, RtAudioUserData* userData);
+	virtual bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry, const AudioCallbackDelegate& audioCallback) = 0;
 
-private:
+	/// <summary>
+	/// Starts any threads associated with the controller, after initialization.
+	/// </summary>
+	virtual void Start() = 0;
 
-	bool _midiMode;	
-	bool _initialized;
+	/// <summary>
+	/// Disposes of backend, and controller resources
+	/// </summary>
+	virtual bool Dispose() = 0;
 
-	SynthPlaybackDevice<float>* _synthDevice;
-	MidiPlaybackDevice<float>* _midiDevice;
+	/// <summary>
+	/// Opens the RT Audio backend stream with specified user data
+	/// </summary>
+	/// <param name="userData">Arbitrary data sent along with the backend stream</param>
+	virtual bool OpenStream(void* userData) = 0;
+	virtual bool CloseStream() = 0;
 
-	PlaybackClock* _streamClock;
-	LoopTimer* _audioTimer;
-	IntervalTimer* _audioSampleTimer;
-	IntervalTimer* _audioLockAcquireTimer;
+	virtual bool StartStream() = 0;
+	virtual bool StopStream() = 0;
+
+	virtual bool IsStreamOpen() = 0;
+	virtual bool IsStreamRunning() = 0;
+
 };
 
 #endif

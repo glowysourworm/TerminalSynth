@@ -3,24 +3,20 @@
 #ifndef RT_AUDIO_CONTROLLER_H
 #define RT_AUDIO_CONTROLLER_H
 
+#include "AtomicLock.h"
+#include "AudioController.h"
 #include "OutputSettings.h"
 #include "RtAudio.h"
-#include "RtAudioUserData.h"
-#include <functional>
+#include "SoundRegistry.h"
+#include "SynthSettings.h"
 #include <string>
 
 /// <summary>
 /// Static functions for RT Audio callbacks; and the container for the RtAudio* instance
 /// </summary>
-class RtAudioController
+class RtAudioController : public AudioController
 {
 public:
-	
-	/// <summary>
-	/// Callback to process RT Audio data (which has a callback with extra variables we don't need)
-	/// </summary>
-	using AudioCallbackDelegate = std::function<int(float* outputBuffer, unsigned int numberFrames, double streamTime, double streamLatench, RtAudioUserData* userData)>;
-
 
 	/// <summary>
 	/// Primary RT Audio Callback:  They have a separate thread managing the device audio. So, this will be on their thread; and we 
@@ -50,31 +46,36 @@ public:
 
 public:
 
-	RtAudioController();
+	RtAudioController(AtomicLock* playbackLock);
 	~RtAudioController();
 
 	/// <summary>
-	/// Initializes RT Audio:  Must be called before use. Once called, must call Dispose before re-calling.
+	/// Initialization function for the synth backend. This must be called before starting the player!
 	/// </summary>
-	bool Initialize(OutputSettings* outputSettings, const AudioCallbackDelegate& callback);
+	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry, const AudioCallbackDelegate& audioCallback) override;
 
 	/// <summary>
-	/// Disposes RT Audio:  Must be called to close / delete RT Audio + Stream
+	/// Starts any threads associated with the controller, after initialization.
 	/// </summary>
-	bool DisposeBackend();
+	void Start() override;
+
+	/// <summary>
+	/// Disposes of backend, and controller resources
+	/// </summary>
+	bool Dispose() override;
 
 	/// <summary>
 	/// Opens the RT Audio backend stream with specified user data
 	/// </summary>
 	/// <param name="userData">Arbitrary data sent along with the backend stream</param>
-	bool OpenStream(void* userData);
-	bool CloseStream();
+	bool OpenStream(void* userData) override;
+	bool CloseStream() override;
 
-	bool StartStream();
-	bool StopStream();
+	bool StartStream() override;
+	bool StopStream() override;
 
-	bool IsStreamOpen();
-	bool IsStreamRunning();
+	bool IsStreamOpen() override;
+	bool IsStreamRunning() override;
 
 private:
 

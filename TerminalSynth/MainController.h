@@ -4,13 +4,13 @@
 #define MAIN_CONTROLLER_H
 
 #include "AtomicLock.h"
-#include "AudioController.h"
 #include "BaseController.h"
 #include "IntervalTimer.h"
 #include "LoopTimer.h"
 #include "MainModelUI.h"
 #include "MainUI.h"
 #include "OutputSettings.h"
+#include "PlaybackController.h"
 #include "RtAudioController.h"
 #include "RtAudioUserData.h"
 #include "SoundRegistry.h"
@@ -46,7 +46,7 @@ private:
 	// Primary Owner of SynthSettings*
 	SynthSettings* _configuration;
 
-	AudioController* _audioController;
+	PlaybackController* _playbackController;
 	LoopTimer* _uiTimer;
 	IntervalTimer* _uiDataFetchTimer;
 	IntervalTimer* _uiLockAcquireTimer;

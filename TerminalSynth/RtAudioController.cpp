@@ -1,12 +1,16 @@
+#include "AtomicLock.h"
+#include "AudioController.h"
 #include "OutputSettings.h"
 #include "RtAudioController.h"
 #include "RtAudioUserData.h"
+#include "SoundRegistry.h"
+#include "SynthSettings.h"
 #include <RtAudio.h>
 #include <exception>
 #include <functional>
 #include <string>
 
-RtAudioController::RtAudioController()
+RtAudioController::RtAudioController(AtomicLock* playbackLock) : AudioController(playbackLock)
 {
 	_instance = nullptr;
 	_outputSettings = nullptr;
@@ -17,9 +21,13 @@ RtAudioController::RtAudioController()
 }
 RtAudioController::~RtAudioController()
 {
-	DisposeBackend();
+	Dispose();
 
 	delete _lastErrorText;
+}
+void RtAudioController::Start()
+{
+	// Nothing to do 
 }
 int RtAudioController::AudioCallback(void* outputBuffer, void* inputBuffer, unsigned int nFrames, double streamTime, RtAudioStreamStatus status, void* userData)
 {
@@ -47,7 +55,7 @@ void RtAudioController::ErrorCallback(RtAudioErrorType type, const std::string& 
 	_lastErrorType = type;
 }
 
-bool RtAudioController::Initialize(OutputSettings* outputSettings, const AudioCallbackDelegate& callback)
+bool RtAudioController::Initialize(SynthSettings* configuration, OutputSettings* outputSettings, SoundRegistry* effectRegistry, const AudioCallbackDelegate& audioCallback)
 {
 	if (_initialized)
 		throw new std::exception("RT Audio Controller already initialzed! Must call Dispose() before re-initializing the backend");
@@ -81,7 +89,7 @@ bool RtAudioController::Initialize(OutputSettings* outputSettings, const AudioCa
 										std::placeholders::_2);
 
 		_instance = new RtAudio(RtAudio::Api::WINDOWS_WASAPI, errorCallback);
-		_audioCallback = new AudioCallbackDelegate(callback);
+		_audioCallback = new AudioCallbackDelegate(audioCallback);
 		_outputSettings = outputSettings;
 		_lastErrorText->clear();
 
@@ -128,7 +136,7 @@ bool RtAudioController::Initialize(OutputSettings* outputSettings, const AudioCa
 	return _initialized;
 }
 
-bool RtAudioController::DisposeBackend()
+bool RtAudioController::Dispose()
 {
 	if (!_initialized)
 		throw new std::exception("RT Audio Controller not initialzed! Must call Initialize() before disposing the stream");

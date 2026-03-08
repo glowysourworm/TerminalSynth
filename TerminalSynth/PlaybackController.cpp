@@ -1,20 +1,19 @@
 #include "AtomicLock.h"
-#include "AudioController.h"
 #include "BaseController.h"
 #include "IntervalTimer.h"
 #include "LoopTimer.h"
 #include "MidiPlaybackDevice.h"
 #include "OutputSettings.h"
 #include "PlaybackClock.h"
+#include "PlaybackController.h"
 #include "RtAudioUserData.h"
 #include "SoundRegistry.h"
 #include "SynthPlaybackDevice.h"
 #include "SynthSettings.h"
-#include <cmath>
 #include <exception>
 #include <string>
 
-AudioController::AudioController(AtomicLock* playbackLock) : BaseController(playbackLock)
+PlaybackController::PlaybackController(AtomicLock* playbackLock) : BaseController(playbackLock)
 {
 	_initialized = false;
 	_midiMode = false;
@@ -27,13 +26,13 @@ AudioController::AudioController(AtomicLock* playbackLock) : BaseController(play
 	_audioLockAcquireTimer = new IntervalTimer();
 }
 
-AudioController::~AudioController()
+PlaybackController::~PlaybackController()
 {
 	if (_initialized)
 		this->Dispose();
 }
 
-bool AudioController::Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry)
+bool PlaybackController::Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry)
 {
 	if (_initialized)
 		throw new std::exception("Audio Controller already initialized!");
@@ -46,7 +45,7 @@ bool AudioController::Initialize(SynthSettings* configuration, OutputSettings* p
 	return _initialized;
 }
 
-int AudioController::ProcessAudioCallback(float* outputBuffer, unsigned int numberOfFrames, double streamTime, double streamLatency, RtAudioUserData* userData)
+int PlaybackController::ProcessAudioCallback(float* outputBuffer, unsigned int numberOfFrames, double streamTime, double streamLatency, RtAudioUserData* userData)
 {
 	// Main Controller Initialization
 	if (!userData->IsInitialized())
@@ -119,7 +118,7 @@ int AudioController::ProcessAudioCallback(float* outputBuffer, unsigned int numb
 	return rtAudioReturnValue;
 }
 
-void AudioController::Start()
+void PlaybackController::Start()
 {
 	_streamClock->Reset();
 	_streamClock->Start();
@@ -128,7 +127,7 @@ void AudioController::Start()
 	_audioLockAcquireTimer->Reset();
 }
 
-bool AudioController::Dispose()
+bool PlaybackController::Dispose()
 {
 	if (!_initialized)
 		throw new std::exception("Audio Controller not yet initialized!");
@@ -152,7 +151,7 @@ bool AudioController::Dispose()
 	return true;
 }
 
-void AudioController::SetMidiMode(const std::string& midiFile)
+void PlaybackController::SetMidiMode(const std::string& midiFile)
 {
 	if (!_initialized)
 		throw new std::exception("Audio Controller not yet initialized!");
@@ -163,7 +162,7 @@ void AudioController::SetMidiMode(const std::string& midiFile)
 	_midiDevice->Load(midiFile);
 }
 
-void AudioController::SetSynthMode()
+void PlaybackController::SetSynthMode()
 {
 	if (!_initialized)
 		throw new std::exception("Audio Controller not yet initialized!");

@@ -129,7 +129,7 @@
     <ClCompile Include="PlaybackClock.cpp">
       <Filter>Source Files\Playback</Filter>
     </ClCompile>
-    <ClCompile Include="AudioController.cpp">
+    <ClCompile Include="PlaybackController.cpp">
       <Filter>Source Files\Controller</Filter>
     </ClCompile>
     <ClCompile Include="MainController.cpp">
@@ -260,7 +260,7 @@
     <ClInclude Include="BaseController.h">
       <Filter>Header Files\Controller</Filter>
     </ClInclude>
-    <ClInclude Include="AudioController.h">
+    <ClInclude Include="PlaybackController.h">
       <Filter>Header Files\Controller</Filter>
     </ClInclude>
     <ClInclude Include="AirwindowsEffect.h">
@@ -439,6 +439,9 @@
     </ClInclude>
     <ClInclude Include="OutputModelUI.h">
       <Filter>Header Files\ModelUI</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioController.h">
+      <Filter>Header Files\Controller</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

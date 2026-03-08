@@ -117,7 +117,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <CopyLocalProjectReference>true</CopyLocalProjectReference>
-    <IncludePath>..\airwindows-plugins;$(LIB)\rtaudio;$(LIB)\FTXUI\include;$(LIB)\libsndfile\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\airwindows-plugins;$(LIB)\rtaudio;$(LIB)\FTXUI\include;$(LIB)\libsndfile\include;$(LIB)\portaudio\include;$(IncludePath)</IncludePath>
     <SourcePath>..\airwindows-plugins;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Brinstar|x64'">
@@ -176,8 +176,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(LIB)\rtaudio\Debug;$(LIB)\FTXUI\Debug;$(LIB)\libsndfile\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ftxui-component.lib;ftxui-dom.lib;ftxui-screen.lib;rtaudiod.lib;sndfile.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(LIB)\rtaudio\Debug;$(LIB)\FTXUI\Debug;$(LIB)\libsndfile\Debug;$(LIB)\portaudio\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ftxui-component.lib;ftxui-dom.lib;ftxui-screen.lib;rtaudiod.lib;sndfile.lib;portaudio.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>LinkVerbose</ShowProgress>
       <ForceFileOutput>MultiplyDefinedSymbolOnly</ForceFileOutput>
     </Link>
@@ -237,7 +237,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AirwindowsEffect.cpp" />
-    <ClCompile Include="AudioController.cpp" />
+    <ClCompile Include="PlaybackController.cpp" />
     <ClCompile Include="BiQuadFilter.cpp" />
     <ClCompile Include="CombFilter.cpp" />
     <ClCompile Include="IntervalTimer.cpp" />
@@ -281,7 +281,7 @@
     <ClInclude Include="CheckboxModelUI.h" />
     <ClInclude Include="CombFilter.h" />
     <ClInclude Include="EffectUI.h" />
-    <ClInclude Include="AudioController.h" />
+    <ClInclude Include="PlaybackController.h" />
     <ClInclude Include="BaseController.h" />
     <ClInclude Include="CheckboxUI.h" />
     <ClInclude Include="EnvelopeUI.h" />
@@ -309,6 +309,7 @@
     <ClInclude Include="OutputModelUI.h" />
     <ClInclude Include="OutputUI.h" />
     <ClInclude Include="PlaybackClock.h" />
+    <ClInclude Include="AudioController.h" />
     <ClInclude Include="PlaybackDevice.h" />
     <ClInclude Include="PlaybackBuffer.h" />
     <ClInclude Include="OutputSettings.h" />

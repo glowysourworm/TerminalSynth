@@ -7,6 +7,7 @@
 #include "MainModelUI.h"
 #include "MainUI.h"
 #include "OutputSettings.h"
+#include "PlaybackController.h"
 #include "RtAudioController.h"
 #include "RtAudioUserData.h"
 #include "SignalSettings.h"
@@ -32,8 +33,8 @@ MainController::MainController(AtomicLock* playbackLock) : BaseController(playba
 	_uiLockAcquireTimer = new IntervalTimer();
 	_uiRenderTimer = new IntervalTimer();
 	_uiSleepTimer = new IntervalTimer();
-	_audioController = new AudioController(playbackLock);
-	_rtAudioController = new RtAudioController();
+	_playbackController = new PlaybackController(playbackLock);
+	_rtAudioController = new RtAudioController(playbackLock);
 	_userData = new RtAudioUserData();
 }
 
@@ -47,7 +48,7 @@ MainController::~MainController()
 	delete _uiLockAcquireTimer;
 	delete _uiRenderTimer;
 	delete _uiSleepTimer;
-	delete _audioController;
+	delete _playbackController;
 	delete _rtAudioController;
 	delete _userData;	
 }
@@ -60,13 +61,17 @@ bool MainController::Initialize(SynthSettings* configuration, OutputSettings* pa
 	_configuration = configuration;
 
 	// RT AUDIO
-	bool success = _rtAudioController->Initialize(parameters, std::bind(&AudioController::ProcessAudioCallback,
-																_audioController,
-																std::placeholders::_1,
-																std::placeholders::_2,
-																std::placeholders::_3,
-																std::placeholders::_4,
-																std::placeholders::_5));
+	bool success = _rtAudioController->Initialize(
+		configuration, 
+		parameters, 
+		effectRegistry, 
+		std::bind(&PlaybackController::ProcessAudioCallback,
+			_playbackController,
+			std::placeholders::_1,
+			std::placeholders::_2,
+			std::placeholders::_3,
+			std::placeholders::_4,
+			std::placeholders::_5));
 
 	// RT AUDIO -> Open Stream (SynthSettings*)(PlaybackParameteres*) (INITIALIZE!)
 	success &= _rtAudioController->OpenStream((void*)_userData);
@@ -85,7 +90,7 @@ bool MainController::Initialize(SynthSettings* configuration, OutputSettings* pa
 	_userData->Initialize(configuration, effectRegistry, parameters);
 
 	// Audio Controller (for callback)
-	success &= _audioController->Initialize(configuration, parameters, effectRegistry);
+	success &= _playbackController->Initialize(configuration, parameters, effectRegistry);
 
 	// Main UI Initialize
 	_mainModelUI = new MainModelUI(configuration, parameters);
@@ -97,7 +102,7 @@ bool MainController::Initialize(SynthSettings* configuration, OutputSettings* pa
 
 void MainController::Start()
 {
-	_audioController->Start();
+	_playbackController->Start();
 	_rtAudioController->StartStream();
 
 	//...
@@ -107,7 +112,7 @@ void MainController::Start()
 bool MainController::Dispose()
 {
 	// Stops UI thread
-	return _audioController->Dispose() && _rtAudioController->DisposeBackend();
+	return _playbackController->Dispose() && _rtAudioController->Dispose();
 }
 
 void MainController::Loop()
