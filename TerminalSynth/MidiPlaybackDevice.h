@@ -3,13 +3,13 @@
 #ifndef MIDI_PLAYBACK_DEVICE_H
 #define MIDI_PLAYBACK_DEVICE_H
 
-#include "Accumulator.h"
+#include "Constant.h"
 #include "MidiEvent.h"
 #include "MidiEventList.h"
 #include "MidiFile.h"
 #include "OutputSettings.h"
-#include "PlaybackBuffer.h"
 #include "PlaybackDevice.h"
+#include "PlaybackFormatTransformer.h"
 #include "PlaybackFrame.h"
 #include "SoundRegistry.h"
 #include "Synth.h"
@@ -17,8 +17,7 @@
 #include <functional>
 #include <string>
 
-template<SignalValue TSignal>
-class MidiPlaybackDevice : public PlaybackDevice<TSignal>
+class MidiPlaybackDevice : public PlaybackDevice
 {
 public:
 
@@ -30,7 +29,8 @@ public:
 	bool GetLastOutput() const override;
 	bool SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration) override;
 	int WritePlaybackBuffer(
-		TSignal* playbackBuffer,
+		void* playbackBuffer,
+		AudioStreamFormat format,
 		unsigned int numberOfFrames,
 		double streamTime,
 		const OutputSettings* outputSettings) override;
@@ -43,7 +43,7 @@ public:
 	/// <summary>
 	/// Returns average output for specified channel from the last frame buffer write
 	/// </summary>
-	TSignal GetOutput(int channelIndex) const;
+	float GetOutput(int channelIndex) const;
 
 private:
 
@@ -85,8 +85,7 @@ private:
 	bool _initialized;
 };
 
-template<SignalValue TSignal>
-MidiPlaybackDevice<TSignal>::MidiPlaybackDevice()
+MidiPlaybackDevice::MidiPlaybackDevice()
 {
 	_midiFile = nullptr;
 	_midiSecondsPerTick = 0;
@@ -100,15 +99,13 @@ MidiPlaybackDevice<TSignal>::MidiPlaybackDevice()
 	_initialized = false;
 }
 
-template<SignalValue TSignal>
-MidiPlaybackDevice<TSignal>::~MidiPlaybackDevice()
+MidiPlaybackDevice::~MidiPlaybackDevice()
 {
 	delete _synth;
 	delete _frame;
 }
 
-template<SignalValue TSignal>
-bool MidiPlaybackDevice<TSignal>::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
+bool MidiPlaybackDevice::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
 {
 	_numberOfChannels = parameters->GetNumberOfChannels();
 	_samplingRate = parameters->GetSamplingRate();
@@ -123,16 +120,14 @@ bool MidiPlaybackDevice<TSignal>::Initialize(const SoundRegistry* effectRegistry
 	return _initialized;
 }
 
-template<SignalValue TSignal>
-bool MidiPlaybackDevice<TSignal>::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration)
+bool MidiPlaybackDevice::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
 	_synth->Update(effectRegistry, configuration->GetDefaultSoundSettings());
 
 	return true;
 }
 
-template<SignalValue TSignal>
-bool MidiPlaybackDevice<TSignal>::SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration)
+bool MidiPlaybackDevice::SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration)
 {
 	bool newPlayback = false;
 
@@ -155,8 +150,7 @@ bool MidiPlaybackDevice<TSignal>::SetForPlayback(unsigned int numberOfFrames, do
 	return newPlayback;
 }
 
-template<SignalValue TSignal>
-void MidiPlaybackDevice<TSignal>::SetMidiSynth(double currentStreamTime, int currentFrameIndex, const SynthSettings* configuration)
+void MidiPlaybackDevice::SetMidiSynth(double currentStreamTime, int currentFrameIndex, const SynthSettings* configuration)
 {
 	Synth* synth = _synth;
 
@@ -165,20 +159,20 @@ void MidiPlaybackDevice<TSignal>::SetMidiSynth(double currentStreamTime, int cur
 		// Note On
 		if (midiEvent.isNoteOn())
 		{
-			synth->Set(midiEvent.getKeyNumber(), true, currentTime, configuration);
+			synth->Set(midiEvent.getKeyNumber(), true, currentTime);
 		}
 
 		// Note Off
 		else if (midiEvent.isNoteOff())
 		{
-			synth->Set(midiEvent.getKeyNumber(), false, currentTime, configuration);
+			synth->Set(midiEvent.getKeyNumber(), false, currentTime);
 		}
 	});
 }
 
-template<SignalValue TSignal>
-int MidiPlaybackDevice<TSignal>::WritePlaybackBuffer(
-	TSignal* playbackBuffer,
+int MidiPlaybackDevice::WritePlaybackBuffer(
+	void* playbackBuffer,
+	AudioStreamFormat format,
 	unsigned int numberOfFrames, 
 	double streamTime, 
 	const OutputSettings* outputSettings)
@@ -197,7 +191,7 @@ int MidiPlaybackDevice<TSignal>::WritePlaybackBuffer(
 	// frame index, looking for MIDI events that are in the file.
 	//
 
-	TSignal* outputBuffer = (TSignal*)playbackBuffer;
+	char* outputBuffer = (char*)playbackBuffer;
 
 	// Calculate frame data (BUFFER SIZE = NUMBER OF CHANNELS x NUMBER OF FRAMES)
 	for (unsigned int frameIndex = 0; frameIndex < numberOfFrames; frameIndex++)
@@ -225,9 +219,7 @@ int MidiPlaybackDevice<TSignal>::WritePlaybackBuffer(
 
 	return 0;
 }
-
-template<SignalValue TSignal>
-void MidiPlaybackDevice<TSignal>::IterateMidiStream(double currentStreamTime, int currentFrameIndex, MidiSynthEventCallback callback)
+void MidiPlaybackDevice::IterateMidiStream(double currentStreamTime, int currentFrameIndex, MidiSynthEventCallback callback)
 {
 	// This will calculate the delta-time involved with the previous frame call
 	double lastStreamTime = currentFrameIndex == 0 ? currentStreamTime : (currentStreamTime + ((currentFrameIndex - 1) / (double)_samplingRate));
@@ -256,8 +248,7 @@ void MidiPlaybackDevice<TSignal>::IterateMidiStream(double currentStreamTime, in
 	}
 }
 
-template<SignalValue TSignal>
-bool MidiPlaybackDevice<TSignal>::Load(const std::string& fileName)
+bool MidiPlaybackDevice::Load(const std::string& fileName)
 {
 	_midiFile = new smf::MidiFile(fileName);
 
@@ -273,14 +264,12 @@ bool MidiPlaybackDevice<TSignal>::Load(const std::string& fileName)
 	return _isLoaded;
 }
 
-template<SignalValue TSignal>
-TSignal MidiPlaybackDevice<TSignal>::GetOutput(int channelIndex) const
+float MidiPlaybackDevice::GetOutput(int channelIndex) const
 {
-	return TSignal();
+	return 0;
 }
 
-template<SignalValue TSignal>
-bool MidiPlaybackDevice<TSignal>::GetLastOutput() const
+bool MidiPlaybackDevice::GetLastOutput() const
 {
 	return _lastOutput;
 }

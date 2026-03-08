@@ -4,6 +4,14 @@
 #ifndef CONSTANT_H
 #define CONSTANT_H
 
+enum class AudioStreamFormat
+{
+	Float32,
+	Int32,
+	Int16,
+	Int8
+};
+
 enum class OscillatorType : int {
 	BuiltIn,
 	SampleBased

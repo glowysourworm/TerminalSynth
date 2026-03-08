@@ -3,10 +3,13 @@
 #ifndef ACCUMULATOR_H
 #define ACCUMULATOR_H
 
-#include "PlaybackBuffer.h"
 #include <cmath>
 #include <cstdlib>
 #include <queue>
+#include <type_traits>
+
+template <typename TSignal>
+concept SignalValue = std::is_floating_point<TSignal>::value;
 
 template<SignalValue TSignal>
 class Accumulator

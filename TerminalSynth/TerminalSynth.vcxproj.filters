@@ -195,6 +195,9 @@
     <ClCompile Include="SignalFactoryCore.cpp">
       <Filter>Source Files\Signal</Filter>
     </ClCompile>
+    <ClCompile Include="PortAudioController.cpp">
+      <Filter>Source Files\Controller</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WindowsKeyCodes.h">
@@ -244,9 +247,6 @@
     </ClInclude>
     <ClInclude Include="SynthNoteMap.h">
       <Filter>Header Files\Synth</Filter>
-    </ClInclude>
-    <ClInclude Include="PlaybackBuffer.h">
-      <Filter>Header Files\Playback</Filter>
     </ClInclude>
     <ClInclude Include="PlaybackClock.h">
       <Filter>Header Files\Playback</Filter>
@@ -442,6 +442,12 @@
     </ClInclude>
     <ClInclude Include="AudioController.h">
       <Filter>Header Files\Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="PortAudioController.h">
+      <Filter>Header Files\Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="PlaybackFormatTransformer.h">
+      <Filter>Header Files\Playback</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

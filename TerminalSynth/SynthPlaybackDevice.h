@@ -4,19 +4,20 @@
 #define SYNTH_PLAYBACK_DEVICE_H
 
 #include "Accumulator.h"
-#include "SoundRegistry.h"
+#include "Constant.h"
 #include "OutputSettings.h"
-#include "PlaybackBuffer.h"
 #include "PlaybackDevice.h"
+#include "PlaybackFormatTransformer.h"
+#include "PlaybackFormatTransformer.h"
 #include "PlaybackFrame.h"
+#include "SoundRegistry.h"
 #include "Synth.h"
 #include "SynthSettings.h"
 #include "WindowsKeyCodes.h"
 #include <Windows.h>
 #include <exception>
 
-template<SignalValue TSignal>
-class SynthPlaybackDevice : public PlaybackDevice<TSignal>
+class SynthPlaybackDevice : public PlaybackDevice
 {
 public:
 
@@ -28,7 +29,8 @@ public:
 	bool SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration) override;
 
 	int WritePlaybackBuffer(
-		TSignal* playbackBuffer,
+		void* playbackBuffer,
+		AudioStreamFormat streamFormat,
 		unsigned int numberOfFrames, 
 		double streamTime, 
 		const OutputSettings* outputSettings) override;
@@ -38,8 +40,8 @@ public:
 	/// <summary>
 	/// Returns average output for specified channel from the last frame buffer write
 	/// </summary>
-	TSignal GetOutputLeft() const;
-	TSignal GetOutputRight() const;
+	float GetOutputLeft() const;
+	float GetOutputRight() const;
 
 private:
 
@@ -52,8 +54,7 @@ private:
 };
 
 
-template<SignalValue TSignal>
-SynthPlaybackDevice<TSignal>::SynthPlaybackDevice()
+SynthPlaybackDevice::SynthPlaybackDevice()
 {
 	_lastOutput = false;
 	_numberOfChannels = 0;
@@ -63,15 +64,13 @@ SynthPlaybackDevice<TSignal>::SynthPlaybackDevice()
 	_initialized = false;
 }
 
-template<SignalValue TSignal>
-SynthPlaybackDevice<TSignal>::~SynthPlaybackDevice()
+SynthPlaybackDevice::~SynthPlaybackDevice()
 {
 	delete _synth;
 	delete _frame;
 }
 
-template<SignalValue TSignal>
-bool SynthPlaybackDevice<TSignal>::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
+bool SynthPlaybackDevice::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
 {
 	_numberOfChannels = parameters->GetNumberOfChannels();
 	_samplingRate = parameters->GetSamplingRate();
@@ -87,16 +86,14 @@ bool SynthPlaybackDevice<TSignal>::Initialize(const SoundRegistry* effectRegistr
 	return _initialized;
 }
 
-template<SignalValue TSignal>
-bool SynthPlaybackDevice<TSignal>::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration)
+bool SynthPlaybackDevice::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration)
 {
 	_synth->Update(effectRegistry, configuration->GetDefaultSoundSettings());
 
 	return true;
 }
 
-template<SignalValue TSignal>
-bool SynthPlaybackDevice<TSignal>::SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration)
+bool SynthPlaybackDevice::SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration)
 {
 	if (!_initialized)
 		throw new std::exception("Audio Controller not yet initialized!");
@@ -140,13 +137,17 @@ bool SynthPlaybackDevice<TSignal>::SetForPlayback(unsigned int numberOfFrames, d
 	return pressedKeys;
 }
 
-template<SignalValue TSignal>
-int SynthPlaybackDevice<TSignal>::WritePlaybackBuffer(TSignal* playbackBuffer, unsigned int numberOfFrames, double streamTime, const OutputSettings* outputSettings)
+int SynthPlaybackDevice::WritePlaybackBuffer(void* playbackBuffer, AudioStreamFormat streamFormat, unsigned int numberOfFrames, double streamTime, const OutputSettings* outputSettings)
 {
 	if (!_initialized)
 		return -1;
 
-	TSignal* outputBuffer = (TSignal*)playbackBuffer;
+	char* outputBuffer = (char*)playbackBuffer;
+
+	// Transform buffers
+	int frameSize = 4;
+	char leftBuffer[4];
+	char rightBuffer[4];
 
 	// Calculate frame data (BUFFER SIZE = NUMBER OF CHANNELS x NUMBER OF FRAMES)
 	for (unsigned int frameIndex = 0; frameIndex < numberOfFrames; frameIndex++)
@@ -162,28 +163,33 @@ int SynthPlaybackDevice<TSignal>::WritePlaybackBuffer(TSignal* playbackBuffer, u
 		// Equalizer Output
 		outputSettings->GetEqualizer()->AddSample(_frame->GetLeft(), _frame->GetRight());
 
-		// Interleved frames
-		outputBuffer[(2 * frameIndex)] = _frame->GetLeft();
-		outputBuffer[(2 * frameIndex) + 1] = _frame->GetRight();
+		// TRANSFORM STREAM:  The byte stream must match the output format
+		PlaybackFormatTransformer::Transform(streamFormat, _frame->GetLeft(), leftBuffer, frameSize);
+		PlaybackFormatTransformer::Transform(streamFormat, _frame->GetRight(), rightBuffer, frameSize);
+
+		// Write Transformed Buffer
+		for (int index = 0; index < frameSize; index++)
+		{
+			// Interleved frames
+			outputBuffer[(2 * frameIndex * frameSize) + index] = leftBuffer[index];
+			outputBuffer[(2 * frameIndex * frameSize) + frameSize + index] = rightBuffer[index];
+		}
 	}
 
 	return 0;
 }
 
-template<SignalValue TSignal>
-TSignal SynthPlaybackDevice<TSignal>::GetOutputLeft() const
+float SynthPlaybackDevice::GetOutputLeft() const
 {
 	return _frame->GetLeft();
 }
 
-template<SignalValue TSignal>
-inline TSignal SynthPlaybackDevice<TSignal>::GetOutputRight() const
+float SynthPlaybackDevice::GetOutputRight() const
 {
 	return _frame->GetRight();
 }
 
-template<SignalValue TSignal>
-bool SynthPlaybackDevice<TSignal>::GetLastOutput() const
+bool SynthPlaybackDevice::GetLastOutput() const
 {
 	return _lastOutput;
 }

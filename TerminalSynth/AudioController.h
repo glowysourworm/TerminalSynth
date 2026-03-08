@@ -5,13 +5,13 @@
 
 #include "AtomicLock.h"
 #include "BaseController.h"
+#include "Constant.h"
 #include "OutputSettings.h"
 #include "RtAudioUserData.h"
 #include "SoundRegistry.h"
 #include "SynthSettings.h"
 #include <exception>
 #include <functional>
-#include <string>
 
 /// <summary>
 /// Static functions for RT Audio callbacks; and the container for the RtAudio* instance
@@ -23,7 +23,7 @@ public:
 	/// <summary>
 	/// Callback to process RT Audio data (which has a callback with extra variables we don't need)
 	/// </summary>
-	using AudioCallbackDelegate = std::function<int(float* outputBuffer, unsigned int numberFrames, double streamTime, double streamLatench, RtAudioUserData* userData)>;
+	using AudioCallbackDelegate = std::function<int(void* outputBuffer, AudioStreamFormat streamFormat, unsigned int numberFrames, double streamTime, double streamLatench, RtAudioUserData* userData)>;
 
 public:
 

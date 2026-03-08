@@ -5,6 +5,7 @@
 
 #include "AtomicLock.h"
 #include "BaseController.h"
+#include "Constant.h"
 #include "IntervalTimer.h"
 #include "LoopTimer.h"
 #include "MidiPlaybackDevice.h"
@@ -48,15 +49,15 @@ public:
 	/// <param name="numberOfFrames">Number of (L/R) frames to process</param>
 	/// <param name="streamTime">Current stream time from RT Audio</param>
 	/// <param name="configuration">This should be the SynthSettings* which is provided on this thread to process, also.</param>
-	int ProcessAudioCallback(float* outputBuffer, unsigned int numberOfFrames, double streamTime, double streamLatency, RtAudioUserData* userData);
+	int ProcessAudioCallback(void* outputBuffer, AudioStreamFormat streamFormat, unsigned int numberOfFrames, double streamTime, double streamLatency, RtAudioUserData* userData);
 
 private:
 
 	bool _midiMode;	
 	bool _initialized;
 
-	SynthPlaybackDevice<float>* _synthDevice;
-	MidiPlaybackDevice<float>* _midiDevice;
+	SynthPlaybackDevice* _synthDevice;
+	MidiPlaybackDevice* _midiDevice;
 
 	PlaybackClock* _streamClock;
 	LoopTimer* _audioTimer;

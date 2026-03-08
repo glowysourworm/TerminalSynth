@@ -4,6 +4,7 @@
 #define MAIN_CONTROLLER_H
 
 #include "AtomicLock.h"
+#include "AudioController.h"
 #include "BaseController.h"
 #include "IntervalTimer.h"
 #include "LoopTimer.h"
@@ -11,7 +12,6 @@
 #include "MainUI.h"
 #include "OutputSettings.h"
 #include "PlaybackController.h"
-#include "RtAudioController.h"
 #include "RtAudioUserData.h"
 #include "SoundRegistry.h"
 #include "SynthSettings.h"
@@ -20,7 +20,7 @@ class MainController : public BaseController
 {
 public:
 
-	MainController(AtomicLock* playbackLock);
+	MainController(AudioController* audioController, AtomicLock* playbackLock);
 	~MainController();
 
 	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry) override;
@@ -40,7 +40,7 @@ private:
 
 	const long LOOP_PERIOD_MICRO = 15000;
 
-	RtAudioController* _rtAudioController;
+	AudioController* _audioController;
 	RtAudioUserData* _userData;
 
 	// Primary Owner of SynthSettings*

@@ -1,5 +1,6 @@
 #include "AtomicLock.h"
 #include "AudioController.h"
+#include "Constant.h"
 #include "OutputSettings.h"
 #include "RtAudioController.h"
 #include "RtAudioUserData.h"
@@ -39,7 +40,7 @@ int RtAudioController::AudioCallback(void* outputBuffer, void* inputBuffer, unsi
 
 	// Audio Callback:  Casting (void*) user data to our synth configuration! And, the output buffer!
 	//
-    return (*_audioCallback)((float*)outputBuffer, nFrames, streamTime, _instance->getStreamLatency(), (RtAudioUserData*)userData);
+    return (*_audioCallback)((float*)outputBuffer, AudioStreamFormat::Float32, nFrames, streamTime, _instance->getStreamLatency(), (RtAudioUserData*)userData);
 }
 
 void RtAudioController::ErrorCallback(RtAudioErrorType type, const std::string& errorText)

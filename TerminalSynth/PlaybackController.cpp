@@ -1,11 +1,13 @@
 #include "AtomicLock.h"
 #include "BaseController.h"
+#include "Constant.h"
 #include "IntervalTimer.h"
 #include "LoopTimer.h"
 #include "MidiPlaybackDevice.h"
 #include "OutputSettings.h"
 #include "PlaybackClock.h"
 #include "PlaybackController.h"
+#include "PlaybackFormatTransformer.h"
 #include "RtAudioUserData.h"
 #include "SoundRegistry.h"
 #include "SynthPlaybackDevice.h"
@@ -18,8 +20,8 @@ PlaybackController::PlaybackController(AtomicLock* playbackLock) : BaseControlle
 	_initialized = false;
 	_midiMode = false;
 
-	_synthDevice = new SynthPlaybackDevice<float>();
-	_midiDevice = new MidiPlaybackDevice<float>();
+	_synthDevice = new SynthPlaybackDevice();
+	_midiDevice = new MidiPlaybackDevice();
 	_streamClock = new PlaybackClock();
 	_audioTimer = new LoopTimer(0.001);
 	_audioSampleTimer = new IntervalTimer();
@@ -45,7 +47,7 @@ bool PlaybackController::Initialize(SynthSettings* configuration, OutputSettings
 	return _initialized;
 }
 
-int PlaybackController::ProcessAudioCallback(float* outputBuffer, unsigned int numberOfFrames, double streamTime, double streamLatency, RtAudioUserData* userData)
+int PlaybackController::ProcessAudioCallback(void* outputBuffer, AudioStreamFormat streamFormat, unsigned int numberOfFrames, double streamTime, double streamLatency, RtAudioUserData* userData)
 {
 	// Main Controller Initialization
 	if (!userData->IsInitialized())
@@ -102,14 +104,14 @@ int PlaybackController::ProcessAudioCallback(float* outputBuffer, unsigned int n
 		_audioSampleTimer->Reset();
 
 		// Write playback buffer from synth device
-		rtAudioReturnValue = _midiMode ? _midiDevice->WritePlaybackBuffer(outputBuffer, numberOfFrames, streamTime, outputSettings) :
-										 _synthDevice->WritePlaybackBuffer(outputBuffer, numberOfFrames, streamTime, outputSettings);
+		rtAudioReturnValue = _midiMode ? _midiDevice->WritePlaybackBuffer(outputBuffer, streamFormat, numberOfFrames, streamTime, outputSettings) :
+										 _synthDevice->WritePlaybackBuffer(outputBuffer, streamFormat, numberOfFrames, streamTime, outputSettings);
 
 		_audioSampleTimer->Mark();
 	//}
 
 	// RT Update (Audio)
-	outputSettings->UpdateRT_Audio(streamTime, avgAudioMilli, avgAudioSampleMicro, avgAudioLockAcquireNano, 0);
+	outputSettings->UpdateRT_Audio(streamTime, avgAudioMilli, avgAudioSampleMicro, avgAudioLockAcquireNano, streamLatency);
 	outputSettings->SetStreamLatency(streamLatency);
 
 	// std::atomic end loop

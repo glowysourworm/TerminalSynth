@@ -244,6 +244,7 @@
     <ClCompile Include="ButterworthFilter.cpp" />
     <ClCompile Include="MainController.cpp" />
     <ClCompile Include="MainUI.cpp" />
+    <ClCompile Include="PortAudioController.cpp" />
     <ClCompile Include="SignalChain.cpp" />
     <ClCompile Include="SignalFactory.cpp" />
     <ClCompile Include="Binasc.cpp" />
@@ -311,9 +312,10 @@
     <ClInclude Include="PlaybackClock.h" />
     <ClInclude Include="AudioController.h" />
     <ClInclude Include="PlaybackDevice.h" />
-    <ClInclude Include="PlaybackBuffer.h" />
     <ClInclude Include="OutputSettings.h" />
+    <ClInclude Include="PlaybackFormatTransformer.h" />
     <ClInclude Include="PlaybackFrame.h" />
+    <ClInclude Include="PortAudioController.h" />
     <ClInclude Include="RtAudioController.h" />
     <ClInclude Include="ScrollViewerUI.h" />
     <ClInclude Include="SignalChain.h" />

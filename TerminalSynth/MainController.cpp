@@ -23,8 +23,11 @@
 #include <thread>
 #include <vector>
 
-MainController::MainController(AtomicLock* playbackLock) : BaseController(playbackLock)
+MainController::MainController(AudioController* audioController, AtomicLock* playbackLock) : BaseController(playbackLock)
 {
+	_audioController = audioController;
+	_playbackController = new PlaybackController(playbackLock);
+
 	_configuration = nullptr;
 	_mainUI = nullptr;
 	_mainModelUI = nullptr;
@@ -32,9 +35,7 @@ MainController::MainController(AtomicLock* playbackLock) : BaseController(playba
 	_uiDataFetchTimer = new IntervalTimer();
 	_uiLockAcquireTimer = new IntervalTimer();
 	_uiRenderTimer = new IntervalTimer();
-	_uiSleepTimer = new IntervalTimer();
-	_playbackController = new PlaybackController(playbackLock);
-	_rtAudioController = new RtAudioController(playbackLock);
+	_uiSleepTimer = new IntervalTimer();	
 	_userData = new RtAudioUserData();
 }
 
@@ -49,7 +50,6 @@ MainController::~MainController()
 	delete _uiRenderTimer;
 	delete _uiSleepTimer;
 	delete _playbackController;
-	delete _rtAudioController;
 	delete _userData;	
 }
 
@@ -60,8 +60,8 @@ bool MainController::Initialize(SynthSettings* configuration, OutputSettings* pa
 {
 	_configuration = configuration;
 
-	// RT AUDIO
-	bool success = _rtAudioController->Initialize(
+	// RT / PORT AUDIO
+	bool success = _audioController->Initialize(
 		configuration, 
 		parameters, 
 		effectRegistry, 
@@ -71,10 +71,11 @@ bool MainController::Initialize(SynthSettings* configuration, OutputSettings* pa
 			std::placeholders::_2,
 			std::placeholders::_3,
 			std::placeholders::_4,
-			std::placeholders::_5));
+			std::placeholders::_5,
+			std::placeholders::_6));
 
 	// RT AUDIO -> Open Stream (SynthSettings*)(PlaybackParameteres*) (INITIALIZE!)
-	success &= _rtAudioController->OpenStream((void*)_userData);
+	success &= _audioController->OpenStream((void*)_userData);
 
 	// Synth Settings Effect Registry:  This will separate out the SignalBase* (which will not be present in the SynthSettings*) (linking issue)
 	//
@@ -103,7 +104,7 @@ bool MainController::Initialize(SynthSettings* configuration, OutputSettings* pa
 void MainController::Start()
 {
 	_playbackController->Start();
-	_rtAudioController->StartStream();
+	_audioController->StartStream();
 
 	//...
 	this->Loop();
@@ -112,7 +113,7 @@ void MainController::Start()
 bool MainController::Dispose()
 {
 	// Stops UI thread
-	return _playbackController->Dispose() && _rtAudioController->Dispose();
+	return _playbackController->Dispose() && _audioController->Dispose();
 }
 
 void MainController::Loop()
@@ -226,15 +227,15 @@ void MainController::Loop()
 			// Stop / Re-Start Audio Stream
 			currentDevice = _mainModelUI->GetOutputModelUI()->GetOutputSettings()->GetDeviceName();
 
-			if (_rtAudioController->IsStreamRunning())
-				_rtAudioController->StopStream();
+			if (_audioController->IsStreamRunning())
+				_audioController->StopStream();
 
-			if (_rtAudioController->IsStreamOpen())
-				_rtAudioController->CloseStream();
+			if (_audioController->IsStreamOpen())
+				_audioController->CloseStream();
 
 			// Starts new stream with currently selected device (OutputSettings*)
-			_rtAudioController->OpenStream(_userData);
-			_rtAudioController->StartStream();
+			_audioController->OpenStream(_userData);
+			_audioController->StartStream();
 		}
 
 		// *** NON-THERAD-SAFE *** (This should be safe outside of the lock for getting / setting simple data)
