@@ -4,7 +4,7 @@
 #define SYNTH_INFORMATION_UI_H
 
 #include "OutputModelUI.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "OutputUI.h"
 #include "UIBase.h"
 #include <exception>
@@ -45,18 +45,28 @@ private:
 
 	int* _synthInfoWidth;
 
+	// Host API / Device Info
 	std::string* _hostApi;
 	std::string* _deviceName;
 	std::string* _streamFormat;
 	std::string* _streamBufferSize;
 	std::string* _samplingRate;
 
-	std::string* _streamTime;
+	// Stream Info
+	std::string* _streamSampleRate;
+	std::string* _streamChannels;
+	std::string* _streamBitFormat;
+	std::string* _streamSuggestedLatency;
+	std::string* _streamOpenStatus;
+	std::string* _streamRunningStatus;
+
+	// Audio Info
 	std::string* _averageAudioMilli;
 	std::string* _averageAudioSampleMicro;
 	std::string* _averageAudioLockAcquireNano;
 	std::string* _streamLatency;
 
+	// UI Info
 	std::string* _averageUIMilli;
 	std::string* _averageUIDataFetchMicro;
 	std::string* _averageUILockAcqcuireNano;
@@ -80,7 +90,6 @@ SynthInformationUI::SynthInformationUI(const std::string& title, const ftxui::Co
 	_streamBufferSize = new std::string("");
 	_samplingRate = new std::string("");
 
-	_streamTime = new std::string("");
 	_averageAudioMilli = new std::string("");
 	_averageAudioSampleMicro = new std::string("");
 	_averageAudioLockAcquireNano = new std::string("");
@@ -107,7 +116,6 @@ SynthInformationUI::~SynthInformationUI()
 	delete _streamBufferSize;
 	delete _samplingRate;
 
-	delete _streamTime;
 	delete _averageAudioMilli;
 	delete _averageAudioSampleMicro;
 	delete _averageAudioLockAcquireNano;
@@ -151,7 +159,6 @@ void SynthInformationUI::Initialize(const OutputModelUI& settings)
 
 				ftxui::text("Metrics (Audio)") | ftxui::color(*_titleColor),
 				ftxui::separator(),
-				ftxui::text("Stream Time (s):"),
 				ftxui::text("Avg. Loop Time (ms):"),
 				ftxui::text("Avg. Sample Time (us):"),
 				ftxui::text("Avg. Lock Acquire (ns):"),
@@ -189,7 +196,6 @@ void SynthInformationUI::Initialize(const OutputModelUI& settings)
 
 				ftxui::text(""),
 				ftxui::separator(),
-				ftxui::text(*_streamTime) | ftxui::align_right,
 				ftxui::text(*_averageAudioMilli) | ftxui::align_right,
 				ftxui::text(*_averageAudioSampleMicro) | ftxui::align_right,
 				ftxui::text(*_averageAudioLockAcquireNano) | ftxui::align_right,
@@ -239,52 +245,49 @@ void SynthInformationUI::ToUI(const OutputModelUI& source)
 }
 void SynthInformationUI::ToUI(const OutputModelUI* source)
 {
-	const OutputSettings* outputSettings = source->GetOutputSettings();
+	const PlaybackInfo* outputSettings = source->GetPlaybackInfo();
 
 	_hostApi->clear();
 	_hostApi->append(outputSettings->GetHostApi());
 
 	_deviceName->clear();
-	_deviceName->append(outputSettings->GetDeviceName());
+	_deviceName->append(source->GetSelectedDevice()->GetDeviceName());
 
 	_streamFormat->clear();
-	_streamFormat->append(outputSettings->GetDeviceFormat());
+	_streamFormat->append(source->GetSelectedDevice()->GetDeviceFormatString());
 
 	_streamBufferSize->clear();
-	_streamBufferSize->append(std::format("{} (frames)", outputSettings->GetOutputBufferFrameSize()));
+	_streamBufferSize->append(std::format("{} (frames)", source->GetSelectedDevice()->GetBufferFrameSize()));
 
 	_samplingRate->clear();
-	_samplingRate->append(std::to_string(outputSettings->GetSamplingRate()));
-
-	_streamTime->clear();
-	_streamTime->append(std::format("{:.3f}", outputSettings->GetStreamTime()));
+	_samplingRate->append(std::to_string(outputSettings->GetStreamInfo()->streamSampleRate));
 
 	_averageAudioMilli->clear();
-	_averageAudioMilli->append(std::format("{:.3f}", outputSettings->GetAvgAudioMilli()));
+	_averageAudioMilli->append(std::format("{:.3f}", outputSettings->GetAudioMetrics()->avgAudioMilli));
 
 	_averageAudioSampleMicro->clear();
-	_averageAudioSampleMicro->append(std::format("{:.3f}", outputSettings->GetAvgAudioSampleMicro()));
+	_averageAudioSampleMicro->append(std::format("{:.3f}", outputSettings->GetAudioMetrics()->avgAudioSampleMicro));
 
 	_averageAudioLockAcquireNano->clear();
-	_averageAudioLockAcquireNano->append(std::format("{:.3f}", outputSettings->GetAvgAudioLockAcquireNano()));
+	_averageAudioLockAcquireNano->append(std::format("{:.3f}", outputSettings->GetAudioMetrics()->avgAudioLockAcquireNano));
 
 	_streamLatency->clear();
-	_streamLatency->append(std::to_string(outputSettings->GetStreamLatency()));
+	_streamLatency->append(std::to_string(outputSettings->GetStreamInfo()->streamActualLatency));
 
 	_averageUIMilli->clear();
-	_averageUIMilli->append(std::format("{:.3f}", outputSettings->GetAvgUIMilli()));
+	_averageUIMilli->append(std::format("{:.3f}", outputSettings->GetUIMetrics()->avgUIMilli));
 
 	_averageUIDataFetchMicro->clear();
-	_averageUIDataFetchMicro->append(std::format("{:.3f}", outputSettings->GetAvgUIDataFetchMicro()));
+	_averageUIDataFetchMicro->append(std::format("{:.3f}", outputSettings->GetUIMetrics()->avgUIDataFetchMicro));
 
 	_averageUILockAcqcuireNano->clear();
-	_averageUILockAcqcuireNano->append(std::format("{:.3f}", outputSettings->GetAvgUILockAqcuireNano()));
+	_averageUILockAcqcuireNano->append(std::format("{:.3f}", outputSettings->GetUIMetrics()->avgUILockAcqcuireNano));
 
 	_averageUIRenderingMilli->clear();
-	_averageUIRenderingMilli->append(std::format("{:.3f}", outputSettings->GetAvgUIRenderingMilli()));
+	_averageUIRenderingMilli->append(std::format("{:.3f}", outputSettings->GetUIMetrics()->avgUIRenderingMilli));
 
 	_averageUISleepMilli->clear();
-	_averageUISleepMilli->append(std::format("{:.3f}", outputSettings->GetAvgUISleepMilli()));
+	_averageUISleepMilli->append(std::format("{:.3f}", outputSettings->GetUIMetrics()->avgUISleepMilli));
 
 	_outputUI->ToUI(source);
 }

@@ -127,12 +127,12 @@ SynthTabUI::SynthTabUI(const SynthTabModelUI& model)
 	_oscillatorSignalUI->Initialize(oscillatorModel);
 	_envelopeSignalUI->Initialize(envelopeModel);
 
-	const SignalChainSettings* effectRegistry = _model->GetEffectRegistry();
+	auto effectRegistry = _model->GetEffectRegistry();
 
 	// Effect Registry
-	for (int index = 0; index < effectRegistry->GetCount(); index++)
+	for (int index = 0; index < effectRegistry->size(); index++)
 	{
-		auto element = effectRegistry->Get(index);
+		auto element = effectRegistry->at(index);
 
 		// New Category
 		if (!_effectsByCategory->contains(element->GetCategory()))

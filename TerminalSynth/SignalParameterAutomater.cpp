@@ -1,6 +1,6 @@
 #include "Constant.h"
 #include "OscillatorParameters.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalFactoryCore.h"
 #include "SignalParameter.h"
@@ -30,10 +30,10 @@ SignalParameterAutomater::~SignalParameterAutomater()
 	delete _oscillatorParameters;
 }
 
-void SignalParameterAutomater::Initialize(const OutputSettings* parameters)
+void SignalParameterAutomater::Initialize(const PlaybackInfo* parameters)
 {
-	_signalFactory = new SignalFactoryCore(parameters->GetSamplingRate());
-	_signalFactoryRandom = new SignalFactoryCore(parameters->GetSamplingRate());
+	_signalFactory = new SignalFactoryCore(parameters->GetStreamInfo()->streamSampleRate);
+	_signalFactoryRandom = new SignalFactoryCore(parameters->GetStreamInfo()->streamSampleRate);
 
 	_signalFactory->Reset(_oscillatorParameters);
 	_signalFactoryRandom->Reset(_oscillatorParametersRandom);

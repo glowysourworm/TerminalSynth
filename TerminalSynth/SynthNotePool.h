@@ -5,7 +5,7 @@
 
 #include "Envelope.h"
 #include "OscillatorParameters.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalChain.h"
 #include "SignalChainSettings.h"
@@ -22,7 +22,7 @@ class SynthNotePool
 {
 public:
 
-	SynthNotePool(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* settings, int capacity);
+	SynthNotePool(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* settings, int capacity);
 	~SynthNotePool();
 
 	// Update Configuration

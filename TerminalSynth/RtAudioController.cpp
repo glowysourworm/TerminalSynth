@@ -1,11 +1,9 @@
 #include "AtomicLock.h"
 #include "AudioController.h"
 #include "Constant.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
+#include "PlaybackUserData.h"
 #include "RtAudioController.h"
-#include "RtAudioUserData.h"
-#include "SoundRegistry.h"
-#include "SynthSettings.h"
 #include <RtAudio.h>
 #include <exception>
 #include <functional>
@@ -14,7 +12,6 @@
 RtAudioController::RtAudioController(AtomicLock* playbackLock) : AudioController(playbackLock)
 {
 	_instance = nullptr;
-	_outputSettings = nullptr;
 	_initialized = false;
 	_audioCallback = nullptr;
 	_lastErrorType = RtAudioErrorType::RTAUDIO_UNKNOWN_ERROR;
@@ -40,7 +37,7 @@ int RtAudioController::AudioCallback(void* outputBuffer, void* inputBuffer, unsi
 
 	// Audio Callback:  Casting (void*) user data to our synth configuration! And, the output buffer!
 	//
-    return (*_audioCallback)((float*)outputBuffer, AudioStreamFormat::Float32, nFrames, streamTime, _instance->getStreamLatency(), (RtAudioUserData*)userData);
+    return (*_audioCallback)((float*)outputBuffer, AudioStreamFormat::Float32, nFrames, streamTime, _instance->getStreamLatency(), (PlaybackUserData*)userData);
 }
 
 void RtAudioController::ErrorCallback(RtAudioErrorType type, const std::string& errorText)
@@ -56,7 +53,7 @@ void RtAudioController::ErrorCallback(RtAudioErrorType type, const std::string& 
 	_lastErrorType = type;
 }
 
-bool RtAudioController::Initialize(SynthSettings* configuration, OutputSettings* outputSettings, SoundRegistry* effectRegistry, const AudioCallbackDelegate& audioCallback)
+bool RtAudioController::Initialize(PlaybackUserData* playbackData, const AudioCallbackDelegate& audioCallback)
 {
 	if (_initialized)
 		throw new std::exception("RT Audio Controller already initialzed! Must call Dispose() before re-initializing the backend");
@@ -91,17 +88,16 @@ bool RtAudioController::Initialize(SynthSettings* configuration, OutputSettings*
 
 		_instance = new RtAudio(RtAudio::Api::WINDOWS_WASAPI, errorCallback);
 		_audioCallback = new AudioCallbackDelegate(audioCallback);
-		_outputSettings = outputSettings;
 		_lastErrorText->clear();
 
 		// Host API
-		_outputSettings->SetHostApi(_instance->getApiDisplayName(RtAudio::Api::WINDOWS_WASAPI));
+		playbackData->GetPlaybackInfo()->SetForHostApi(_instance->getApiDisplayName(RtAudio::Api::WINDOWS_WASAPI));
 
 
 		// Output Device List
 		//
 		auto deviceIds = _instance->getDeviceIds();
-		auto selectedDevice = outputSettings->GetSelectedDevice();
+		auto selectedDevice = playbackData->GetDeviceRegister()->GetSelectedDevice();
 
 		for (int index = 0; index < deviceIds.size(); index++)
 		{
@@ -116,13 +112,17 @@ bool RtAudioController::Initialize(SynthSettings* configuration, OutputSettings*
 			GetDeviceFormatString(deviceInfo, deviceFormat);
 			GetDeviceFormatParagraph(deviceInfo, deviceParagraph);
 
-			_outputSettings->AddDevice(
+			playbackData->GetDeviceRegister()->AddDevice(
 				deviceInfo.ID,
 				deviceFormat,
 				deviceParagraph,
-				deviceInfo.name,
+				deviceInfo.name, 
+				this->FormatFrom(deviceInfo.nativeFormats),
 				deviceInfo.preferredSampleRate,
-				deviceInfo.outputChannels, 512, deviceInfo.isDefaultOutput);
+				deviceInfo.outputChannels, 
+				512, 
+				0, 
+				deviceInfo.isDefaultOutput);
 		}
 
 		// Initialized
@@ -158,7 +158,7 @@ bool RtAudioController::Dispose()
 	}
 }
 
-bool RtAudioController::OpenStream(void* userData)
+bool RtAudioController::OpenStream(PlaybackUserData* userData)
 {
 	if (!_initialized)
 		throw new std::exception("RT Audio Controller not initialzed! Must call Initialize() before opening the stream");
@@ -167,7 +167,7 @@ bool RtAudioController::OpenStream(void* userData)
 	{
 		// Output Device
 		//
-		auto outputDevice = _outputSettings->GetSelectedDevice();
+		auto outputDevice = userData->GetDeviceRegister()->GetSelectedDevice();
 		
 		RtAudio::StreamParameters outputParameters;
 		outputParameters.deviceId = outputDevice->GetId();
@@ -199,26 +199,26 @@ bool RtAudioController::OpenStream(void* userData)
 										std::placeholders::_5,
 										std::placeholders::_6);
 
-		_instance->openStream(&outputParameters,					// 
-							NULL,									// Duplex Mode (input parameters)
-							RTAUDIO_FLOAT32,						// RT Audio Format
-							outputDevice->GetSamplingRate(),		// Device Sampling Rate
-							&outputBufferFrameSize,					// Device (preferred) Frame Size (RT Audio will adjust this)
-							audioCallback,							// Audio Callback
-							userData,								// void* shared data
+		_instance->openStream(&outputParameters,					 
+							NULL,												// Duplex Mode (input parameters)
+							this->FormatTo(outputDevice->GetDeviceFormat()),	// RT Audio Format
+							outputDevice->GetSamplingRate(),					// Device Sampling Rate
+							&outputBufferFrameSize,								// Device (preferred) Frame Size (RT Audio will adjust this)
+							audioCallback,										// Audio Callback
+							userData,											// void* shared data
 							&options);
 
 		// Set Playback Parameters:  These are created in int main(); but they're invalid until
 		//							 we set "initialized" to true, as long as the controller pattern
 		//							 is strictly kept, you won't have a private pointer to them.
 		//
-		_outputSettings->UpdateDevice(
+		userData->UpdateDevice(
 						outputDevice->GetDeviceName(),
 						_instance->getStreamSampleRate(),
 						outputBufferFrameSize,
 						true);
 
-		_outputSettings->SetStreamLatency(_instance->getStreamLatency());
+		userData->GetPlaybackInfo()->GetStreamInfo()->streamActualLatency = _instance->getStreamLatency();
 	}
 	catch (std::exception ex)
 	{
@@ -302,4 +302,38 @@ void RtAudioController::GetDeviceFormatParagraph(const RtAudio::DeviceInfo& devi
 	destination += "Sample Rate:	            " + std::to_string(deviceInfo.currentSampleRate) + "\n";
 	destination += "Sample Rate (preferred): " + std::to_string(deviceInfo.currentSampleRate) + "\n";
 	destination += "Number of Channels:      " + std::to_string(deviceInfo.outputChannels) + "\n";
+}
+
+RtAudioFormat RtAudioController::FormatTo(AudioStreamFormat format)
+{
+	switch (format)
+	{
+	case AudioStreamFormat::Float32:
+		return RTAUDIO_FLOAT32;
+	case AudioStreamFormat::Int32:
+		return RTAUDIO_SINT32;
+	case AudioStreamFormat::Int16:
+		return RTAUDIO_SINT16;
+	case AudioStreamFormat::Int8:
+		return RTAUDIO_SINT8;
+	default:
+		throw new std::exception("Unhandled format type:  PortAudioController.cpp");
+	}
+}
+
+AudioStreamFormat RtAudioController::FormatFrom(RtAudioFormat format)
+{
+	switch (format)
+	{
+	case RTAUDIO_FLOAT32:
+		return AudioStreamFormat::Float32;
+	case RTAUDIO_SINT32:
+		return AudioStreamFormat::Int32;
+	case RTAUDIO_SINT16:
+		return AudioStreamFormat::Int16;
+	case RTAUDIO_SINT8:
+		return AudioStreamFormat::Int8;
+	default:
+		throw new std::exception("Unhandled format type:  PortAudioController.cpp");
+	}
 }

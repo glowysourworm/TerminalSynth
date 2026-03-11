@@ -6,7 +6,7 @@
 #include "BiQuadFilter.h"
 #include "CombFilter.h"
 #include "OscillatorParameters.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalFactoryCore.h"
 #include "SignalSettings.h"
@@ -15,7 +15,7 @@ class SignalFactory
 {
 public:
 
-	SignalFactory(const OutputSettings* outputSettings);
+	SignalFactory(const PlaybackInfo* outputSettings);
 	~SignalFactory();
 
 	float GetFrequency(unsigned int midiNote);
@@ -41,7 +41,7 @@ private:
 
 private:
 
-	const OutputSettings* _outputSettings;
+	const PlaybackInfo* _outputSettings;
 	BiQuadFilter* _lowPassFilter;
 	CombFilter* _combFilter;
 

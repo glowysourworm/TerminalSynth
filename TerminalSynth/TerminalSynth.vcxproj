@@ -244,6 +244,7 @@
     <ClCompile Include="ButterworthFilter.cpp" />
     <ClCompile Include="MainController.cpp" />
     <ClCompile Include="MainUI.cpp" />
+    <ClCompile Include="PlaybackUserData.cpp" />
     <ClCompile Include="PortAudioController.cpp" />
     <ClCompile Include="SignalChain.cpp" />
     <ClCompile Include="SignalFactory.cpp" />
@@ -278,10 +279,12 @@
     <ClInclude Include="AirwindowsEffect.h" />
     <ClInclude Include="AirwindowsEffectLoader.h" />
     <ClInclude Include="AtomicLock.h" />
+    <ClInclude Include="MetricAudioInfo.h" />
     <ClInclude Include="BiQuadFilter.h" />
     <ClInclude Include="CheckboxModelUI.h" />
     <ClInclude Include="CombFilter.h" />
     <ClInclude Include="EffectUI.h" />
+    <ClInclude Include="MetricUIInfo.h" />
     <ClInclude Include="PlaybackController.h" />
     <ClInclude Include="BaseController.h" />
     <ClInclude Include="CheckboxUI.h" />
@@ -312,7 +315,8 @@
     <ClInclude Include="PlaybackClock.h" />
     <ClInclude Include="AudioController.h" />
     <ClInclude Include="PlaybackDevice.h" />
-    <ClInclude Include="OutputSettings.h" />
+    <ClInclude Include="PlaybackDeviceRegister.h" />
+    <ClInclude Include="PlaybackInfo.h" />
     <ClInclude Include="PlaybackFormatTransformer.h" />
     <ClInclude Include="PlaybackFrame.h" />
     <ClInclude Include="PortAudioController.h" />
@@ -324,6 +328,7 @@
     <ClInclude Include="SignalParameterAutomater.h" />
     <ClInclude Include="SignalParameterUI.h" />
     <ClInclude Include="SoundSettings.h" />
+    <ClInclude Include="StreamInfo.h" />
     <ClInclude Include="SynthTabModelUI.h" />
     <ClInclude Include="SynthTabUI.h" />
     <ClInclude Include="SignalFactory.h" />
@@ -363,7 +368,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="RtAudioUserData.h" />
+    <None Include="PlaybackUserData.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

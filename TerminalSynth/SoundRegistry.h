@@ -5,7 +5,7 @@
 
 #include "AirwindowsEffect.h"
 #include "AirwindowsEffectLoader.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "SignalBase.h"
 #include "SignalSettings.h"
 #include <AirwinRegistry.h>
@@ -33,7 +33,7 @@ public:
 	/// Creates an initial collection of effects plugins from the Airwin .lib, and creates a basic
 	/// cache of instances. The destination list may be used to initialize the names of the plugins.
 	/// </summary>
-	bool Initialize(const OutputSettings* outputSettings, std::vector<SignalSettings>& destinationList);
+	bool Initialize(const PlaybackInfo* outputSettings, std::vector<SignalSettings>& destinationList);
 
 	/// <summary>
 	/// Gets the count of unique-by-name instances of signal effects. Multiple instances of
@@ -79,7 +79,7 @@ private:
 	// Instances that are being used
 	std::map<std::string, std::vector<SignalBase*>*>* _effectInstancesCheckedOut;
 
-	const OutputSettings* _outputSettings;
+	const PlaybackInfo* _outputSettings;
 };
 
 SoundRegistry::SoundRegistry()
@@ -125,12 +125,12 @@ SoundRegistry::~SoundRegistry()
 	delete _effectInstancesCheckedOut;
 }
 
-bool SoundRegistry::Initialize(const OutputSettings* outputSettings, std::vector<SignalSettings>& destinationList)
+bool SoundRegistry::Initialize(const PlaybackInfo* outputSettings, std::vector<SignalSettings>& destinationList)
 {
 	_outputSettings = outputSettings;
 
 	// LOAD AIRWIN PLUGINS!
-	bool success = _airwinEffectRegistry->Load(_outputSettings->GetSamplingRate());
+	bool success = _airwinEffectRegistry->Load(_outputSettings->GetStreamInfo()->streamSampleRate);
 
 	std::vector<std::string> pluginList;
 
@@ -148,7 +148,7 @@ bool SoundRegistry::Initialize(const OutputSettings* outputSettings, std::vector
 		_effectInstancesCheckedOut->insert(std::make_pair(pluginList.at(index), new std::vector<SignalBase*>()));		// MEMORY! ~SoundRegistry
 
 		// Airwindows Instance!
-		AudioEffectX* effect = pluginEntry->CreateEffect(_outputSettings->GetSamplingRate());
+		AudioEffectX* effect = pluginEntry->CreateEffect(_outputSettings->GetStreamInfo()->streamSampleRate);
 
 		// Signal Settings (for our wrapper)
 		SignalSettings pluginSettings;
@@ -205,7 +205,7 @@ SignalBase* SoundRegistry::Checkout(const std::string& name) const
 	AirwinRegistryEntry* entry = _registryEntries->at(name);
 
 	// Airwindows Instance!
-	AudioEffectX* effect = entry->CreateEffect(_outputSettings->GetSamplingRate());
+	AudioEffectX* effect = entry->CreateEffect(_outputSettings->GetStreamInfo()->streamSampleRate);
 
 	// Signal Settings (for our wrapper)
 	SignalSettings pluginSettings;

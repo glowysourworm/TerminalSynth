@@ -5,10 +5,10 @@
 
 #include "AtomicLock.h"
 #include "AudioController.h"
-#include "OutputSettings.h"
+#include "Constant.h"
+#include "PlaybackInfo.h"
+#include "PlaybackUserData.h"
 #include "RtAudio.h"
-#include "SoundRegistry.h"
-#include "SynthSettings.h"
 #include <string>
 
 /// <summary>
@@ -52,7 +52,7 @@ public:
 	/// <summary>
 	/// Initialization function for the synth backend. This must be called before starting the player!
 	/// </summary>
-	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry, const AudioCallbackDelegate& audioCallback) override;
+	bool Initialize(PlaybackUserData* playbackData, const AudioCallbackDelegate& audioCallback) override;
 
 	/// <summary>
 	/// Starts any threads associated with the controller, after initialization.
@@ -68,7 +68,7 @@ public:
 	/// Opens the RT Audio backend stream with specified user data
 	/// </summary>
 	/// <param name="userData">Arbitrary data sent along with the backend stream</param>
-	bool OpenStream(void* userData) override;
+	bool OpenStream(PlaybackUserData* userData) override;
 	bool CloseStream() override;
 
 	bool StartStream() override;
@@ -82,6 +82,9 @@ private:
 	void GetDeviceFormatString(const RtAudio::DeviceInfo& deviceInfo, std::string& destination) const;
 	void GetDeviceFormatParagraph(const RtAudio::DeviceInfo& deviceInfo, std::string& destination) const;
 
+	RtAudioFormat FormatTo(AudioStreamFormat format);
+	AudioStreamFormat FormatFrom(RtAudioFormat format);
+
 private:
 
 	AudioCallbackDelegate* _audioCallback;
@@ -91,8 +94,6 @@ private:
 	RtAudioErrorType _lastErrorType;
 	std::string* _lastErrorText;
 
-	OutputSettings* _outputSettings;
-	
 	bool _initialized;
 
 };

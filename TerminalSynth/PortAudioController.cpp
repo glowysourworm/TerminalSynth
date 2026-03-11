@@ -1,12 +1,10 @@
 #include "AtomicLock.h"
 #include "AudioController.h"
 #include "Constant.h"
-#include "OutputSettings.h"
-#include "PlaybackFormatTransformer.h"
+#include "PlaybackInfo.h"
+#include "PlaybackUserData.h"
 #include "PortAudioController.h"
-#include "RtAudioUserData.h"
 #include "SoundRegistry.h"
-#include "SynthSettings.h"
 #include <exception>
 #include <portaudio.h>
 #include <string>
@@ -19,7 +17,6 @@ AudioStreamFormat PortAudioController::Format;
 
 PortAudioController::PortAudioController(AtomicLock* playbackLock) : AudioController(playbackLock)
 {
-	_outputSettings = nullptr;
 	_initialized = false;
 	_audioCallback = nullptr;
 
@@ -55,10 +52,10 @@ int PortAudioController::AudioCallback(
 	
 	// Audio Callback:  Casting (void*) user data to our synth configuration! And, the output buffer!
 	//
-	return (*_audioCallback)(outputBuffer, PortAudioController::Format, frameCount, timeInfo->currentTime, streamInfo->outputLatency, (RtAudioUserData*)userData);
+	return (*_audioCallback)(outputBuffer, PortAudioController::Format, frameCount, timeInfo->currentTime, streamInfo->outputLatency, (PlaybackUserData*)userData);
 }
 
-bool PortAudioController::Initialize(SynthSettings* configuration, OutputSettings* outputSettings, SoundRegistry* effectRegistry, const AudioCallbackDelegate& audioCallback)
+bool PortAudioController::Initialize(PlaybackUserData* playbackData, const AudioCallbackDelegate& audioCallback)
 {
 	if (_initialized)
 		throw new std::exception("Port Audio Controller already initialzed! Must call Dispose() before re-initializing the backend");
@@ -71,23 +68,22 @@ bool PortAudioController::Initialize(SynthSettings* configuration, OutputSetting
 
 		auto hostApiIndex = Pa_GetDefaultHostApi();
 
-		for (int index = 0; index < Pa_GetHostApiCount(); index++)
-		{
-			if (Pa_GetHostApiInfo(index)->type == PaHostApiTypeId::paWASAPI)
-				hostApiIndex = index;
-		}
+		//for (int index = 0; index < Pa_GetHostApiCount(); index++)
+		//{
+		//	if (Pa_GetHostApiInfo(index)->type == PaHostApiTypeId::paWASAPI)
+		//		hostApiIndex = index;
+		//}
 
 		auto hostApi = Pa_GetHostApiInfo(hostApiIndex);
 
 		_audioCallback = new AudioCallbackDelegate(audioCallback);
-		_outputSettings = outputSettings;
 
 		// Host API
-		_outputSettings->SetHostApi(hostApi->name);
+		playbackData->GetPlaybackInfo()->SetForHostApi(hostApi->name);
 
 		// Output Device List
 		//
-		auto selectedDevice = outputSettings->GetSelectedDevice();
+		auto selectedDevice = playbackData->GetDeviceRegister()->GetSelectedDevice();
 		auto defaultDeviceIndex = Pa_GetDefaultOutputDevice();
 
 		for (int index = 0; index < Pa_GetDeviceCount(); index++)
@@ -107,13 +103,16 @@ bool PortAudioController::Initialize(SynthSettings* configuration, OutputSetting
 			GetDeviceFormatString(deviceInfo, deviceFormat);
 			GetDeviceFormatParagraph(deviceInfo, deviceParagraph);
 
-			_outputSettings->AddDevice(
+			playbackData->GetDeviceRegister()->AddDevice(
 				index,
 				deviceFormat,
 				deviceParagraph,
 				deviceInfo->name,
+				AudioStreamFormat::Float32,
 				deviceInfo->defaultSampleRate,
-				deviceInfo->maxOutputChannels, 512, index == defaultDeviceIndex);
+				deviceInfo->maxOutputChannels, 512,						// The number of output frames should be device / api specific
+				index == defaultDeviceIndex, 
+				deviceInfo->defaultLowOutputLatency);
 		}
 
 		// Initialized
@@ -149,7 +148,7 @@ bool PortAudioController::Dispose()
 	}
 }
 
-bool PortAudioController::OpenStream(void* userData)
+bool PortAudioController::OpenStream(PlaybackUserData* userData)
 {
 	if (!_initialized)
 		throw new std::exception("RT Audio Controller not initialzed! Must call Initialize() before opening the stream");
@@ -158,17 +157,17 @@ bool PortAudioController::OpenStream(void* userData)
 	{
 		// Output Device
 		//
-		auto outputDevice = _outputSettings->GetSelectedDevice();
+		auto outputDevice = userData->GetDeviceRegister()->GetSelectedDevice();
 
 		PaStreamParameters outputParameters;
 		outputParameters.channelCount = outputDevice->GetNumberOfChannels();
 		outputParameters.device = outputDevice->GetId();
-		outputParameters.sampleFormat = paInt16;
+		outputParameters.sampleFormat = this->FormatTo(outputDevice->GetDeviceFormat());
 		outputParameters.hostApiSpecificStreamInfo = NULL;
-		outputParameters.suggestedLatency = _outputSettings->GetStreamLatency();
+		outputParameters.suggestedLatency = outputDevice->GetSuggestedLatencySeconds();
 
 		// STREAM FORMAT SETTING!
-		PortAudioController::Format = AudioStreamFormat::Int16;
+		PortAudioController::Format = outputDevice->GetDeviceFormat();
 
 		// The typedef callback definition needs a conversion for using a non-static function!
 		//
@@ -195,13 +194,14 @@ bool PortAudioController::OpenStream(void* userData)
 
 		auto streamInfo = Pa_GetStreamInfo(PortAudioController::Stream);
 
-		_outputSettings->UpdateDevice(
+		userData->UpdateDevice(
 			outputDevice->GetDeviceName(),
 			streamInfo->sampleRate,
-			0,
+			outputDevice->GetBufferFrameSize(),
 			true);
 
-		_outputSettings->SetStreamLatency(streamInfo->outputLatency);
+		userData->GetPlaybackInfo()->GetStreamInfo()->streamActualLatency = streamInfo->outputLatency;
+		userData->GetPlaybackInfo()->GetStreamInfo()->streamSampleRate = streamInfo->sampleRate;
 	}
 	catch (std::exception ex)
 	{
@@ -314,4 +314,38 @@ void PortAudioController::GetDeviceFormatParagraph(const PaDeviceInfo* deviceInf
 	destination += std::string(deviceInfo->name) + "\n";
 	destination += "Sample Rate:	            " + std::to_string(deviceInfo->defaultSampleRate) + "\n";
 	destination += "Number of Channels:      " + std::to_string(deviceInfo->maxOutputChannels) + "\n";
+}
+
+PaSampleFormat PortAudioController::FormatTo(AudioStreamFormat format) const
+{
+	switch (format)
+	{
+	case AudioStreamFormat::Float32:
+		return paFloat32;
+	case AudioStreamFormat::Int32:
+		return paInt32;
+	case AudioStreamFormat::Int16:
+		return paInt16;
+	case AudioStreamFormat::Int8:
+		return paInt8;
+	default:
+		throw new std::exception("Unhandled format type:  PortAudioController.cpp");
+	}
+}
+
+AudioStreamFormat PortAudioController::FormatFrom(PaSampleFormat format) const
+{
+	switch (format)
+	{
+	case paFloat32:
+		return AudioStreamFormat::Float32;
+	case paInt32:
+		return AudioStreamFormat::Int32;
+	case paInt16:
+		return AudioStreamFormat::Int16;
+	case paInt8:
+		return AudioStreamFormat::Int8;
+	default:
+		throw new std::exception("Unhandled format type:  PortAudioController.cpp");
+	}
 }

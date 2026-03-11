@@ -1,5 +1,5 @@
 #include "ButterworthFilter.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
 #include <cmath>
@@ -32,7 +32,7 @@ ButterworthFilter::~ButterworthFilter()
 	SignalBase::~SignalBase();
 }
 
-void ButterworthFilter::Initialize(const OutputSettings* parameters)
+void ButterworthFilter::Initialize(const PlaybackInfo* parameters)
 {
 	SignalBase::Initialize(parameters);
 }

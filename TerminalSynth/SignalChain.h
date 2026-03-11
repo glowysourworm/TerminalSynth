@@ -3,7 +3,7 @@
 #ifndef SIGNAL_CHAIN_H
 #define SIGNAL_CHAIN_H
 
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
 #include "SignalChainSettings.h"
@@ -20,7 +20,7 @@ public:
 	SignalChain();
 	~SignalChain();
 
-	void Initialize(const SoundRegistry* effectRegistry, const SignalChainSettings* signalChainSettings, const OutputSettings* parameters);
+	void Initialize(const SoundRegistry* effectRegistry, const SignalChainSettings* signalChainSettings, const PlaybackInfo* parameters);
 
 	void Update(SoundRegistry* effectRegistry, const SignalChainSettings* signalChainSettings);
 

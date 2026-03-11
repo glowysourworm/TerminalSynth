@@ -2,21 +2,21 @@
 #include "CombFilter.h"
 #include "Constant.h"
 #include "OscillatorParameters.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalFactory.h"
 #include "SignalFactoryCore.h"
 #include <cstdlib>
 #include <exception>
 
-SignalFactory::SignalFactory(const OutputSettings* outputSettings)
+SignalFactory::SignalFactory(const PlaybackInfo* outputSettings)
 {
 	_outputSettings = outputSettings;
 
 	_lowPassFilter = nullptr;
 	_combFilter = nullptr;
 
-	_core = new SignalFactoryCore(outputSettings->GetSamplingRate());
+	_core = new SignalFactoryCore(outputSettings->GetStreamInfo()->streamSampleRate);
 }
 
 SignalFactory::~SignalFactory()
@@ -41,7 +41,7 @@ void SignalFactory::Reset(const OscillatorParameters* parameters)
 	float resonance = 0.01;
 
 	// Create Filters
-	_lowPassFilter = new BiQuadFilter(BiQuadFilter::FilterType::LPF, _outputSettings->GetSamplingRate(), cornerFrequency, resonance);
+	_lowPassFilter = new BiQuadFilter(BiQuadFilter::FilterType::LPF, _outputSettings->GetStreamInfo()->streamSampleRate, cornerFrequency, resonance);
 	_combFilter = new CombFilter(0.05f, 1.0f, false);
 
 	// Signal settings don't apply, here, since there are no other parameters to add to
@@ -57,7 +57,7 @@ float SignalFactory::GetFrequency(unsigned int midiNote)
 
 void SignalFactory::GenerateSample(const OscillatorParameters* parameters, PlaybackFrame* frame, float absoluteTime)
 {
-	int samplingRate = _outputSettings->GetSamplingRate();
+	int samplingRate = _outputSettings->GetStreamInfo()->streamSampleRate;
 	float signalHigh = parameters->GetSignalHigh();
 	float signalLow = parameters->GetSignalLow();
 	float frequency = parameters->GetFrequency();

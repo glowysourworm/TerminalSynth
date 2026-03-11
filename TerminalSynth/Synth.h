@@ -3,8 +3,8 @@
 #ifndef SYNTH_H
 #define SYNTH_H
 
-#include "OutputSettings.h"
 #include "PlaybackFrame.h"
+#include "PlaybackInfo.h"
 #include "SignalChain.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
@@ -22,7 +22,7 @@ public:
 	~Synth();
 
 	// Update Configuration
-	void Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters);
+	void Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters);
 
 	// Update Configuration
 	void Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings);
@@ -33,7 +33,7 @@ public:
 	/// <summary>
 	/// Synthesizes a full output at the specified stream time. Returns true if there was output this call.
 	/// </summary>
-	bool GetSample(PlaybackFrame* frame, double absoluteTime, const OutputSettings* outputSettings);
+	bool GetSample(PlaybackFrame* frame, double absoluteTime, float gain, float leftRightBalance);
 
 	/// <summary>
 	/// Gets rid of outdated cache. This should be done after the user has stopped playback for a short

@@ -6,10 +6,10 @@
 #include "MainController.h"
 #include "MainModelUI.h"
 #include "MainUI.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackController.h"
 #include "RtAudioController.h"
-#include "RtAudioUserData.h"
+#include "PlaybackUserData.h"
 #include "SignalSettings.h"
 #include "SoundRegistry.h"
 #include "SynthSettings.h"
@@ -28,7 +28,7 @@ MainController::MainController(AudioController* audioController, AtomicLock* pla
 	_audioController = audioController;
 	_playbackController = new PlaybackController(playbackLock);
 
-	_configuration = nullptr;
+	_userData = nullptr;
 	_mainUI = nullptr;
 	_mainModelUI = nullptr;
 	_uiTimer = new LoopTimer(0.075);
@@ -36,12 +36,10 @@ MainController::MainController(AudioController* audioController, AtomicLock* pla
 	_uiLockAcquireTimer = new IntervalTimer();
 	_uiRenderTimer = new IntervalTimer();
 	_uiSleepTimer = new IntervalTimer();	
-	_userData = new RtAudioUserData();
 }
 
 MainController::~MainController()
 {
-	delete _configuration;
 	delete _mainUI;
 	delete _mainModelUI;
 	delete _uiTimer;
@@ -56,15 +54,13 @@ MainController::~MainController()
 /// <summary>
 /// Initialization function for the synth backend. This must be called before starting the player!
 /// </summary>
-bool MainController::Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry)
+bool MainController::Initialize(PlaybackUserData* userData)
 {
-	_configuration = configuration;
+	_userData = userData;
 
 	// RT / PORT AUDIO
 	bool success = _audioController->Initialize(
-		configuration, 
-		parameters, 
-		effectRegistry, 
+		userData,
 		std::bind(&PlaybackController::ProcessAudioCallback,
 			_playbackController,
 			std::placeholders::_1,
@@ -75,26 +71,16 @@ bool MainController::Initialize(SynthSettings* configuration, OutputSettings* pa
 			std::placeholders::_6));
 
 	// RT AUDIO -> Open Stream (SynthSettings*)(PlaybackParameteres*) (INITIALIZE!)
-	success &= _audioController->OpenStream((void*)_userData);
+	success &= _audioController->OpenStream(_userData);
 
-	// Synth Settings Effect Registry:  This will separate out the SignalBase* (which will not be present in the SynthSettings*) (linking issue)
-	//
-	std::vector<SignalSettings> registryList;
-
-	// Airwindows Plugins:  Require sampling rate!
-	success &= effectRegistry->Initialize(parameters, registryList);
-
-	// -> Initialize(..) (completes the configuration's registry)
-	configuration->GetEffectRegistry()->Initialize(registryList);
-
-	// -> Initilize(..) (the RT Audio playback can now be unblocked)
-	_userData->Initialize(configuration, effectRegistry, parameters);
-
+	// -> Effect Registry, Airwindows Plugins:  Require sampling rate! (Set by audio controller after stream is open)
+	success &= userData->Initialize();
+	
 	// Audio Controller (for callback)
-	success &= _playbackController->Initialize(configuration, parameters, effectRegistry);
+	success &= _playbackController->Initialize(_userData);
 
 	// Main UI Initialize
-	_mainModelUI = new MainModelUI(configuration, parameters);
+	_mainModelUI = new MainModelUI(_userData);
 	_mainUI = new MainUI(*_mainModelUI);
 	_mainUI->Initialize(*_mainModelUI);
 
@@ -122,7 +108,7 @@ void MainController::Loop()
 	auto loop = ftxui::Loop(&screen, _mainUI->GetComponent());
 	
 	// Store for detecting device change!
-	std::string currentDevice = _mainModelUI->GetOutputModelUI()->GetOutputSettings()->GetDeviceName();
+	std::string currentDevice = _userData->GetDeviceRegister()->GetDeviceName();
 
 	// FTXUI has an option to create an event loop (this will run their backend UI code)
 	//
@@ -132,7 +118,7 @@ void MainController::Loop()
 	// Primary Loop!!! 
 	//
 	// Audio Thread:  The RT Audio callback will arrive on their background thread from the audio backend. We
-	//				  just have to manage two shared pointers:  OutputSettings*, and SynthSettings*.
+	//				  just have to manage two shared pointers:  PlaybackInfo*, and SynthSettings*.
 	//				  The SynthPlaybackDevice* will be updated, from the synth configuration, during the 
 	//				  callback. So, this must be synchronized somehow. Probably a std::atomic which could be
 	//				  shared inside the SynthSettings*
@@ -155,7 +141,7 @@ void MainController::Loop()
 		//				the audio thread. So, updating won't be very costly, or disruptive to
 		//				playback. 
 		// 
-		//				The shared pointer RtAudioUserData* may be synchronized through the 
+		//				The shared pointer PlaybackUserData* may be synchronized through the 
 		//				AtomicLock* (see below, and on AudioController* playback)
 		// 
 		//				The settings have been copied off to the UI portion and can be used
@@ -202,16 +188,12 @@ void MainController::Loop()
 
 			// UI -> Model -> Configuration
 			_mainUI->FromUI(_mainModelUI);
-			_mainModelUI->FromUI(_configuration);	
-
-			// Also, need the Gain and L/R Balance
-			_userData->GetOutputSettings()->SetGain(_mainModelUI->GetOutputModelUI()->GetOutputSettings()->GetGain());
-			_userData->GetOutputSettings()->SetLeftRightBalance(_mainModelUI->GetOutputModelUI()->GetOutputSettings()->GetLeftRightBalance());
+			_mainModelUI->FromUI(_userData->GetSynthSettings());	
 
 			_uiDataFetchTimer->Mark();
 
 			// -> Forward dirty status to AudioController
-			_configuration->SetDirty();
+			_userData->GetSynthSettings()->SetDirty();
 
 			this->PlaybackLock->Release();
 
@@ -221,11 +203,13 @@ void MainController::Loop()
 			//
 		}
 
-		// DEVICE CHANGE! (OutputSettings* was set for a new device)
-		if (_mainModelUI->GetOutputModelUI()->GetOutputSettings()->GetDeviceName() != currentDevice)
+		// DEVICE CHANGE! (PlaybackInfo* was set for a new device)
+		if (_mainModelUI->GetOutputModelUI()->GetSelectedDeviceName() != currentDevice)
 		{
 			// Stop / Re-Start Audio Stream
-			currentDevice = _mainModelUI->GetOutputModelUI()->GetOutputSettings()->GetDeviceName();
+			currentDevice = _mainModelUI->GetOutputModelUI()->GetSelectedDeviceName();
+
+			_userData->SelectDevice(currentDevice);
 
 			if (_audioController->IsStreamRunning())
 				_audioController->StopStream();
@@ -233,20 +217,20 @@ void MainController::Loop()
 			if (_audioController->IsStreamOpen())
 				_audioController->CloseStream();
 
-			// Starts new stream with currently selected device (OutputSettings*)
+			// Starts new stream with currently selected device (PlaybackInfo*)
 			_audioController->OpenStream(_userData);
 			_audioController->StartStream();
 		}
 
 		// *** NON-THERAD-SAFE *** (This should be safe outside of the lock for getting / setting simple data)
-		_userData->GetOutputSettings()->UpdateRT_UI(
+		_userData->GetPlaybackInfo()->UpdateRT_UI(
 			_uiTimer->GetAvgMilli(),
 			_uiDataFetchTimer->AvgMicro(),
 			_uiLockAcquireTimer->AvgNano(),
 			_uiRenderTimer->AvgMilli(),
 			_uiSleepTimer->AvgMilli());
 
-		_mainModelUI->ToUI(_userData->GetSynthSettings(), _userData->GetOutputSettings());
+		_mainModelUI->ToUI(_userData);
 		// ***********************
 		
 		_mainUI->ToUI(_mainModelUI);

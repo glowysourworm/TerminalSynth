@@ -4,21 +4,17 @@
 #define OUTPUT_UI_H
 
 #include "OutputModelUI.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "SliderUI.h"
 #include "UIBase.h"
 #include "ValueCapture.h"
 #include <exception>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
-#include <ftxui/component/component_options.hpp>
 #include <ftxui/dom/canvas.hpp>
-#include <ftxui/dom/direction.hpp>
 #include <ftxui/dom/elements.hpp>
-#include <ftxui/dom/linear_gradient.hpp>
 #include <ftxui/screen/color.hpp>
 #include <string>
-#include <utility>
 #include <vector>
 
 class OutputUI : public UIBase<OutputModelUI>
@@ -98,19 +94,18 @@ OutputUI::~OutputUI()
 
 void OutputUI::Initialize(const OutputModelUI& settings)
 {
-    const OutputSettings* outputSettings = settings.GetOutputSettings();
+    const PlaybackInfo* outputSettings = settings.GetPlaybackInfo();
 
-    _gainUI->Initialize(outputSettings->GetGain());
-    _leftRightUI->Initialize(outputSettings->GetLeftRightBalance());
+    _gainUI->Initialize(settings.GetGain());
+    _leftRightUI->Initialize(settings.GetLeftRightBalance());
 
     // Device List
     _deviceList->clear();
-    for (int index = 0; index < outputSettings->GetDeviceList()->size(); index++)
+    for (int index = 0; index < settings.GetDeviceNameList().size(); index++)
     {
-        _deviceList->push_back(outputSettings->GetDeviceList()->at(index)->GetDeviceName());
+        _deviceList->push_back(settings.GetDeviceNameList().at(index));
 
-        if (outputSettings->GetSelectedDevice() != nullptr &&
-            outputSettings->GetSelectedDevice()->GetDeviceName() == outputSettings->GetDeviceList()->at(index)->GetDeviceName())
+        if (settings.GetDeviceNameList().at(index) == settings.GetSelectedDeviceName())
             _deviceSelectedIndex->SetValue(index);
     }
 
@@ -226,8 +221,8 @@ void OutputUI::ToUI(const OutputModelUI& source)
 }
 void OutputUI::ToUI(const OutputModelUI* source)
 {
-    _gainUI->ToUI(source->GetOutputSettings()->GetGain());
-    _leftRightUI->ToUI(source->GetOutputSettings()->GetLeftRightBalance());
+    _gainUI->ToUI(source->GetGain());
+    _leftRightUI->ToUI(source->GetLeftRightBalance());
 
     for (int index = 0; index < source->GetEqualizerOutput()->size(); index++)
     {
@@ -248,12 +243,12 @@ void OutputUI::FromUI(OutputModelUI* destination)
     _gainUI->FromUI(gain);
     _leftRightUI->FromUI(leftRight);
 
-    destination->GetOutputSettings()->SetLeftRightBalance(leftRight);
-    destination->GetOutputSettings()->SetGain(gain);
+    destination->SetLeftRightBalance(leftRight);
+    destination->SetGain(gain);
 
     // OUTPUT DEVICE!
     if (_deviceSelectedIndex->HasChanged())
-        destination->GetOutputSettings()->SelectDevice(_deviceList->at(_deviceSelectedIndex->GetValue()));
+        destination->SetSelectedDeviceName(_deviceList->at(_deviceSelectedIndex->GetValue()));
 }
 
 #endif

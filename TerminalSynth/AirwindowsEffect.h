@@ -3,7 +3,7 @@
 #ifndef AIRWINDOWS_EFFECT_H
 #define AIRWINDOWS_EFFECT_H
 
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
 #include "SignalSettings.h"
@@ -21,7 +21,7 @@ public:
 	AirwindowsEffect(const SignalSettings& settings, AudioEffectX* plugin);
 	~AirwindowsEffect();
 
-	void Initialize(const OutputSettings* outputSettings) override;
+	void Initialize(const PlaybackInfo* outputSettings) override;
 	void SetFrame(PlaybackFrame* frame, float absoluteTime) override;
 	bool HasOutput(float absoluteTime) const override;
 

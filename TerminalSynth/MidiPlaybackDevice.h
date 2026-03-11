@@ -4,13 +4,14 @@
 #define MIDI_PLAYBACK_DEVICE_H
 
 #include "Constant.h"
+#include "EqualizerOutput.h"
 #include "MidiEvent.h"
 #include "MidiEventList.h"
 #include "MidiFile.h"
-#include "OutputSettings.h"
 #include "PlaybackDevice.h"
 #include "PlaybackFormatTransformer.h"
 #include "PlaybackFrame.h"
+#include "PlaybackInfo.h"
 #include "SoundRegistry.h"
 #include "Synth.h"
 #include "SynthSettings.h"
@@ -24,16 +25,17 @@ public:
 	MidiPlaybackDevice();
 	~MidiPlaybackDevice();
 
-	bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters) override;
+	bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) override;
 	bool Update(SoundRegistry* effectRegistry, const SynthSettings* configuration) override;
 	bool GetLastOutput() const override;
 	bool SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration) override;
 	int WritePlaybackBuffer(
 		void* playbackBuffer,
-		AudioStreamFormat format,
+		AudioStreamFormat streamFormat,
 		unsigned int numberOfFrames,
 		double streamTime,
-		const OutputSettings* outputSettings) override;
+		EqualizerOutput* equalizerOutput,
+		float gain, float leftRightBalance) override;
 
 	/// <summary>
 	/// Loads midi file and creates playback configuration
@@ -105,10 +107,10 @@ MidiPlaybackDevice::~MidiPlaybackDevice()
 	delete _frame;
 }
 
-bool MidiPlaybackDevice::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
+bool MidiPlaybackDevice::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters)
 {
-	_numberOfChannels = parameters->GetNumberOfChannels();
-	_samplingRate = parameters->GetSamplingRate();
+	_numberOfChannels = parameters->GetStreamInfo()->streamChannels;
+	_samplingRate = parameters->GetStreamInfo()->streamSampleRate;
 
 	_synth = new Synth(configuration, _numberOfChannels, _samplingRate);
 	_frame = new PlaybackFrame();
@@ -172,10 +174,11 @@ void MidiPlaybackDevice::SetMidiSynth(double currentStreamTime, int currentFrame
 
 int MidiPlaybackDevice::WritePlaybackBuffer(
 	void* playbackBuffer,
-	AudioStreamFormat format,
-	unsigned int numberOfFrames, 
-	double streamTime, 
-	const OutputSettings* outputSettings)
+	AudioStreamFormat streamFormat,
+	unsigned int numberOfFrames,
+	double streamTime,
+	EqualizerOutput* equalizerOutput,
+	float gain, float leftRightBalance)
 {
 	if (!_initialized)
 		return -1;
@@ -205,10 +208,10 @@ int MidiPlaybackDevice::WritePlaybackBuffer(
 		_frame->Clear();
 
 		// Get Samples for N channels
-		_lastOutput = _synth->GetSample(_frame, absoluteTime, outputSettings);
+		_lastOutput = _synth->GetSample(_frame, absoluteTime, gain, leftRightBalance);
 
 		// Equalizer Output
-		outputSettings->GetEqualizer()->AddSample(_frame->GetLeft(), _frame->GetRight());
+		equalizerOutput->AddSample(_frame->GetLeft(), _frame->GetRight());
 
 		// Interleved frames
 		// 

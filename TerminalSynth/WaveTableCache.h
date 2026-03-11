@@ -4,7 +4,7 @@
 #define WAVE_TABLE_CACHE_H
 
 #include "OscillatorParameters.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "SignalFactory.h"
 #include "SynthSettings.h"
 #include "WaveTable.h"
@@ -20,7 +20,7 @@ public:
 	WaveTableCache();
 	~WaveTableCache();
 
-	bool Initialize(const SynthSettings* synthSettings, const OutputSettings* outputSettings);
+	bool Initialize(const SynthSettings* synthSettings, const PlaybackInfo* outputSettings);
 
 	/// <summary>
 	/// Loads the list of sound bank(s) (last directory name(s)) into the user's destination vector
@@ -70,8 +70,8 @@ private:
 
 private:
 
-	bool Initialize_SoundBanks(const SynthSettings* synthSettings, const OutputSettings* outputSettings);
-	bool Initialize_Oscillators(const SynthSettings* synthSettings, const OutputSettings* outputSettings);
+	bool Initialize_SoundBanks(const SynthSettings* synthSettings, const PlaybackInfo* outputSettings);
+	bool Initialize_Oscillators(const SynthSettings* synthSettings, const PlaybackInfo* outputSettings);
 
 private:
 

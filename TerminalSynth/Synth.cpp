@@ -1,5 +1,5 @@
-#include "OutputSettings.h"
 #include "PlaybackFrame.h"
+#include "PlaybackInfo.h"
 #include "SignalChain.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
@@ -12,7 +12,7 @@ Synth::Synth(const SynthSettings* configuration, unsigned int numberOfChannels, 
 	_numberOfChannels = numberOfChannels;
 	_samplingRate = samplingRate;
 	_postProcessing = new SignalChain();
-	_pianoNotes = nullptr;
+	_pianoNotes = nullptr;	
 }
 
 Synth::~Synth()
@@ -21,7 +21,7 @@ Synth::~Synth()
 	delete _postProcessing;
 }
 
-void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
+void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters)
 {
 	_pianoNotes = new SynthNotePool(effectRegistry, configuration, parameters, 10);
 	_postProcessing->Initialize(effectRegistry, configuration->GetDefaultSoundSettings()->GetPostProcessing(), parameters);
@@ -41,13 +41,10 @@ void Synth::Set(int midiNumber, bool pressed, double absoluteTime)
 {
 	_pianoNotes->SetNote(midiNumber, pressed, absoluteTime);
 }
-bool Synth::GetSample(PlaybackFrame* frame, double absoluteTime, const OutputSettings* outputSettings)
+bool Synth::GetSample(PlaybackFrame* frame, double absoluteTime, float gain, float leftRightBalance)
 {
-	float gain = outputSettings->GetGain();
-	float leftRight = outputSettings->GetLeftRightBalance();
-
 	// Primary Synth Voice(s)
-	bool hasOutput = _pianoNotes->SetFrame(frame, absoluteTime, gain, leftRight);
+	bool hasOutput = _pianoNotes->SetFrame(frame, absoluteTime, gain, leftRightBalance);
 
 	// Post Processing
 	hasOutput |= _postProcessing->HasOutput(absoluteTime);

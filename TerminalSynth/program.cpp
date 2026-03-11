@@ -1,6 +1,7 @@
 #include "AtomicLock.h"
 #include "MainController.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
+#include "PlaybackUserData.h"
 #include "PortAudioController.h"
 #include "RtAudioController.h"
 #include "SoundRegistry.h"
@@ -12,7 +13,7 @@
 /// <summary>
 /// This will eventually come from a file, so there'll be some new component
 /// </summary>
-SynthSettings* CreateConfiguration(OutputSettings* deviceSettings, const std::string& soundBankDirectory)
+SynthSettings* CreateConfiguration(const std::string& soundBankDirectory)
 {
 	SynthSettings* configuration = new SynthSettings(soundBankDirectory);
 
@@ -98,13 +99,12 @@ int main(int argc, char* argv[], char* envp[])
 	// Primary Shared Pointers:  The OutputSettings* are initialized and maintained by the MainController, with 
 	//							 the RtAudioController* providing the host api, and device info.
 	//
-	OutputSettings* parameters = new OutputSettings();
-	SynthSettings* configuration = CreateConfiguration(parameters, soundBankDirectory);
-	SoundRegistry* registry = new SoundRegistry();											// NEEDS INITIALIZATION (W/ SAMPLING RATE)
+	SynthSettings* configuration = CreateConfiguration(soundBankDirectory);
+	PlaybackUserData* userData = new PlaybackUserData(configuration);
 
 	SetConsoleTitleA("Terminal Synth");
 
-	if (!controller.Initialize(configuration, parameters, registry))
+	if (!controller.Initialize(userData))
 		return -1;
 
 	controller.Start();
@@ -115,8 +115,6 @@ int main(int argc, char* argv[], char* envp[])
 	// All threads have stopped, we can now delete the rest of our heap memory
 	delete configuration;
 	delete playbackLock;
-	delete registry;
-	delete parameters;
 
 	return 0;
 }

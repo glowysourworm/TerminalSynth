@@ -4,7 +4,8 @@
 #define PLAYBACK_DEVICE_H
 
 #include "Constant.h"
-#include "OutputSettings.h"
+#include "EqualizerOutput.h"
+#include "PlaybackInfo.h"
 #include "SoundRegistry.h"
 #include "SynthSettings.h"
 
@@ -20,7 +21,7 @@ public:
 	/// Initialization of playback device is required before starting RT Audio playback.
 	/// </summary>
 	/// <returns>Returns true if device is ready, otherwise false for some sort of error</returns>
-	virtual bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters) = 0;
+	virtual bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) = 0;
 
 	/// <summary>
 	/// Update of playback device with current settings
@@ -49,7 +50,13 @@ public:
 	/// Tells the playback device to write its output to the playback buffer. The write should start at frame index 0, and
 	/// end at the frame index that coincides with the stream end time. The function should return non-zero for error indication.
 	/// </summary>
-	virtual int WritePlaybackBuffer(void* playbackBuffer, AudioStreamFormat format, unsigned int numberOfFrames, double streamTime, const OutputSettings* outputSettings) = 0;
+	virtual int WritePlaybackBuffer(
+		void* playbackBuffer, 
+		AudioStreamFormat streamFormat,
+		unsigned int numberOfFrames,
+		double streamTime,
+		EqualizerOutput* equalizerOutput,
+		float gain, float leftRightBalance) = 0;
 };
 
 

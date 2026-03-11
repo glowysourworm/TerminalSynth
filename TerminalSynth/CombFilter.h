@@ -3,7 +3,7 @@
 #ifndef COMBFILTER_H
 #define COMBFILTER_H
 
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
 #include <queue>
@@ -21,7 +21,7 @@ public:
 	CombFilter(float delaySeconds, float gain, bool feedback);
 	~CombFilter();
 
-	void Initialize(const OutputSettings* parameters) override;
+	void Initialize(const PlaybackInfo* parameters) override;
 	void SetFrame(PlaybackFrame* frame, float absoluteTime) override;
 	bool HasOutput(float absoluteTime) const override;
 

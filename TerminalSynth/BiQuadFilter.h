@@ -3,7 +3,7 @@
 #ifndef BIQUAD_FILTER_H
 #define BIQUAD_FILTER_H
 
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
 #include "SignalSettings.h"
@@ -74,7 +74,7 @@ public:
 	BiQuadFilter(FilterType filterType, unsigned int samplingRate, float dbGain, float corner, float resonance);
 	~BiQuadFilter();
 
-	void Initialize(const OutputSettings* parameters) override;
+	void Initialize(const PlaybackInfo* parameters) override;
 	void SetFrame(PlaybackFrame* frame, float absoluteTime) override;
 	bool HasOutput(float absoluteTime) const override;
 

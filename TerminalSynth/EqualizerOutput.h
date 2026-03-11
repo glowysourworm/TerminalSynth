@@ -15,7 +15,7 @@ class EqualizerOutput
 {
 public:
 
-	EqualizerOutput(unsigned int inputSizePowOf2, unsigned int outputSizePowOf2, unsigned int samplingRate) 
+	EqualizerOutput(unsigned int inputSizePowOf2, unsigned int outputSizePowOf2) 
 	{
 		if (inputSizePowOf2 < outputSizePowOf2)
 			throw new std::exception("Must have a smaller output size than input:  EqualizerOutput.h");
@@ -152,7 +152,7 @@ public:
 		}
 	}
 
-	void GetEQ(std::vector<PlaybackFrame>* destination)
+	void GetEQ(std::vector<PlaybackFrame>* destination) const
 	{
 		// The Output is Symmetrical
 		if (destination->size() != (_output->size() / 2))
@@ -162,6 +162,22 @@ public:
 		{
 			destination->at(index).SetFrame(_output->at(index).GetLeft(), _output->at(index).GetRight(), 0);
 		}
+	}
+	
+	/// <summary>
+	/// (MEMORY!) Creates new std::vector<PlaybackFrame>* prepared to receive sample output (contains
+	///			  the current sample output)
+	/// </summary>
+	std::vector<PlaybackFrame>* GetEQCopy() const
+	{
+		std::vector<PlaybackFrame>* result = new std::vector<PlaybackFrame>();
+
+		for (int index = 0; index < _output->size() / 2; index++)
+		{
+			result->push_back(PlaybackFrame(_output->at(index).GetLeft(), _output->at(index).GetRight(), 0));
+		}
+
+		return result;
 	}
 
 	int GetOutputLength() const { return _output->size(); }

@@ -5,17 +5,17 @@
 
 #include "ModelUI.h"
 #include "OutputModelUI.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
+#include "PlaybackUserData.h"
 #include "SynthSettings.h"
 #include "SynthTabModelUI.h"
 #include <string>
-#include <vector>
 
 class MainModelUI : public ModelUI
 {
 public:
 
-	MainModelUI(const SynthSettings* synthSettings, const OutputSettings* outputSettings);
+	MainModelUI(const PlaybackUserData* playbackData);
 	MainModelUI(const MainModelUI& copy);
 	~MainModelUI();	
 
@@ -23,7 +23,7 @@ public:
 	int GetOrder() const override;
 
 	void FromUI(SynthSettings* destination);
-	void ToUI(const SynthSettings* synthSettings, const OutputSettings* outputSettings);
+	void ToUI(const PlaybackUserData* playbackData);
 
 	SynthTabModelUI* GetSynthTabModelUI() const;
 	OutputModelUI* GetOutputModelUI() const;
@@ -40,14 +40,14 @@ private:
 	bool _haveSoundSettingsChanged;
 };
 
-MainModelUI::MainModelUI(const SynthSettings* synthSettings, const OutputSettings* outputSettings)
+MainModelUI::MainModelUI(const PlaybackUserData* playbackData)
 {
 	_name = new std::string("Terminal Synth");
-	_synthTabModelUI = new SynthTabModelUI(synthSettings->GetEffectRegistry(), synthSettings->GetDefaultSoundSettings(), synthSettings->GetSoundBankSettings());
-	_outputModelUI = new OutputModelUI(outputSettings);
+	_synthTabModelUI = new SynthTabModelUI(playbackData->GetEffectRegistryList(), playbackData->GetSynthSettings()->GetDefaultSoundSettings(), playbackData->GetSynthSettings()->GetSoundBankSettings());
+	_outputModelUI = new OutputModelUI(playbackData);
 
 	// Running Initialization Cycle (this may need redesign if the UI grows any bigger)
-	_outputModelUI->ToUI(outputSettings);
+	_outputModelUI->ToUI(playbackData);
 
 	_haveSoundSettingsChanged = false;
 }
@@ -59,7 +59,7 @@ MainModelUI::MainModelUI(const MainModelUI& copy)
 	_outputModelUI = new OutputModelUI(*copy.GetOutputModelUI());
 
 	// Running Initialization Cycle (this may need redesign if the UI grows any bigger)
-	_outputModelUI->ToUI(copy.GetOutputModelUI()->GetOutputSettings());
+	//_outputModelUI->ToUI(copy.GetOutputModelUI()->GetPlaybackInfo(), copy.GetOutputModelUI()->GetEqualizerOutput());
 
 	_haveSoundSettingsChanged = false;
 }
@@ -99,12 +99,14 @@ int MainModelUI::GetOrder() const
 void MainModelUI::FromUI(SynthSettings* destination)
 {
 	_synthTabModelUI->Update(destination->GetDefaultSoundSettings(), destination->GetSoundBankSettings());
+	destination->SetGain(_outputModelUI->GetGain());
+	destination->SetLeftRightBalance(_outputModelUI->GetLeftRightBalance());
 }
-void MainModelUI::ToUI(const SynthSettings* synthSettings, const OutputSettings* outputSettings)
+void MainModelUI::ToUI(const PlaybackUserData* playbackData)
 {
-	_outputModelUI->ToUI(outputSettings);
+	_outputModelUI->ToUI(playbackData);
 
-	_haveSoundSettingsChanged = _synthTabModelUI->GetSoundSettings()->IsEqual(synthSettings->GetCurrentSoundSettings());
+	_haveSoundSettingsChanged = _synthTabModelUI->GetSoundSettings()->IsEqual(playbackData->GetSynthSettings()->GetCurrentSoundSettings());
 }
 
 #endif

@@ -19,10 +19,10 @@ SynthSettings::SynthSettings(const std::string& soundBankDirectory)
 
 	_soundSettingsList = new std::vector<SoundSettings*>();
 
-	_effectRegistry = new SignalChainSettings();
-
 	_midiLow = MIDI_PIANO_LOW_NUMBER;
 	_midiHigh = MIDI_PIANO_HIGH_NUMBER;
+	_gain = 1.0f;
+	_leftRightBalance = 0.5f;
 
 	_oversamplingFactor = 1.0;
 
@@ -43,8 +43,6 @@ SynthSettings::SynthSettings(const SynthSettings& copy)
 	}
 
 
-	_effectRegistry = new SignalChainSettings(*copy.GetEffectRegistry());
-
 	_midiLow = copy.GetMidiLow();
 	_midiHigh = copy.GetMidiHigh();
 	
@@ -59,7 +57,6 @@ SynthSettings::~SynthSettings()
 		delete _soundSettingsList->at(index);
 	}
 
-	delete _effectRegistry;
 	delete _keyMap;
 	delete _defaultSoundSettings;
 	delete _soundSettingsList;
@@ -162,6 +159,16 @@ float SynthSettings::GetOversamplingFactor() const
 	return _oversamplingFactor;
 }
 
+float SynthSettings::GetGain() const
+{
+	return _gain;
+}
+
+float SynthSettings::GetLeftRightBalance() const
+{
+	return _leftRightBalance;
+}
+
 bool SynthSettings::HasMidiNote(WindowsKeyCodes keyCode) const
 {
 	return _keyMap->HasMidiNote(keyCode);
@@ -175,6 +182,21 @@ int SynthSettings::GetMidiNote(WindowsKeyCodes keyCode) const
 WindowsKeyCodes SynthSettings::GetKeyCode(int midiNote) const
 {
 	return _keyMap->GetKeyCode(midiNote);
+}
+
+void SynthSettings::SetGain(float value)
+{
+	if (_gain != value)
+		_isDirty = true;
+
+	_gain = value;
+}
+void SynthSettings::SetLeftRightBalance(float value)
+{
+	if (_leftRightBalance != value)
+		_isDirty = true;
+
+	_leftRightBalance = value;
 }
 
 void SynthSettings::SetMidiLow(int value)
@@ -212,11 +234,6 @@ void SynthSettings::SetOversamplingFactor(float value)
 {
 	_oversamplingFactor = value;
 	_isDirty = true;
-}
-
-SignalChainSettings* SynthSettings::GetEffectRegistry() const
-{
-	return _effectRegistry;
 }
 
 int SynthSettings::GetSoundSettingsCount() const

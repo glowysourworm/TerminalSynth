@@ -1,7 +1,7 @@
 #include "Constant.h"
 #include "Envelope.h"
 #include "OscillatorParameters.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalChain.h"
 #include "SignalChainSettings.h"
@@ -18,10 +18,10 @@
 #include <utility>
 #include <vector>
 
-SynthNotePool::SynthNotePool(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* settings, int capacity)
+SynthNotePool::SynthNotePool(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* settings, int capacity)
 {
 	_capacity = capacity;
-	_systemSamplingRate = settings->GetSamplingRate();
+	_systemSamplingRate = settings->GetStreamInfo()->streamSampleRate;
 	_engagedNotes = new std::map<int, SynthNote*>();
 	_disengagedNotes = new std::map<SynthNote*, SynthNote*>();
 	_waveTableCache = new WaveTableCache();

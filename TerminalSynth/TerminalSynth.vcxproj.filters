@@ -91,6 +91,12 @@
     <Filter Include="Header Files\ModelUI">
       <UniqueIdentifier>{34098a0a-6bb6-41ea-95ae-637a5dc75c1e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\ModelPlayback">
+      <UniqueIdentifier>{21ed5333-4b6a-4a3b-85ef-08967c8c21ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ModelPlayback">
+      <UniqueIdentifier>{7600c1e3-950c-4e7d-9e75-ce5e64a2833a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp">
@@ -197,6 +203,9 @@
     </ClCompile>
     <ClCompile Include="PortAudioController.cpp">
       <Filter>Source Files\Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="PlaybackUserData.cpp">
+      <Filter>Source Files\ModelPlayback</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -314,12 +323,6 @@
     <ClInclude Include="SynthSettings.h">
       <Filter>Header Files\Model</Filter>
     </ClInclude>
-    <ClInclude Include="OutputSettings.h">
-      <Filter>Header Files\Model</Filter>
-    </ClInclude>
-    <ClInclude Include="EqualizerOutput.h">
-      <Filter>Header Files\Model</Filter>
-    </ClInclude>
     <ClInclude Include="SignalParameter.h">
       <Filter>Header Files\Model</Filter>
     </ClInclude>
@@ -431,9 +434,6 @@
     <ClInclude Include="SynthTabModelUI.h">
       <Filter>Header Files\ModelUI</Filter>
     </ClInclude>
-    <ClInclude Include="OutputDeviceInfo.h">
-      <Filter>Header Files\Model</Filter>
-    </ClInclude>
     <ClInclude Include="Algorithm.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
@@ -449,10 +449,31 @@
     <ClInclude Include="PlaybackFormatTransformer.h">
       <Filter>Header Files\Playback</Filter>
     </ClInclude>
+    <ClInclude Include="PlaybackInfo.h">
+      <Filter>Header Files\ModelPlayback</Filter>
+    </ClInclude>
+    <ClInclude Include="OutputDeviceInfo.h">
+      <Filter>Header Files\ModelPlayback</Filter>
+    </ClInclude>
+    <ClInclude Include="EqualizerOutput.h">
+      <Filter>Header Files\ModelPlayback</Filter>
+    </ClInclude>
+    <ClInclude Include="StreamInfo.h">
+      <Filter>Header Files\ModelPlayback</Filter>
+    </ClInclude>
+    <ClInclude Include="PlaybackDeviceRegister.h">
+      <Filter>Header Files\ModelPlayback</Filter>
+    </ClInclude>
+    <ClInclude Include="MetricAudioInfo.h">
+      <Filter>Header Files\ModelPlayback</Filter>
+    </ClInclude>
+    <ClInclude Include="MetricUIInfo.h">
+      <Filter>Header Files\ModelPlayback</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="RtAudioUserData.h">
-      <Filter>Header Files\Controller</Filter>
+    <None Include="PlaybackUserData.h">
+      <Filter>Header Files\ModelPlayback</Filter>
     </None>
   </ItemGroup>
 </Project>

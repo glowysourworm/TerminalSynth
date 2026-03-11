@@ -49,10 +49,6 @@ void MainUI::Initialize(const MainModelUI& model)
 
 	_buttonColor = ftxui::Color::RGBA(0, 0, 255, 50);
 
-	// Airwin Registry List
-	std::vector<std::string> pluginList;
-	_model->GetSynthTabModelUI()->GetEffectRegistry()->GetList(pluginList);
-
 	auto midiSettings = ftxui::Container::Horizontal({
 
 	});

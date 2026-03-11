@@ -1,4 +1,4 @@
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
 #include "SignalSettings.h"
@@ -11,7 +11,7 @@ SynthEffect::SynthEffect(const std::string& name, const SignalSettings& paramete
 SynthEffect::~SynthEffect()
 {
 }
-void SynthEffect::Initialize(const OutputSettings* parameters)
+void SynthEffect::Initialize(const PlaybackInfo* parameters)
 {
 	SignalBase::Initialize(parameters);
 }

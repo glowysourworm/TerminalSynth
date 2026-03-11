@@ -1,5 +1,5 @@
 #include "CombFilter.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
 #include <queue>
@@ -20,7 +20,7 @@ CombFilter::~CombFilter()
 	delete _bufferR;
 }
 
-void CombFilter::Initialize(const OutputSettings* parameters)
+void CombFilter::Initialize(const PlaybackInfo* parameters)
 {
 	SignalBase::Initialize(parameters);
 
@@ -30,7 +30,7 @@ void CombFilter::Initialize(const OutputSettings* parameters)
 
 	float delaySeconds = this->GetParameterValue(0);
 
-	int bufferSize = (int)(delaySeconds * parameters->GetSamplingRate());
+	int bufferSize = (int)(delaySeconds * parameters->GetStreamInfo()->streamSampleRate);
 
 	// Initialize the queue
 	for (int i = 0; i < bufferSize; i++)

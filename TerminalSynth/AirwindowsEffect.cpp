@@ -1,5 +1,5 @@
 #include "AirwindowsEffect.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
 #include "SignalSettings.h"
@@ -38,7 +38,7 @@ AirwindowsEffect::~AirwindowsEffect()
 	delete[] _output;
 }
 
-void AirwindowsEffect::Initialize(const OutputSettings* parameters)
+void AirwindowsEffect::Initialize(const PlaybackInfo* parameters)
 {
 	SignalBase::Initialize(parameters);
 }

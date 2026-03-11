@@ -10,11 +10,8 @@
 #include "LoopTimer.h"
 #include "MainModelUI.h"
 #include "MainUI.h"
-#include "OutputSettings.h"
 #include "PlaybackController.h"
-#include "RtAudioUserData.h"
-#include "SoundRegistry.h"
-#include "SynthSettings.h"
+#include "PlaybackUserData.h"
 
 class MainController : public BaseController
 {
@@ -23,7 +20,7 @@ public:
 	MainController(AudioController* audioController, AtomicLock* playbackLock);
 	~MainController();
 
-	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry) override;
+	bool Initialize(PlaybackUserData* playbackData) override;
 	bool Dispose() override;
 
 	/// <summary>
@@ -41,12 +38,10 @@ private:
 	const long LOOP_PERIOD_MICRO = 15000;
 
 	AudioController* _audioController;
-	RtAudioUserData* _userData;
-
-	// Primary Owner of SynthSettings*
-	SynthSettings* _configuration;
-
 	PlaybackController* _playbackController;
+
+	PlaybackUserData* _userData;
+	
 	LoopTimer* _uiTimer;
 	IntervalTimer* _uiDataFetchTimer;
 	IntervalTimer* _uiLockAcquireTimer;

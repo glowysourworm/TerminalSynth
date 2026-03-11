@@ -9,12 +9,9 @@
 #include "IntervalTimer.h"
 #include "LoopTimer.h"
 #include "MidiPlaybackDevice.h"
-#include "OutputSettings.h"
 #include "PlaybackClock.h"
-#include "RtAudioUserData.h"
-#include "SoundRegistry.h"
+#include "PlaybackUserData.h"
 #include "SynthPlaybackDevice.h"
-#include "SynthSettings.h"
 #include <string>
 
 class PlaybackController : public BaseController
@@ -24,7 +21,7 @@ public:
 	PlaybackController(AtomicLock* playbackLock);
 	~PlaybackController();
 
-	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry) override;
+	bool Initialize(PlaybackUserData* playbackData) override;
 	bool Dispose() override;
 	void Start() override;
 
@@ -49,7 +46,7 @@ public:
 	/// <param name="numberOfFrames">Number of (L/R) frames to process</param>
 	/// <param name="streamTime">Current stream time from RT Audio</param>
 	/// <param name="configuration">This should be the SynthSettings* which is provided on this thread to process, also.</param>
-	int ProcessAudioCallback(void* outputBuffer, AudioStreamFormat streamFormat, unsigned int numberOfFrames, double streamTime, double streamLatency, RtAudioUserData* userData);
+	int ProcessAudioCallback(void* outputBuffer, AudioStreamFormat streamFormat, unsigned int numberOfFrames, double streamTime, double streamLatency, PlaybackUserData* userData);
 
 private:
 

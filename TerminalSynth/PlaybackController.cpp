@@ -4,11 +4,10 @@
 #include "IntervalTimer.h"
 #include "LoopTimer.h"
 #include "MidiPlaybackDevice.h"
-#include "OutputSettings.h"
 #include "PlaybackClock.h"
 #include "PlaybackController.h"
-#include "PlaybackFormatTransformer.h"
-#include "RtAudioUserData.h"
+#include "PlaybackInfo.h"
+#include "PlaybackUserData.h"
 #include "SoundRegistry.h"
 #include "SynthPlaybackDevice.h"
 #include "SynthSettings.h"
@@ -34,20 +33,20 @@ PlaybackController::~PlaybackController()
 		this->Dispose();
 }
 
-bool PlaybackController::Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry)
+bool PlaybackController::Initialize(PlaybackUserData* playbackData)
 {
 	if (_initialized)
 		throw new std::exception("Audio Controller already initialized!");
 
-	_synthDevice->Initialize(effectRegistry, configuration, parameters);
-	_midiDevice->Initialize(effectRegistry, configuration, parameters);
+	_synthDevice->Initialize(playbackData->GetEffectRegistry(), playbackData->GetSynthSettings(), playbackData->GetPlaybackInfo());
+	_midiDevice->Initialize(playbackData->GetEffectRegistry(), playbackData->GetSynthSettings(), playbackData->GetPlaybackInfo());
 
 	_initialized = true;
 
 	return _initialized;
 }
 
-int PlaybackController::ProcessAudioCallback(void* outputBuffer, AudioStreamFormat streamFormat, unsigned int numberOfFrames, double streamTime, double streamLatency, RtAudioUserData* userData)
+int PlaybackController::ProcessAudioCallback(void* outputBuffer, AudioStreamFormat streamFormat, unsigned int numberOfFrames, double streamTime, double streamLatency, PlaybackUserData* userData)
 {
 	// Main Controller Initialization
 	if (!userData->IsInitialized())
@@ -62,14 +61,12 @@ int PlaybackController::ProcessAudioCallback(void* outputBuffer, AudioStreamForm
 
 	SynthSettings* configuration = userData->GetSynthSettings();
 	SoundRegistry* effectRegistry = userData->GetEffectRegistry();
-	OutputSettings* outputSettings = userData->GetOutputSettings();
+	PlaybackInfo* outputSettings = userData->GetPlaybackInfo();
 
 	// Some RT Updates
 	float avgAudioMilli = _audioTimer->GetAvgMilli();
 	float avgAudioSampleMicro = _audioSampleTimer->AvgMicro();
 	float avgAudioLockAcquireNano = _audioLockAcquireTimer->AvgNano();
-	float leftChannel;
-	float rightChannel;
 
 	// std::atomic wait loop (timing the lock acquire)
 	_audioLockAcquireTimer->Reset();
@@ -97,6 +94,9 @@ int PlaybackController::ProcessAudioCallback(void* outputBuffer, AudioStreamForm
 	bool pressedKeys = _midiMode ? _midiDevice->SetForPlayback(numberOfFrames, streamTime, configuration) :
 								   _synthDevice->SetForPlayback(numberOfFrames, streamTime, configuration);
 
+	float gain = configuration->GetGain();
+	float leftRight = configuration->GetLeftRightBalance();
+
 	// Optimize CPU
 	//if (lastOutput || pressedKeys)
 	//{
@@ -104,15 +104,14 @@ int PlaybackController::ProcessAudioCallback(void* outputBuffer, AudioStreamForm
 		_audioSampleTimer->Reset();
 
 		// Write playback buffer from synth device
-		rtAudioReturnValue = _midiMode ? _midiDevice->WritePlaybackBuffer(outputBuffer, streamFormat, numberOfFrames, streamTime, outputSettings) :
-										 _synthDevice->WritePlaybackBuffer(outputBuffer, streamFormat, numberOfFrames, streamTime, outputSettings);
+		rtAudioReturnValue = _midiMode ? _midiDevice->WritePlaybackBuffer(outputBuffer, streamFormat, numberOfFrames, streamTime, userData->GetEqualizer(), gain, leftRight) :
+										 _synthDevice->WritePlaybackBuffer(outputBuffer, streamFormat, numberOfFrames, streamTime, userData->GetEqualizer(), gain, leftRight);
 
 		_audioSampleTimer->Mark();
 	//}
 
 	// RT Update (Audio)
 	outputSettings->UpdateRT_Audio(streamTime, avgAudioMilli, avgAudioSampleMicro, avgAudioLockAcquireNano, streamLatency);
-	outputSettings->SetStreamLatency(streamLatency);
 
 	// std::atomic end loop
 	this->PlaybackLock->Release();

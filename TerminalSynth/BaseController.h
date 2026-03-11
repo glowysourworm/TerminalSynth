@@ -4,9 +4,7 @@
 #define BASE_CONTROLLER_H
 
 #include "AtomicLock.h"
-#include "OutputSettings.h"
-#include "SoundRegistry.h"
-#include "SynthSettings.h"
+#include "PlaybackUserData.h"
 
 /// <summary>
 /// Simple base class to enforce Initialize / Dispose pattern on the controllers. The Synth, SynthPlaybackDevice, and
@@ -26,7 +24,7 @@ public:
 	/// <summary>
 	/// Initialization function for the synth backend. This must be called before starting the player!
 	/// </summary>
-	virtual bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry) = 0;
+	virtual bool Initialize(PlaybackUserData* playbackData) = 0;
 
 	/// <summary>
 	/// Starts any threads associated with the controller, after initialization.

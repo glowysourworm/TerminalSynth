@@ -3,13 +3,12 @@
 #ifndef SYNTH_PLAYBACK_DEVICE_H
 #define SYNTH_PLAYBACK_DEVICE_H
 
-#include "Accumulator.h"
 #include "Constant.h"
-#include "OutputSettings.h"
+#include "EqualizerOutput.h"
 #include "PlaybackDevice.h"
 #include "PlaybackFormatTransformer.h"
-#include "PlaybackFormatTransformer.h"
 #include "PlaybackFrame.h"
+#include "PlaybackInfo.h"
 #include "SoundRegistry.h"
 #include "Synth.h"
 #include "SynthSettings.h"
@@ -24,16 +23,17 @@ public:
 	SynthPlaybackDevice();
 	~SynthPlaybackDevice();
 
-	bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters) override;
+	bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) override;
 	bool Update(SoundRegistry* effectRegistry, const SynthSettings* configuration) override;
 	bool SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration) override;
 
 	int WritePlaybackBuffer(
 		void* playbackBuffer,
 		AudioStreamFormat streamFormat,
-		unsigned int numberOfFrames, 
-		double streamTime, 
-		const OutputSettings* outputSettings) override;
+		unsigned int numberOfFrames,
+		double streamTime,
+		EqualizerOutput* equalizerOutput,
+		float gain, float leftRightBalance) override;
 
 	bool GetLastOutput() const override;
 
@@ -70,10 +70,10 @@ SynthPlaybackDevice::~SynthPlaybackDevice()
 	delete _frame;
 }
 
-bool SynthPlaybackDevice::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const OutputSettings* parameters)
+bool SynthPlaybackDevice::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters)
 {
-	_numberOfChannels = parameters->GetNumberOfChannels();
-	_samplingRate = parameters->GetSamplingRate();
+	_numberOfChannels = parameters->GetStreamInfo()->streamChannels;
+	_samplingRate = parameters->GetStreamInfo()->streamSampleRate;
 
 	_synth = new Synth(configuration, _numberOfChannels, _samplingRate);
 	_frame = new PlaybackFrame();
@@ -137,7 +137,12 @@ bool SynthPlaybackDevice::SetForPlayback(unsigned int numberOfFrames, double str
 	return pressedKeys;
 }
 
-int SynthPlaybackDevice::WritePlaybackBuffer(void* playbackBuffer, AudioStreamFormat streamFormat, unsigned int numberOfFrames, double streamTime, const OutputSettings* outputSettings)
+int SynthPlaybackDevice::WritePlaybackBuffer(void* playbackBuffer,
+	AudioStreamFormat streamFormat,
+	unsigned int numberOfFrames,
+	double streamTime,
+	EqualizerOutput* equalizerOutput,
+	float gain, float leftRightBalance)
 {
 	if (!_initialized)
 		return -1;
@@ -158,10 +163,10 @@ int SynthPlaybackDevice::WritePlaybackBuffer(void* playbackBuffer, AudioStreamFo
 		_frame->Clear();
 
 		// Get Samples for N channels
-		_lastOutput = _synth->GetSample(_frame, absoluteTime, outputSettings);
+		_lastOutput = _synth->GetSample(_frame, absoluteTime, gain, leftRightBalance);
 
 		// Equalizer Output
-		outputSettings->GetEqualizer()->AddSample(_frame->GetLeft(), _frame->GetRight());
+		equalizerOutput->AddSample(_frame->GetLeft(), _frame->GetRight());
 
 		// TRANSFORM STREAM:  The byte stream must match the output format
 		PlaybackFormatTransformer::Transform(streamFormat, _frame->GetLeft(), leftBuffer, frameSize);

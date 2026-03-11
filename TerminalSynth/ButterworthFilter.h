@@ -4,7 +4,7 @@
 #ifndef BUTTERWORTH_FILTER_H
 #define BUTTERWORTH_FILTER_H
 
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
 
@@ -15,7 +15,7 @@ public:
 	ButterworthFilter(int samplingRate, float gain);
 	~ButterworthFilter();
 
-	void Initialize(const OutputSettings* parameters) override;
+	void Initialize(const PlaybackInfo* parameters) override;
 	void SetFrame(PlaybackFrame* frame, float absoluteTime) override;
 	bool HasOutput(float absoluteTime) const override;
 

@@ -5,7 +5,7 @@
 
 #include "Accumulator.h"
 #include "Constant.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalParameter.h"
 #include "SignalParameterAutomater.h"
@@ -60,7 +60,7 @@ public:
 		delete _parameterAutomaters;
 	}
 
-	virtual void Initialize(const OutputSettings* outputSettings)
+	virtual void Initialize(const PlaybackInfo* outputSettings)
 	{
 		_outputSettings = outputSettings;
 
@@ -70,8 +70,8 @@ public:
 		}
 
 		// Track clipping
-		_leftAccumulator->ResetFor(true, outputSettings->GetSamplingRate());
-		_rightAccumulator->ResetFor(true, outputSettings->GetSamplingRate());
+		_leftAccumulator->ResetFor(true, outputSettings->GetStreamInfo()->streamSampleRate);
+		_rightAccumulator->ResetFor(true, outputSettings->GetStreamInfo()->streamSampleRate);
 	}
 
 	/// <summary>
@@ -193,7 +193,7 @@ private:
 	Accumulator<float>* _rightAccumulator;
 
 	// We should try to remove this initialization dependency
-	const OutputSettings* _outputSettings;
+	const PlaybackInfo* _outputSettings;
 	
 	std::vector<SignalParameterAutomater*>* _parameterAutomaters;
 };

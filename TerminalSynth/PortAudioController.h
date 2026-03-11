@@ -6,9 +6,8 @@
 #include "AtomicLock.h"
 #include "AudioController.h"
 #include "Constant.h"
-#include "OutputSettings.h"
-#include "SoundRegistry.h"
-#include "SynthSettings.h"
+#include "PlaybackInfo.h"
+#include "PlaybackUserData.h"
 #include <portaudio.h>
 #include <string>
 
@@ -58,7 +57,7 @@ public:
 	/// <summary>
 	/// Initialization function for the synth backend. This must be called before starting the player!
 	/// </summary>
-	bool Initialize(SynthSettings* configuration, OutputSettings* parameters, SoundRegistry* effectRegistry, const AudioCallbackDelegate& audioCallback) override;
+	bool Initialize(PlaybackUserData* playbackData, const AudioCallbackDelegate& audioCallback) override;
 
 	/// <summary>
 	/// Starts any threads associated with the controller, after initialization.
@@ -74,7 +73,7 @@ public:
 	/// Opens the RT Audio backend stream with specified user data
 	/// </summary>
 	/// <param name="userData">Arbitrary data sent along with the backend stream</param>
-	bool OpenStream(void* userData) override;
+	bool OpenStream(PlaybackUserData* userData) override;
 	bool CloseStream() override;
 
 	bool StartStream() override;
@@ -89,11 +88,12 @@ private:
 	void GetDeviceFormatString(const PaDeviceInfo* deviceInfo, std::string& destination) const;
 	void GetDeviceFormatParagraph(const PaDeviceInfo* deviceInfo, std::string& destination) const;
 
+	PaSampleFormat FormatTo(AudioStreamFormat format) const;
+	AudioStreamFormat FormatFrom(PaSampleFormat format) const;
+
 private:
 
 	AudioCallbackDelegate* _audioCallback;
-
-	OutputSettings* _outputSettings;
 
 	bool _initialized;
 

@@ -5,7 +5,7 @@
 
 #include "Constant.h"
 #include "OscillatorParameters.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalFactoryCore.h"
 #include "SignalParameter.h"
@@ -23,7 +23,7 @@ public:
 	/// <summary>
 	/// Initializes components with output settings
 	/// </summary>
-	void Initialize(const OutputSettings* parameters);
+	void Initialize(const PlaybackInfo* parameters);
 
 	/// <summary>
 	/// Updates from SignalParameter*

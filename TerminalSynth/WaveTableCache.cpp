@@ -1,7 +1,7 @@
 #include "Constant.h"
 #include "Envelope.h"
 #include "OscillatorParameters.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalFactory.h"
 #include "SoundFileReader.h"
@@ -51,12 +51,12 @@ WaveTableCache::~WaveTableCache()
 	delete _signalFactory;
 }
 
-bool WaveTableCache::Initialize(const SynthSettings* synthSettings, const OutputSettings* outputSettings)
+bool WaveTableCache::Initialize(const SynthSettings* synthSettings, const PlaybackInfo* outputSettings)
 {
 	// Oscillator Sampling Rate:  This may be set differently to oversample the oscillator
 	//
-	_systemSamplingRate = outputSettings->GetSamplingRate();
-	_oscillatorSamplingRate = outputSettings->GetSamplingRate();
+	_systemSamplingRate = outputSettings->GetStreamInfo()->streamSampleRate;
+	_oscillatorSamplingRate = outputSettings->GetStreamInfo()->streamSampleRate;
 
 	_signalFactory = new SignalFactory(outputSettings);
 	
@@ -66,7 +66,7 @@ bool WaveTableCache::Initialize(const SynthSettings* synthSettings, const Output
 	return success;
 }
 
-bool WaveTableCache::Initialize_SoundBanks(const SynthSettings* synthSettings, const OutputSettings* outputSettings)
+bool WaveTableCache::Initialize_SoundBanks(const SynthSettings* synthSettings, const PlaybackInfo* outputSettings)
 {
 	try
 	{
@@ -105,7 +105,7 @@ bool WaveTableCache::Initialize_SoundBanks(const SynthSettings* synthSettings, c
 	return true;
 }
 
-bool WaveTableCache::Initialize_Oscillators(const SynthSettings* synthSettings, const OutputSettings* outputSettings)
+bool WaveTableCache::Initialize_Oscillators(const SynthSettings* synthSettings, const PlaybackInfo* outputSettings)
 {
 	try
 	{
@@ -119,7 +119,7 @@ bool WaveTableCache::Initialize_Oscillators(const SynthSettings* synthSettings, 
 				OscillatorParameters parameters(OscillatorType::BuiltIn, (BuiltInOscillators)oscillatorType, "", "", frequency, SIGNAL_LOW, SIGNAL_HIGH);
 
 				// (MEMORY!) ~WaveTableCache (Also, note oversampling factor!) (this is propagated using the second sampling rate in WaveTable*)
-				WTCacheKey_Oscillator* cacheKey = new WTCacheKey_Oscillator(parameters, midiNumber, outputSettings->GetSamplingRate() * synthSettings->GetOversamplingFactor());
+				WTCacheKey_Oscillator* cacheKey = new WTCacheKey_Oscillator(parameters, midiNumber, outputSettings->GetStreamInfo()->streamSampleRate * synthSettings->GetOversamplingFactor());
 
 				_oscillatorList->push_back(cacheKey);
 			}

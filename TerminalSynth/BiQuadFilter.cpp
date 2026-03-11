@@ -1,5 +1,5 @@
 #include "BiQuadFilter.h"
-#include "OutputSettings.h"
+#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
 #include "SignalBase.h"
 #include <cmath>
@@ -45,7 +45,7 @@ BiQuadFilter::~BiQuadFilter()
 	delete _output2;
 }
 
-void BiQuadFilter::Initialize(const OutputSettings* parameters)
+void BiQuadFilter::Initialize(const PlaybackInfo* parameters)
 {
 	SignalBase::Initialize(parameters);
 
@@ -55,15 +55,15 @@ void BiQuadFilter::Initialize(const OutputSettings* parameters)
 
 	switch (_type)
 	{
-	case BiQuadFilter::FilterType::LPF:			Set_LPF(parameters->GetSamplingRate()); break;
-	case BiQuadFilter::FilterType::HPF:			Set_HPF(parameters->GetSamplingRate()); break;
-	case BiQuadFilter::FilterType::BPF_Gain:	Set_BPF_Gain(parameters->GetSamplingRate()); break;
-	case BiQuadFilter::FilterType::BPF_Flat:	Set_BPF_Flat(parameters->GetSamplingRate()); break;
-	case BiQuadFilter::FilterType::Notch:		Set_Notch(parameters->GetSamplingRate()); break;
-	case BiQuadFilter::FilterType::APF:			Set_APF(parameters->GetSamplingRate()); break;
-	case BiQuadFilter::FilterType::PeakingEQ:	Set_PeakingEQ(parameters->GetSamplingRate()); break; 
-	case BiQuadFilter::FilterType::LowShelf:	Set_LowShelf(parameters->GetSamplingRate()); break;
-	case BiQuadFilter::FilterType::HighShelf:	Set_HighShelf(parameters->GetSamplingRate()); break;
+	case BiQuadFilter::FilterType::LPF:			Set_LPF(parameters->GetStreamInfo()->streamSampleRate); break;
+	case BiQuadFilter::FilterType::HPF:			Set_HPF(parameters->GetStreamInfo()->streamSampleRate); break;
+	case BiQuadFilter::FilterType::BPF_Gain:	Set_BPF_Gain(parameters->GetStreamInfo()->streamSampleRate); break;
+	case BiQuadFilter::FilterType::BPF_Flat:	Set_BPF_Flat(parameters->GetStreamInfo()->streamSampleRate); break;
+	case BiQuadFilter::FilterType::Notch:		Set_Notch(parameters->GetStreamInfo()->streamSampleRate); break;
+	case BiQuadFilter::FilterType::APF:			Set_APF(parameters->GetStreamInfo()->streamSampleRate); break;
+	case BiQuadFilter::FilterType::PeakingEQ:	Set_PeakingEQ(parameters->GetStreamInfo()->streamSampleRate); break;
+	case BiQuadFilter::FilterType::LowShelf:	Set_LowShelf(parameters->GetStreamInfo()->streamSampleRate); break;
+	case BiQuadFilter::FilterType::HighShelf:	Set_HighShelf(parameters->GetStreamInfo()->streamSampleRate); break;
 	default:
 		throw new std::exception("Unhandled BiQuad Filter type:  BiQuadFilter::Initialize");
 	}
