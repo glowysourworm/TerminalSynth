@@ -44,7 +44,25 @@ int PortAudioController::AudioCallback(
 	if (!this->IsStreamOpen())
 		throw new std::exception("Port Audio Controller stream not open! Backend thread still running!");
 
-	auto streamInfo = Pa_GetStreamInfo(PortAudioController::Stream);
+	switch (statusFlags)
+	{
+	case 0:						// Nothing to report
+		break;
+	case paInputUnderflow:
+		break;
+	case paInputOverflow:
+		break;
+	case paOutputUnderflow:
+		break;
+	case paOutputOverflow:
+		break;
+	case paPrimingOutput:
+		break;
+	default:
+		throw new std::exception("Unhandled port audio status flag:  PortAudioController.cpp");
+	}
+
+	//auto streamInfo = Pa_GetStreamInfo(PortAudioController::Stream);
 
 	// TRY THIS!!! TIME OFFSET!
 	// 
@@ -52,7 +70,9 @@ int PortAudioController::AudioCallback(
 	
 	// Audio Callback:  Casting (void*) user data to our synth configuration! And, the output buffer!
 	//
-	return (*_audioCallback)(outputBuffer, PortAudioController::Format, frameCount, timeInfo->currentTime, streamInfo->outputLatency, (PlaybackUserData*)userData);
+	auto retValue = (PaStreamCallbackResult)(*_audioCallback)(outputBuffer, PortAudioController::Format, frameCount, timeInfo->currentTime, 0, (PlaybackUserData*)userData);
+
+	return 0;
 }
 
 bool PortAudioController::Initialize(PlaybackUserData* playbackData, const AudioCallbackDelegate& audioCallback)
@@ -100,6 +120,59 @@ bool PortAudioController::Initialize(PlaybackUserData* playbackData, const Audio
 			//PaWinWaveFormat format;
 			//PaWasapi_GetDeviceDefaultFormat(&format, 1, index);
 			
+			// BRUTE FORCE FORMAT:  Try querying their backend, otherwise, it's "device specific"
+			//
+			PaStreamParameters outputParams;
+			outputParams.channelCount = deviceInfo->maxOutputChannels;
+			outputParams.device = index;
+			outputParams.hostApiSpecificStreamInfo = NULL;
+			outputParams.suggestedLatency = deviceInfo->defaultLowOutputLatency;
+
+			AudioStreamFormat sampleFormat;
+			bool sampleFormatFound = false;
+
+			// Float 32
+			outputParams.sampleFormat = this->FormatTo(AudioStreamFormat::Float32);
+
+			if (Pa_IsFormatSupported(NULL, &outputParams, deviceInfo->defaultSampleRate) == 0)
+			{
+				sampleFormat = AudioStreamFormat::Float32;
+				sampleFormatFound = true;
+			}
+				
+
+			// Int 32
+			outputParams.sampleFormat = this->FormatTo(AudioStreamFormat::Int32);
+
+			if (!sampleFormatFound && Pa_IsFormatSupported(NULL, &outputParams, deviceInfo->defaultSampleRate) == 0)
+			{
+				sampleFormat = AudioStreamFormat::Int32;
+				sampleFormatFound = true;
+			}
+				
+
+			// Int 16
+			outputParams.sampleFormat = this->FormatTo(AudioStreamFormat::Int16);
+
+			if (!sampleFormatFound && Pa_IsFormatSupported(NULL, &outputParams, deviceInfo->defaultSampleRate) == 0)
+			{
+				sampleFormat = AudioStreamFormat::Int16;
+				sampleFormatFound = true;
+			}
+				
+
+			// Int 8
+			outputParams.sampleFormat = this->FormatTo(AudioStreamFormat::Int8);
+
+			if (!sampleFormatFound && Pa_IsFormatSupported(NULL, &outputParams, deviceInfo->defaultSampleRate) == 0)
+			{
+				sampleFormat = AudioStreamFormat::Int8;
+				sampleFormatFound = true;
+			}
+
+			if (!sampleFormatFound)
+				continue;
+			
 			GetDeviceFormatString(deviceInfo, deviceFormat);
 			GetDeviceFormatParagraph(deviceInfo, deviceParagraph);
 
@@ -108,11 +181,12 @@ bool PortAudioController::Initialize(PlaybackUserData* playbackData, const Audio
 				deviceFormat,
 				deviceParagraph,
 				deviceInfo->name,
-				AudioStreamFormat::Float32,
+				sampleFormat,
 				deviceInfo->defaultSampleRate,
-				deviceInfo->maxOutputChannels, 512,						// The number of output frames should be device / api specific
-				index == defaultDeviceIndex, 
-				deviceInfo->defaultLowOutputLatency);
+				deviceInfo->maxOutputChannels, 
+				512,									// The number of output frames should be device / api specific				
+				deviceInfo->defaultLowOutputLatency,
+				index == defaultDeviceIndex);
 		}
 
 		// Initialized
@@ -139,6 +213,10 @@ bool PortAudioController::Dispose()
 
 		if (this->IsStreamOpen())
 			this->CloseStream();
+
+		auto error = Pa_Terminate();
+
+		HandleError(error);
 
 		return true;
 	}
