@@ -53,10 +53,10 @@ private:
 	std::string* _samplingRate;
 
 	// Stream Info
-	std::string* _streamSampleRate;
-	std::string* _streamChannels;
-	std::string* _streamBitFormat;
-	std::string* _streamSuggestedLatency;
+	std::string* _deviceSampleRate;
+	std::string* _deviceChannels;
+	std::string* _deviceBitFormat;
+	std::string* _deviceSuggestedLatency;
 	std::string* _streamOpenStatus;
 	std::string* _streamRunningStatus;
 
@@ -95,6 +95,13 @@ SynthInformationUI::SynthInformationUI(const std::string& title, const ftxui::Co
 	_averageAudioLockAcquireNano = new std::string("");
 	_streamLatency = new std::string("");
 
+	_deviceSampleRate = new std::string("");
+	_deviceChannels = new std::string("");
+	_deviceBitFormat = new std::string("");
+	_deviceSuggestedLatency = new std::string("");
+	_streamOpenStatus = new std::string("");
+	_streamRunningStatus = new std::string("");
+
 	_averageUIMilli = new std::string("");
 	_averageUIDataFetchMicro = new std::string("");
 	_averageUILockAcqcuireNano = new std::string("");
@@ -114,12 +121,19 @@ SynthInformationUI::~SynthInformationUI()
 	delete _deviceName;
 	delete _streamFormat;
 	delete _streamBufferSize;
+	delete _streamOpenStatus;
+	delete _streamRunningStatus;
 	delete _samplingRate;
 
 	delete _averageAudioMilli;
 	delete _averageAudioSampleMicro;
 	delete _averageAudioLockAcquireNano;
 	delete _streamLatency;
+
+	delete _deviceSampleRate;
+	delete _deviceChannels;
+	delete _deviceBitFormat;
+	delete _deviceSuggestedLatency;
 
 	delete _averageUIMilli;
 	delete _averageUIDataFetchMicro;
@@ -151,10 +165,20 @@ void SynthInformationUI::Initialize(const OutputModelUI& settings)
 				ftxui::text("RT Playback") | ftxui::color(*_titleColor),
 				ftxui::separator(),
 				ftxui::text("Host API:"),
-				ftxui::text("Device Name:"),
-				ftxui::text("Stream Format:"),
-				ftxui::text("Stream Buffer Size:"),
-				ftxui::text("Sample Rate (Hz):"),
+				ftxui::text("Latency:"),
+				ftxui::text("Sample Rate:"),
+				ftxui::text("Open Status:"),
+				ftxui::text("Run Status:"),
+				ftxui::separator(),
+
+				ftxui::text("RT Playback Device") | ftxui::color(*_titleColor),
+				ftxui::separator(),
+				ftxui::text("Name:"),
+				ftxui::text("# Channels:"),
+				ftxui::text("Bit Format:"),
+				ftxui::text("Buffer Size:"),
+				ftxui::text("Sample Rate:"),
+				ftxui::text("Suggested Latency:"),
 				ftxui::separator(),
 
 				ftxui::text("Metrics (Audio)") | ftxui::color(*_titleColor),
@@ -162,7 +186,6 @@ void SynthInformationUI::Initialize(const OutputModelUI& settings)
 				ftxui::text("Avg. Loop Time (ms):"),
 				ftxui::text("Avg. Sample Time (us):"),
 				ftxui::text("Avg. Lock Acquire (ns):"),
-				ftxui::text("Stream Latency (samples):"),
 				ftxui::separator(),
 
 				ftxui::text("Metrics (UI)") | ftxui::color(*_titleColor),
@@ -188,10 +211,20 @@ void SynthInformationUI::Initialize(const OutputModelUI& settings)
 				ftxui::text(""),
 				ftxui::separator(),
 				ftxui::text(*_hostApi),
-				ftxui::text(*_deviceName),
-				ftxui::text(*_streamFormat),
-				ftxui::text(*_streamBufferSize),
+				ftxui::text(*_streamLatency),
 				ftxui::text(*_samplingRate),
+				ftxui::text(*_streamOpenStatus),
+				ftxui::text(*_streamRunningStatus),
+				ftxui::separator(),
+
+				ftxui::text(""),
+				ftxui::separator(),
+				ftxui::text(*_deviceName),
+				ftxui::text(*_deviceChannels),
+				ftxui::text(*_deviceBitFormat),
+				ftxui::text(*_streamBufferSize),
+				ftxui::text(*_deviceSampleRate),
+				ftxui::text(*_deviceSuggestedLatency),
 				ftxui::separator(),
 
 				ftxui::text(""),
@@ -199,7 +232,6 @@ void SynthInformationUI::Initialize(const OutputModelUI& settings)
 				ftxui::text(*_averageAudioMilli) | ftxui::align_right,
 				ftxui::text(*_averageAudioSampleMicro) | ftxui::align_right,
 				ftxui::text(*_averageAudioLockAcquireNano) | ftxui::align_right,
-				ftxui::text(*_streamLatency) | ftxui::align_right,
 				ftxui::separator(),
 
 				ftxui::text(""),
@@ -255,6 +287,24 @@ void SynthInformationUI::ToUI(const OutputModelUI* source)
 
 	_streamFormat->clear();
 	_streamFormat->append(source->GetSelectedDevice()->GetDeviceFormatString());
+
+	_deviceBitFormat->clear();
+	_deviceBitFormat->append(source->GetSelectedDevice()->GetDeviceFormatString());
+
+	_deviceChannels->clear();
+	_deviceChannels->append(std::to_string(source->GetSelectedDevice()->GetNumberOfChannels()) + " channel(s)");
+
+	_deviceSampleRate->clear();
+	_deviceSampleRate->append(std::to_string(source->GetSelectedDevice()->GetSamplingRate()));
+
+	_deviceSuggestedLatency->clear();
+	_deviceSuggestedLatency->append(std::to_string(source->GetSelectedDevice()->GetSuggestedLatencySeconds()));
+
+	_streamOpenStatus->clear();
+	_streamOpenStatus->append(outputSettings->GetStreamInfo()->streamOpenStatus ? "Open" : "Closed");
+
+	_streamRunningStatus->clear();
+	_streamRunningStatus->append(outputSettings->GetStreamInfo()->streamRunningStatus ? "Running" : "Stopped");
 
 	_streamBufferSize->clear();
 	_streamBufferSize->append(std::format("{} (frames)", source->GetSelectedDevice()->GetBufferFrameSize()));

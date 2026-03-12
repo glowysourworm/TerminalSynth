@@ -85,7 +85,7 @@ public:
 private:
 
 	void HandleError(const PaError& error);
-	void GetDeviceFormatString(const PaDeviceInfo* deviceInfo, std::string& destination) const;
+	void GetDeviceFormatString(AudioStreamFormat streamFormat, std::string& destination) const;
 	void GetDeviceFormatParagraph(const PaDeviceInfo* deviceInfo, std::string& destination) const;
 
 	PaSampleFormat FormatTo(AudioStreamFormat format) const;

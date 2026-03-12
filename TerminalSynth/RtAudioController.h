@@ -79,7 +79,7 @@ public:
 
 private:
 
-	void GetDeviceFormatString(const RtAudio::DeviceInfo& deviceInfo, std::string& destination) const;
+	void GetDeviceFormatString(AudioStreamFormat streamFormat, std::string& destination) const;
 	void GetDeviceFormatParagraph(const RtAudio::DeviceInfo& deviceInfo, std::string& destination) const;
 
 	RtAudioFormat FormatTo(AudioStreamFormat format);

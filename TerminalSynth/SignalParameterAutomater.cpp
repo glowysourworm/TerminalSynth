@@ -47,7 +47,12 @@ void SignalParameterAutomater::Update(const SignalParameter* parameter)
 	_type = parameter->GetAutomationType();
 	_oscillatorType = parameter->GetAutomationOscillator(); 
 	_oscillatorParameters->SetFrequency(parameter->GetAutomationFrequency());
+	_oscillatorParameters->SetSignalLow(parameter->GetAutomationLow());
+	_oscillatorParameters->SetSignalHigh(parameter->GetAutomationHigh());
 	_oscillatorParametersRandom->SetFrequency(parameter->GetAutomationFrequency());
+
+	_signalFactory->Reset(_oscillatorParameters);
+	_signalFactoryRandom->Reset(_oscillatorParametersRandom);
 }
 
 float SignalParameterAutomater::GetValue(const PlaybackFrame* frame, double absoluteTime) const

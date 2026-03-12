@@ -4,7 +4,6 @@
 #include "PlaybackInfo.h"
 #include "PlaybackUserData.h"
 #include "PortAudioController.h"
-#include "SoundRegistry.h"
 #include <exception>
 #include <portaudio.h>
 #include <string>
@@ -70,7 +69,7 @@ int PortAudioController::AudioCallback(
 	
 	// Audio Callback:  Casting (void*) user data to our synth configuration! And, the output buffer!
 	//
-	auto retValue = (PaStreamCallbackResult)(*_audioCallback)(outputBuffer, PortAudioController::Format, frameCount, timeInfo->currentTime, 0, (PlaybackUserData*)userData);
+	auto retValue = (PaStreamCallbackResult)(*_audioCallback)(outputBuffer, PortAudioController::Format, frameCount, timeInfo->outputBufferDacTime, 0, (PlaybackUserData*)userData);
 
 	return 0;
 }
@@ -90,7 +89,7 @@ bool PortAudioController::Initialize(PlaybackUserData* playbackData, const Audio
 
 		//for (int index = 0; index < Pa_GetHostApiCount(); index++)
 		//{
-		//	if (Pa_GetHostApiInfo(index)->type == PaHostApiTypeId::paWASAPI)
+		//	if (Pa_GetHostApiInfo(index)->type == PaHostApiTypeId::paMME)
 		//		hostApiIndex = index;
 		//}
 
@@ -110,6 +109,11 @@ bool PortAudioController::Initialize(PlaybackUserData* playbackData, const Audio
 		{
 			auto deviceInfo = Pa_GetDeviceInfo(index);
 
+			// Host Api (Check)
+			if (deviceInfo->hostApi != hostApiIndex)
+				continue;
+
+			// Output Channels (Check)
 			if (deviceInfo->maxOutputChannels <= 0)
 				continue;
 
@@ -173,7 +177,7 @@ bool PortAudioController::Initialize(PlaybackUserData* playbackData, const Audio
 			if (!sampleFormatFound)
 				continue;
 			
-			GetDeviceFormatString(deviceInfo, deviceFormat);
+			GetDeviceFormatString(sampleFormat, deviceFormat);
 			GetDeviceFormatParagraph(deviceInfo, deviceParagraph);
 
 			playbackData->GetDeviceRegister()->AddDevice(
@@ -379,10 +383,27 @@ void PortAudioController::HandleError(const PaError& error)
 	}
 }
 
-void PortAudioController::GetDeviceFormatString(const PaDeviceInfo* deviceInfo, std::string& destination) const
+void PortAudioController::GetDeviceFormatString(AudioStreamFormat streamFormat, std::string& destination) const
 {
 	destination.clear();
-	destination = std::to_string(deviceInfo->defaultSampleRate) + " (Hz), " + std::to_string(deviceInfo->maxOutputChannels) + " Channels";
+
+	switch (streamFormat)
+	{
+	case AudioStreamFormat::Float32:
+		destination.append("Float 32 bit");
+		break;
+	case AudioStreamFormat::Int32:
+		destination.append("Int 32 bit");
+		break;
+	case AudioStreamFormat::Int16:
+		destination.append("Int 16 bit");
+		break;
+	case AudioStreamFormat::Int8:
+		destination.append("Int 8 bit");
+		break;
+	default:
+		throw new std::exception("Unhandled format type:  PortAudioController.cpp");
+	}
 }
 
 void PortAudioController::GetDeviceFormatParagraph(const PaDeviceInfo* deviceInfo, std::string& destination) const

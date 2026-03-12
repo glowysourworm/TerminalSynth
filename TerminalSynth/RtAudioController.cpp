@@ -109,7 +109,7 @@ bool RtAudioController::Initialize(PlaybackUserData* playbackData, const AudioCa
 			std::string deviceFormat;
 			std::string deviceParagraph;
 
-			GetDeviceFormatString(deviceInfo, deviceFormat);
+			GetDeviceFormatString(this->FormatFrom(deviceInfo.nativeFormats), deviceFormat);
 			GetDeviceFormatParagraph(deviceInfo, deviceParagraph);
 
 			playbackData->GetDeviceRegister()->AddDevice(
@@ -288,10 +288,27 @@ bool RtAudioController::IsStreamRunning()
 	return _instance->isStreamRunning();
 }
 
-void RtAudioController::GetDeviceFormatString(const RtAudio::DeviceInfo& deviceInfo, std::string& destination) const
+void RtAudioController::GetDeviceFormatString(AudioStreamFormat streamFormat, std::string& destination) const
 {
 	destination.clear();
-	destination = std::to_string(deviceInfo.preferredSampleRate) + " (Hz), " + std::to_string(deviceInfo.outputChannels) + " Channels";
+	
+	switch (streamFormat)
+	{
+	case AudioStreamFormat::Float32:
+		destination.append("Float 32 bit");
+		break;
+	case AudioStreamFormat::Int32:
+		destination.append("Int 32 bit");
+		break;
+	case AudioStreamFormat::Int16:
+		destination.append("Int 16 bit");
+		break;
+	case AudioStreamFormat::Int8:
+		destination.append("Int 8 bit");
+		break;
+	default:
+		throw new std::exception("Unhandled format type:  PortAudioController.cpp");
+	}
 }
 
 void RtAudioController::GetDeviceFormatParagraph(const RtAudio::DeviceInfo& deviceInfo, std::string& destination) const
