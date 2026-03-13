@@ -76,6 +76,16 @@ void WaveTable::Clear(double zeroTime, double absoluteTime)
 	WaveBase::Clear(zeroTime, absoluteTime);
 }
 
+int WaveTable::GetFrameLength() const
+{
+	return _frameLength;
+}
+
+float WaveTable::GetSamplingRate() const
+{
+	return _samplingRate;
+}
+
 void WaveTable::SetFrameImpl(PlaybackFrame* frame, double zeroTime, double absoluteTime)
 {
 	float left = GetLinearSpline(zeroTime, absoluteTime, true);
@@ -90,7 +100,7 @@ float WaveTable::GetLinearSpline(double zeroTime, double absoluteTime, bool chan
 	double sampleTime = absoluteTime - zeroTime;
 
 	// First, take our oversampled array, and get the necessary points to match it to the spline
-	int bigIndex = sampleTime * _systemSamplingRate * (_samplingRate / (float)_systemSamplingRate);			// Expanded to Frame Length (which is oversampled)
+	int bigIndex = sampleTime * _systemSamplingRate /* *(_samplingRate / (float)_systemSamplingRate)*/;			// Expanded to Frame Length (which is oversampled)
 
 	// Oversampled frame domain
 	int frame0Index = bigIndex % _frameLength;

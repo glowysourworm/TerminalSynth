@@ -7,9 +7,8 @@
 #include "CombFilter.h"
 #include "OscillatorParameters.h"
 #include "PlaybackInfo.h"
-#include "PlaybackFrame.h"
 #include "SignalFactoryCore.h"
-#include "SignalSettings.h"
+#include "WaveTable.h"
 
 class SignalFactory
 {
@@ -18,19 +17,17 @@ public:
 	SignalFactory(const PlaybackInfo* outputSettings);
 	~SignalFactory();
 
-	float GetFrequency(unsigned int midiNote);
+	/// <summary>
+	/// (MEMORY!) Creates new wavetable with the provided parameters! Wave sample rate may be over / under sampled.
+	/// </summary>
+	WaveTable* GenerateWaveTable(const OscillatorParameters& parameters, int midiNumber, float waveSamplingRate);
+
+private:
 
 	/// <summary>
 	/// Sets the signal factory for the specified oscillator parameters, and resets all filters
 	/// </summary>
 	void Reset(const OscillatorParameters* parameters);
-
-	/// <summary>
-	/// Generates a sample for the specified stream time
-	/// </summary>
-	void GenerateSample(const OscillatorParameters* parameters, PlaybackFrame* frame, float absoluteTime);
-
-private:
 
 	float GenerateTriangleSample(float frequency, float absoluteTime);
 	float GenerateSquareSample(float frequency, float absoluteTime);

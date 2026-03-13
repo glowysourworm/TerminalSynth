@@ -1,13 +1,18 @@
+#include "Algorithm.h"
 #include "BiQuadFilter.h"
 #include "CombFilter.h"
 #include "Constant.h"
 #include "OscillatorParameters.h"
-#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
+#include "PlaybackInfo.h"
 #include "SignalFactory.h"
 #include "SignalFactoryCore.h"
+#include "WaveTable.h"
+#include <cmath>
+#include <complex>
 #include <cstdlib>
 #include <exception>
+#include <vector>
 
 SignalFactory::SignalFactory(const PlaybackInfo* outputSettings)
 {
@@ -50,57 +55,146 @@ void SignalFactory::Reset(const OscillatorParameters* parameters)
 	_combFilter->Initialize(_outputSettings);
 }
 
-float SignalFactory::GetFrequency(unsigned int midiNote)
-{
-	return TerminalSynth::GetMidiFrequency(midiNote);		// We need a namespace!
-}
+//void SignalFactory::GenerateSample(const OscillatorParameters* parameters, PlaybackFrame* frame, float absoluteTime)
+//{
+//	int samplingRate = _outputSettings->GetStreamInfo()->streamSampleRate;
+//	float signalHigh = parameters->GetSignalHigh();
+//	float signalLow = parameters->GetSignalLow();
+//	float frequency = parameters->GetFrequency();
+//	float monoSample = 0;
+//
+//	// Create Sample
+//	switch (parameters->GetType())
+//	{
+//	case OscillatorType::BuiltIn:
+//	{
+//		switch (parameters->GetBuiltInType())
+//		{
+//		case BuiltInOscillators::Sine:
+//			monoSample = this->GenerateSineSample(parameters->GetFrequency(), absoluteTime);
+//			break;
+//		case BuiltInOscillators::Square:
+//			monoSample = this->GenerateSquareSample(parameters->GetFrequency(), absoluteTime);
+//			break;
+//		case BuiltInOscillators::Triangle:
+//			monoSample = this->GenerateTriangleSample(parameters->GetFrequency(), absoluteTime);
+//			break;
+//		case BuiltInOscillators::Sawtooth:
+//			monoSample = this->GenerateSawtoothSample(parameters->GetFrequency(), absoluteTime);
+//			break;
+//		case BuiltInOscillators::SynthesizedStringPluck:
+//			monoSample = this->GeneratePluckedStringSample(parameters->GetFrequency(), parameters->GetSignalHigh(), parameters->GetSignalLow(), absoluteTime);
+//			break;
+//		case BuiltInOscillators::Random:
+//			monoSample = this->GenerateRandomSample(parameters->GetFrequency(), absoluteTime);
+//			break;
+//		default:
+//			throw new std::exception("Unhandled built in oscillator type");
+//		}
+//	}
+//	break;
+//	case OscillatorType::SampleBased:
+//		monoSample = this->GenerateSineSample(parameters->GetFrequency(), absoluteTime);
+//		break;
+//	default:
+//		throw new std::exception("Unhandled oscillator type");
+//	}
+//
+//	frame->SetFrame(monoSample, monoSample, frame->GetEnvelopeLevel());
+//}
 
-void SignalFactory::GenerateSample(const OscillatorParameters* parameters, PlaybackFrame* frame, float absoluteTime)
+WaveTable* SignalFactory::GenerateWaveTable(const OscillatorParameters& parameters, int midiNumber, float waveSamplingRate)
 {
-	int samplingRate = _outputSettings->GetStreamInfo()->streamSampleRate;
-	float signalHigh = parameters->GetSignalHigh();
-	float signalLow = parameters->GetSignalLow();
-	float frequency = parameters->GetFrequency();
-	float monoSample = 0;
+	this->Reset(&parameters);
 
-	// Create Sample
-	switch (parameters->GetType())
+	float frequency = TerminalSynth::GetMidiFrequency(midiNumber + (parameters.GetOctave() * 12));
+	float period = 1 / frequency;
+
+	// Oversampled Frame Length
+	//int sampleLength = (period * oversampleFactor) * _outputSettings->GetStreamInfo()->streamSampleRate;
+	//float sampleRate = _outputSettings->GetStreamInfo()->streamSampleRate * oversampleFactor;
+
+	int sampleLength = pow(2, 16);				// Need a number greater than the sampling rate
+	float sampleRate = sampleLength / period;
+
+	WaveTable* result = new WaveTable(WaveTable::Mode::Periodic, sampleLength, sampleRate, _outputSettings->GetStreamInfo()->streamSampleRate);
+
+	// IFFT Wave Generation:  Using harmonic banded frequency.. something or other
+	//
+	// https://zynaddsubfx.sourceforge.io/doc/PADsynth/PADsynth.htm#Sound_examples
+	//
+
+	std::vector<std::complex<double>> waveArray(sampleLength);
+	int numberHarmonics = 10;
+	
+	// IFFT:  In frequency space, where is our fundamental frequency?
+	// 
+	//		  N/2 -> ((sample rate) / 2)
+	//		  
+	//		  22050 Hz would be half the nyquist frequency for human hearing
+	//		  which is close to our sampling rate, typically. 
+	// 
+	//		  I think the sampling rate IS the frequency, actually, with the
+	//		  Nyquist theory giving a multiple of 2 to put it near enough to
+	//		  the human hearing threshold to give a signal that will be close
+	//		  to ideal.
+	//
+	//		  Oversampled:  Our sample index must be scaled to keep the correct
+	//						frequency in the wave array
+	//
+
+	// Harmonics
+	for (int n = 1; n <= numberHarmonics; n++)
 	{
-	case OscillatorType::BuiltIn:
-	{
-		switch (parameters->GetBuiltInType())
+		// Harmonic Band: Fundamental * (Sample Length / System Sample Length), which takes the 
+		//				  oversampled domain into account.
+		//
+		float sideBandwidth = TerminalSynth::CentsToHertz(5.0f, frequency * n) - (frequency * n);
+
+		// Multiply by our sample factor
+		int centerIndex = (int)((frequency * n) / (sampleLength / _outputSettings->GetStreamInfo()->streamSampleRate));
+		int sideBandwidthIndex = sideBandwidth * (sampleLength / _outputSettings->GetStreamInfo()->streamSampleRate);
+
+		if (centerIndex + sideBandwidthIndex >= waveArray.size())
+			continue;
+
+		for (int index = centerIndex - sideBandwidthIndex; index <= centerIndex + sideBandwidthIndex; index++)
 		{
-		case BuiltInOscillators::Sine:
-			monoSample = this->GenerateSineSample(parameters->GetFrequency(), absoluteTime);
-			break;
-		case BuiltInOscillators::Square:
-			monoSample = this->GenerateSquareSample(parameters->GetFrequency(), absoluteTime);
-			break;
-		case BuiltInOscillators::Triangle:
-			monoSample = this->GenerateTriangleSample(parameters->GetFrequency(), absoluteTime);
-			break;
-		case BuiltInOscillators::Sawtooth:
-			monoSample = this->GenerateSawtoothSample(parameters->GetFrequency(), absoluteTime);
-			break;
-		case BuiltInOscillators::SynthesizedStringPluck:
-			monoSample = this->GeneratePluckedStringSample(parameters->GetFrequency(), parameters->GetSignalHigh(), parameters->GetSignalLow(), absoluteTime);
-			break;
-		case BuiltInOscillators::Random:
-			monoSample = this->GenerateRandomSample(parameters->GetFrequency(), absoluteTime);
-			break;
-		default:
-			throw new std::exception("Unhandled built in oscillator type");
+			// Use Gaussian Window to control the side band amplitude
+			float gaussWindow = Algorithm::Gaussian3Sigma(index, centerIndex - sideBandwidthIndex, centerIndex + sideBandwidthIndex);
+
+			// Produce a harmonic with random phase
+			waveArray[index] += std::complex<double>(gaussWindow / std::sqrtf(n), rand() / (double)RAND_MAX);
 		}
 	}
-	break;
-	case OscillatorType::SampleBased:
-		monoSample = this->GenerateSineSample(parameters->GetFrequency(), absoluteTime);
-		break;
-	default:
-		throw new std::exception("Unhandled oscillator type");
+
+	// IFFT
+	Algorithm::IFFT(&waveArray);
+
+	SignalFactory* that = this;
+
+	float maxSample = 0;
+
+	for (int index = 0; index < waveArray.size(); index++)
+	{
+		if (waveArray[index].real() > maxSample)
+			maxSample = waveArray[index].real();
 	}
 
-	frame->SetFrame(monoSample, monoSample, frame->GetEnvelopeLevel());
+	// Load WaveTable*
+	result->CreateSamplesByFrame([&waveArray, &that, &frequency, &maxSample](int frameIndex, float& leftSample, float& rightSample) {
+
+		leftSample = waveArray[frameIndex].real() / maxSample;
+		rightSample = waveArray[frameIndex].real() / maxSample;
+
+		//leftSample = waveArray[frameIndex].real() / maxSample;
+		//rightSample = waveArray[frameIndex].real() / maxSample;
+
+		//leftSample = that->GenerateSineSample(frequency, sampleTime);
+		//rightSample = that->GenerateSineSample(frequency, sampleTime);
+	});
+
+	return result;
 }
 
 float SignalFactory::GenerateTriangleSample(float frequency, float sampleTime)

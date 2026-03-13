@@ -4,7 +4,6 @@
 #define SIGNAL_FACTORY_CORE_H
 
 #include "OscillatorParameters.h"
-#include "PlaybackFrame.h"
 #include <vector>
 
 /// <summary>

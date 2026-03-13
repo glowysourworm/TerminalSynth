@@ -57,6 +57,16 @@ public:
 	bool HasOutput(double zeroTime, double absoluteTime) const override;
 	void Clear(double zeroTime, double absoluteTime) override;
 
+	/// <summary>
+	/// Gets (oversampled) frame length of the wave table
+	/// </summary>
+	int GetFrameLength() const;
+
+	/// <summary>
+	/// Gets (oversampled) sampling rate of the wave table
+	/// </summary>
+	float GetSamplingRate() const;
+
 protected:
 
 	void SetFrameImpl(PlaybackFrame* frame, double zeroTime, double absoluteTime) override;

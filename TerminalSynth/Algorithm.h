@@ -49,6 +49,38 @@ public:
         }
     }
 
+
+    static void IFFT(std::vector<Complex>* destination) 
+    {
+        const double PI = acos(-1);
+        int N = destination->size();
+
+        if (N <= 1) 
+            return;
+
+        // Divide
+        std::vector<Complex> even(N / 2), odd(N / 2);
+
+        for (size_t i = 0; i < N / 2; i++)
+        {
+            even[i] = destination->at(i * 2);
+            odd[i] = destination->at((i * 2) + 1);
+        }
+
+        // Conquer
+        IFFT(&even);
+        IFFT(&odd);
+
+        // Combine
+        for (size_t k = 0; k < N / 2; k++) 
+        {
+            Complex t = std::polar(1.0, (2.0 * PI * k) / N) * odd[k];
+
+            destination->at(k) = even[k] + t;
+            destination->at(k + (N / 2)) = even[k] - t;
+        }
+    }
+
     /// <summary>
     /// Multiplies the input vector by a Guassian window function. https://en.wikipedia.org/wiki/Window_function
     /// </summary>
@@ -91,6 +123,39 @@ public:
         size_t Nover2 = N / 2;
 
         return std::exp(-0.5 * std::pow((n - (Nover2)) / (sigma * Nover2), 2));
+    }
+
+    /// <summary>
+    /// Generates a Guassian window function value based on a 3-sigma window. https://en.wikipedia.org/wiki/Window_function
+    /// </summary>
+    /// <param name="n">Current index of the signal vector</param>
+    /// <param name="nBegin">Beginning of the gaussian</param>
+    /// <param name="nEnd">End of the gaussian</param>
+    static double Gaussian3Sigma(size_t n, size_t nBegin, size_t nEnd)
+    {
+        if (nBegin > nEnd)
+            throw new std::exception("Invalid Gaussian Window parameters:  Algorithm.h");
+
+        if (n < nBegin ||
+            n > nEnd)
+            throw new std::exception("Invalid Gaussian Window parameters:  Algorithm.h");
+
+        if (nBegin == nEnd)
+            return n == nBegin ? 1 : 0;
+
+        const double PI = acos(-1);
+
+        size_t mean = (size_t)(nEnd - nBegin / 2.0f);
+        size_t sigma = ((nEnd - nBegin) / 6.0f);            // 6 total sigma lengths
+
+        if (sigma == 0)
+            return 1;
+
+        float A = 1.0f / (std::sqrtf(2 * PI) * sigma);
+        float z = (n - mean / (float)sigma);
+
+        // Standard Gaussian centered at the midway point of the window, 3-sigma out.
+        return A * std::exp(-0.5 * z * z);
     }
 };
 

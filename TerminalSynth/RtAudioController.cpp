@@ -111,7 +111,7 @@ bool RtAudioController::Initialize(PlaybackUserData* playbackData, const AudioCa
 
 			GetDeviceFormatString(this->FormatFrom(deviceInfo.nativeFormats), deviceFormat);
 			GetDeviceFormatParagraph(deviceInfo, deviceParagraph);
-
+			
 			playbackData->GetDeviceRegister()->AddDevice(
 				deviceInfo.ID,
 				deviceFormat,
@@ -179,7 +179,7 @@ bool RtAudioController::OpenStream(PlaybackUserData* userData)
 		//options.flags |= RTAUDIO_SCHEDULE_REALTIME;					
 		options.numberOfBuffers = 4;						// Has to do with audio format!
 		//options.flags |= RTAUDIO_HOG_DEVICE;
-		//options.flags |= RTAUDIO_MINIMIZE_LATENCY;
+		options.flags |= RTAUDIO_MINIMIZE_LATENCY;
 		//options.flags |= RTAUDIO_NONINTERLEAVED; 
 
 
@@ -189,7 +189,7 @@ bool RtAudioController::OpenStream(PlaybackUserData* userData)
 		//			  value. So, we'll send it something the device likes; and see what it comes back with.
 		//
 		//unsigned int outputBufferFrameSize = (unsigned int)(10.6667 * 0.001 * outputDevice.preferredSampleRate);
-		unsigned int outputBufferFrameSize = 32;
+		unsigned int outputBufferFrameSize = outputDevice->GetBufferFrameSize();
 
 		auto audioCallback = std::bind(&RtAudioController::AudioCallback, this,
 										std::placeholders::_1,

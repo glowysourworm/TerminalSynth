@@ -119,7 +119,7 @@ bool WaveTableCache::Initialize_Oscillators(const SynthSettings* synthSettings, 
 				OscillatorParameters parameters(OscillatorType::BuiltIn, (BuiltInOscillators)oscillatorType, "", "", frequency, SIGNAL_LOW, SIGNAL_HIGH);
 
 				// (MEMORY!) ~WaveTableCache (Also, note oversampling factor!) (this is propagated using the second sampling rate in WaveTable*)
-				WTCacheKey_Oscillator* cacheKey = new WTCacheKey_Oscillator(parameters, midiNumber, outputSettings->GetStreamInfo()->streamSampleRate * synthSettings->GetOversamplingFactor());
+				WTCacheKey_Oscillator* cacheKey = new WTCacheKey_Oscillator(parameters, midiNumber, outputSettings->GetStreamInfo()->streamSampleRate /* * synthSettings->GetOversamplingFactor() */);
 
 				_oscillatorList->push_back(cacheKey);
 			}
@@ -193,25 +193,7 @@ bool WaveTableCache::CreateWaveTable(WTCacheKey_Oscillator* cacheKey)
 	try
 	{
 		// (MEMORY!) ~WaveTableCache
-		WaveTable* waveTable = new WaveTable(WaveTable::Mode::Periodic, 
-											 cacheKey->GetNumberOfFrames(), 
-										     cacheKey->GetSampleRate(), 
-											 _systemSamplingRate);
-		SignalFactory* signalFactory = _signalFactory;
-		OscillatorParameters* parameters = cacheKey->GetParameters();
-		PlaybackFrame frame;
-
-		// Sets SignalFactory* for next oscillator
-		signalFactory->Reset(cacheKey->GetParameters());
-
-		// Create Samples
-		waveTable->CreateSamplesByTime(WaveTable::WaveTableSampleGenerateSecondCallback([&signalFactory, &parameters, &frame](float sampleTime, float& leftSample, float& rightSample)
-		{
-			signalFactory->GenerateSample(parameters, &frame, sampleTime);
-			leftSample = frame.GetLeft();
-			rightSample = frame.GetRight();
-		}));
-
+		WaveTable* waveTable = _signalFactory->GenerateWaveTable(*cacheKey->GetParameters(), cacheKey->GetMidiNote(), 0);	// TODO: WAVE SAMPLE RATE
 
 		_cacheOscillator->insert(std::make_pair(cacheKey->GetHashCode(), waveTable));
 	}

@@ -42,6 +42,22 @@ namespace TerminalSynth
 	{
 		return 440.0f * powf(2, ((midiNumber - 69.0f) / 12.0f));
 	}
+
+	/// <summary>
+	/// Converts hertz to cents (centered at the center frequency). 100 cents is a half-tone.
+	/// </summary>
+	float HertzToCents(float centerFrequency, float frequency)
+	{
+		return 1200.0f * log2f(frequency / centerFrequency);
+	}
+
+	/// <summary>
+	/// Converts cents to hertz with reference to the center frequency
+	/// </summary>
+	float CentsToHertz(float cents, float centerFrequency)
+	{
+		return centerFrequency * powf(2.0f, cents / 1200.0f);
+	}
 }
 
 const int REVERB_COMB_SIZE = 4;
