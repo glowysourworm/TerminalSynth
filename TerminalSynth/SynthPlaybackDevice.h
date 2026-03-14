@@ -148,6 +148,7 @@ int SynthPlaybackDevice::WritePlaybackBuffer(void* playbackBuffer,
 		return -1;
 
 	char* outputBuffer = (char*)playbackBuffer;
+	//float* outputBuffer = (float*)playbackBuffer;
 
 	// Transform buffers
 	int frameSize = 4;
@@ -186,6 +187,10 @@ int SynthPlaybackDevice::WritePlaybackBuffer(void* playbackBuffer,
 			outputBuffer[(2 * frameIndex * frameSize) + index] = leftBuffer[index];
 			outputBuffer[(2 * frameIndex * frameSize) + frameSize + index] = rightBuffer[index];
 		}
+
+		// Interleved frames
+		//outputBuffer[(2 * frameIndex)] = _frame->GetLeft();
+		//outputBuffer[(2 * frameIndex) + 1] = _frame->GetRight();
 
 		// Increment Time:  The buffer index follows the audio output; and the stream time is
 		//					approximated during this block of samples.

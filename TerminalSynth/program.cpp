@@ -1,10 +1,7 @@
 #include "AtomicLock.h"
 #include "MainController.h"
-#include "PlaybackInfo.h"
 #include "PlaybackUserData.h"
 #include "PortAudioController.h"
-#include "RtAudioController.h"
-#include "SoundRegistry.h"
 #include "SynthSettings.h"
 #include "Windows.h"
 #include "WindowsKeyCodes.h"
@@ -93,7 +90,6 @@ int main(int argc, char* argv[], char* envp[])
 
 	// Manual keyboard input
 	PortAudioController audioController(playbackLock);
-	//RtAudioController audioController(playbackLock);
 	MainController controller(&audioController, playbackLock);
 
 	// Primary Shared Pointers:  The OutputSettings* are initialized and maintained by the MainController, with 

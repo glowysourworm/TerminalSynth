@@ -103,7 +103,7 @@ float SignalFactoryCore::GenerateSawtoothSample(float frequency, size_t timeCurs
 
 float SignalFactoryCore::GenerateSineSample(float frequency, size_t timeCursor, double streamTime)
 {
-	return ((_signalHigh - _signalLow) * sinf(2.0 * std::numbers::pi * frequency * streamTime)) + _signalLow;
+	return (0.5f * (_signalHigh - _signalLow) * sinf(2.0 * std::numbers::pi * frequency * streamTime)) + (0.5f * (_signalHigh + _signalLow));
 }
 
 float SignalFactoryCore::GenerateRandomSample(float frequency, size_t timeCursor, double streamTime)

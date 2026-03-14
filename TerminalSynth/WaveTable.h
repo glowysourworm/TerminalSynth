@@ -73,9 +73,9 @@ protected:
 
 private:
 
-	float GetLinearSpline(double zeroTime, double absoluteTime, bool channelLeft);
+	float GetLinearSpline(size_t timeCursor, double zeroTime, double absoluteTime, bool channelLeft);
 	//float GetLinearSplineBuffered(double absoluteTime, bool channelLeft);
-	float GetCubicSpline(double absoluteTime, bool channelLeft);
+	//float SetFrameCubicSpline(PlaybackFrame* frame, double absoluteTime, bool channelLeft);
 
 private:
 

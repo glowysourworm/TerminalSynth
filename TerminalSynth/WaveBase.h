@@ -20,8 +20,6 @@ public:
 		_signalLow = SIGNAL_LOW;
 		_signalHigh = SIGNAL_HIGH;
 		_samplingRate = samplingRate;
-		_leftAccumulator = new Accumulator<double>(true);
-		_rightAccumulator = new Accumulator<double>(true);
 	};
 
 	/// <summary>
@@ -35,13 +33,9 @@ public:
 		_signalLow = signalLow;
 		_signalHigh = signalHigh;
 		_samplingRate = samplingRate;
-		_leftAccumulator = new Accumulator<double>(true);
-		_rightAccumulator = new Accumulator<double>(true);
 	}
 	virtual ~WaveBase()
 	{
-		delete _leftAccumulator;
-		delete _rightAccumulator;
 	}
 
 	/// <summary>
@@ -55,9 +49,6 @@ public:
 
 		// Call the class's implementation (modifies the frame)
 		this->SetFrameImpl(frame, zeroTime, absoluteTime);
-
-		_leftAccumulator->Add(frame->GetLeft());
-		_rightAccumulator->Add(frame->GetRight());
 	}
 	virtual bool HasOutput(double zeroTime, double absoluteTime) const = 0;
 
@@ -67,13 +58,7 @@ public:
 	/// </summary>
 	virtual void Clear(double zeroTime, double absoluteTime)
 	{
-		_leftAccumulator->Reset();
-		_rightAccumulator->Reset();
 	}
-
-	bool HasClipped() const { return _leftAccumulator->GetAvg() > _signalHigh || _rightAccumulator->GetAvg() > _signalHigh; }
-	bool HasClippedLeft() const { return _leftAccumulator->GetAvg() > _signalHigh; }
-	bool HasClippedRight() const { return _rightAccumulator->GetAvg() > _signalHigh; }
 
 protected:
 
@@ -93,8 +78,6 @@ private:
 	double _signalLow;
 	double _signalHigh;	
 	unsigned int _samplingRate;
-	Accumulator<double>* _leftAccumulator;
-	Accumulator<double>* _rightAccumulator;
 };
 
 #endif

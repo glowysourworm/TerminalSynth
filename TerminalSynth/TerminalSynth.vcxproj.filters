@@ -141,9 +141,6 @@
     <ClCompile Include="MainController.cpp">
       <Filter>Source Files\Controller</Filter>
     </ClCompile>
-    <ClCompile Include="RtAudioController.cpp">
-      <Filter>Source Files\Controller</Filter>
-    </ClCompile>
     <ClCompile Include="ButterworthFilter.cpp">
       <Filter>Source Files\Filter</Filter>
     </ClCompile>
@@ -286,9 +283,6 @@
     </ClInclude>
     <ClInclude Include="OutputUI.h">
       <Filter>Header Files\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RtAudioController.h">
-      <Filter>Header Files\Controller</Filter>
     </ClInclude>
     <ClInclude Include="SynthInformationUI.h">
       <Filter>Header Files\UI</Filter>

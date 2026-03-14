@@ -56,11 +56,17 @@ public:
 	{
 		if (_previouslySet)
 		{
-			_left += left /* / 2.0f */;
-			_right += right /* / 2.0f */;
+			_left += left /* 2.0f */;
+			_right += right /* / 2.0f */ ;
 		}
 		else
 			this->SetFrame(left, right);
+	}
+	 
+	void MultFrame(float constantLeft, float constantRight)
+	{
+		_left *= constantLeft;
+		_right *= constantRight;
 	}
 
 	/// <summary>

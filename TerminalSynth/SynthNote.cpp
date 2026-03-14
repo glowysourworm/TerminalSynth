@@ -39,24 +39,24 @@ void SynthNote::GetSample(PlaybackFrame* frame)
 {
 	_waveTable->SetFrame(frame, _envelope->GetEngageTime(), frame->GetStreamTime());
 
-	//float envelopeLevel = _envelope->GetEnvelopeLevel(frame->GetStreamTime());
-	float envelopeLevel = 1;
+	float envelopeLevel = _envelope->GetEnvelopeLevel(frame->GetStreamTime());
+	//float envelopeLevel = 1;
 
 	frame->SetFrame(envelopeLevel * frame->GetLeft(), envelopeLevel * frame->GetRight());
 }
 
 void SynthNote::AddSample(PlaybackFrame* frame)
 {
-	PlaybackFrame noteFrame(*frame);
+	PlaybackFrame localFrame(*frame);
 
 	// Create Sample
-	this->GetSample(&noteFrame);
+	this->GetSample(&localFrame);
 
 	// Add Effects Chain
-	_effectsChain->SetFrame(&noteFrame);
+	_effectsChain->SetFrame(&localFrame);
 
 	// Add Output
-	frame->AddFrame(noteFrame.GetLeft(), noteFrame.GetRight());
+	frame->AddFrame(localFrame.GetLeft(), localFrame.GetRight());
 }
 
 bool SynthNote::HasOutput(float absoluteTime)

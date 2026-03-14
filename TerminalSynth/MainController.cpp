@@ -6,12 +6,9 @@
 #include "MainController.h"
 #include "MainModelUI.h"
 #include "MainUI.h"
-#include "PlaybackInfo.h"
 #include "PlaybackController.h"
-#include "RtAudioController.h"
+#include "PlaybackInfo.h"
 #include "PlaybackUserData.h"
-#include "SignalSettings.h"
-#include "SoundRegistry.h"
 #include "SynthSettings.h"
 #include <chrono>
 #include <cmath>
@@ -21,7 +18,6 @@
 #include <functional>
 #include <string>
 #include <thread>
-#include <vector>
 
 MainController::MainController(AudioController* audioController, AtomicLock* playbackLock) : BaseController(playbackLock)
 {

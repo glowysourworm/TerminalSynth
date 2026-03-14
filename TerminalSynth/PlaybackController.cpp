@@ -87,7 +87,7 @@ int PlaybackController::ProcessAudioCallback(void* outputBuffer, AudioStreamForm
 	int rtAudioReturnValue = 0;
 
 	// Last Output
-	bool lastOutput = _midiMode ? _midiDevice->GetLastOutput() : _synthDevice->GetLastOutput();
+	//bool lastOutput = _midiMode ? _midiDevice->GetLastOutput() : _synthDevice->GetLastOutput();
 
 	// Windows API, SynthSettings*, SynthPlaybackDevice* (be aware of usage)
 	//

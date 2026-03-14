@@ -67,7 +67,9 @@ int PortAudioController::AudioCallback(
 
 	// Audio Callback:  Casting (void*) user data to our synth configuration! And, the output buffer!
 	//
-	(PaStreamCallbackResult)(*_audioCallback)(outputBuffer, PortAudioController::Format, frameCount, timeInfo->outputBufferDacTime, 0, (PlaybackUserData*)userData);
+	(PaStreamCallbackResult)(*_audioCallback)(outputBuffer, PortAudioController::Format, frameCount, timeInfo->currentTime, 0, (PlaybackUserData*)userData);
+
+	return 0;
 }
 
 bool PortAudioController::Initialize(PlaybackUserData* playbackData, const AudioCallbackDelegate& audioCallback)
@@ -83,11 +85,11 @@ bool PortAudioController::Initialize(PlaybackUserData* playbackData, const Audio
 
 		auto hostApiIndex = Pa_GetDefaultHostApi();
 
-		for (int index = 0; index < Pa_GetHostApiCount(); index++)
-		{
-			if (Pa_GetHostApiInfo(index)->type == PaHostApiTypeId::paWASAPI)
-				hostApiIndex = index;
-		}
+		//for (int index = 0; index < Pa_GetHostApiCount(); index++)
+		//{
+		//	if (Pa_GetHostApiInfo(index)->type == PaHostApiTypeId::paWDMKS)
+		//		hostApiIndex = index;
+		//}
 
 		auto hostApi = Pa_GetHostApiInfo(hostApiIndex);
 
@@ -190,7 +192,7 @@ bool PortAudioController::Initialize(PlaybackUserData* playbackData, const Audio
 				sampleFormat,
 				deviceInfo->defaultSampleRate,
 				deviceInfo->maxOutputChannels, 
-				512,									// The number of output frames should be device / api specific				
+				512,													// The number of output frames should be device / api specific				
 				deviceInfo->defaultLowOutputLatency,
 			   (index == defaultDeviceIndex) || !deviceSelected);
 
