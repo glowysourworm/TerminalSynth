@@ -3,7 +3,7 @@
 A console synthesizer implementation using FTXUI / Port Audio / Airwindows built in native C++ to
 play around with and understand real time audio. 
 
-
+https://github.com/glowysourworm/TerminalSynth/blob/main/saw-galactic3.wav?raw=true
 
 ![Alt text](/screenshot.png)
 
