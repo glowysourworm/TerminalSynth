@@ -6,6 +6,7 @@
 #include <cmath>
 #include <complex>
 #include <exception>
+#include <limits>
 #include <vector>
 
 class Algorithm
@@ -14,7 +15,7 @@ class Algorithm
     
 public:
 
-    static void FFT(std::vector<Complex>* destination)
+    static void FFT(std::vector<Complex>* destination, double& maxReal)
     {
         const double PI = acos(-1);
         const size_t N = destination->size();
@@ -35,9 +36,15 @@ public:
             odd[i] = destination->at((i * 2) + 1);
         }
 
+        double maxEvenReal = std::numeric_limits<double>::min();
+        double maxOddReal = std::numeric_limits<double>::min();
+
         // Conquer
-        FFT(&even);
-        FFT(&odd);
+        FFT(&even, maxEvenReal);
+        FFT(&odd, maxOddReal);
+
+        maxReal = fmax(maxEvenReal, maxReal);
+        maxReal = fmax(maxOddReal, maxReal);
 
         // Combine
         for (size_t k = 0; k < N / 2; k++) 
@@ -46,11 +53,14 @@ public:
 
             destination->at(k) = even[k] + t;
             destination->at(k + (N / 2)) = even[k] - t;
+
+            maxReal = fmax(maxReal, destination->at(k).real());
+            maxReal = fmax(maxReal, destination->at(k + (N / 2)).real());
         }
     }
 
 
-    static void IFFT(std::vector<Complex>* destination) 
+    static void IFFT(std::vector<Complex>* destination, double& maxReal)
     {
         const double PI = acos(-1);
         int N = destination->size();
@@ -67,9 +77,15 @@ public:
             odd[i] = destination->at((i * 2) + 1);
         }
 
+        double maxEvenReal = std::numeric_limits<double>::min();
+        double maxOddReal = std::numeric_limits<double>::min();
+
         // Conquer
-        IFFT(&even);
-        IFFT(&odd);
+        IFFT(&even, maxEvenReal);
+        IFFT(&odd, maxOddReal);
+
+        maxReal = fmax(maxEvenReal, maxReal);
+        maxReal = fmax(maxOddReal, maxReal);
 
         // Combine
         for (size_t k = 0; k < N / 2; k++) 
@@ -78,6 +94,9 @@ public:
 
             destination->at(k) = even[k] + t;
             destination->at(k + (N / 2)) = even[k] - t;
+
+            maxReal = fmax(maxReal, destination->at(k).real());
+            maxReal = fmax(maxReal, destination->at(k + (N / 2)).real());
         }
     }
 

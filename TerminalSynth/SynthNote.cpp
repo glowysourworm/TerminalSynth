@@ -35,24 +35,25 @@ unsigned int SynthNote::GetMidiNumber() const
 	return _midiNumber;
 }
 
-void SynthNote::GetSample(PlaybackFrame* frame, float absoluteTime)
+void SynthNote::GetSample(PlaybackFrame* frame)
 {
-	_waveTable->SetFrame(frame, _envelope->GetEngageTime(), absoluteTime);
+	_waveTable->SetFrame(frame, _envelope->GetEngageTime(), frame->GetStreamTime());
 
-	float envelopeLevel = _envelope->GetEnvelopeLevel(absoluteTime);
+	//float envelopeLevel = _envelope->GetEnvelopeLevel(frame->GetStreamTime());
+	float envelopeLevel = 1;
 
-	frame->SetFrame(envelopeLevel * frame->GetLeft(), envelopeLevel * frame->GetRight(), frame->GetEnvelopeLevel());
+	frame->SetFrame(envelopeLevel * frame->GetLeft(), envelopeLevel * frame->GetRight());
 }
 
-void SynthNote::AddSample(PlaybackFrame* frame, float absoluteTime)
+void SynthNote::AddSample(PlaybackFrame* frame)
 {
 	PlaybackFrame noteFrame(*frame);
 
 	// Create Sample
-	this->GetSample(&noteFrame, absoluteTime);
+	this->GetSample(&noteFrame);
 
 	// Add Effects Chain
-	_effectsChain->SetFrame(&noteFrame, absoluteTime);
+	_effectsChain->SetFrame(&noteFrame);
 
 	// Add Output
 	frame->AddFrame(noteFrame.GetLeft(), noteFrame.GetRight());

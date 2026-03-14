@@ -5,8 +5,8 @@
 
 #include "Accumulator.h"
 #include "Constant.h"
-#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
+#include "PlaybackInfo.h"
 #include "SignalParameter.h"
 #include "SignalParameterAutomater.h"
 #include "SignalSettings.h"
@@ -101,14 +101,14 @@ public:
 	/// (SignalBase) Sets accumulators for signal. In derived class, it should be used to produce the 
 	/// output.
 	/// </summary>
-	virtual void SetFrame(PlaybackFrame* frame, float absoluteTime)
+	virtual void SetFrame(PlaybackFrame* frame)
 	{
 		// Parameter Automation
 		for (int index = 0; index < _settings->GetParameterCount(); index++)
 		{
 			if (_settings->GetParameter(index)->GetAutomationEnabled())
 			{
-				float value = _parameterAutomaters->at(index)->GetValue(frame, absoluteTime);
+				float value = _parameterAutomaters->at(index)->GetValue(frame);
 
 				// Call function to set the current parameter value before sample
 				// is calculated
@@ -119,7 +119,7 @@ public:
 		_leftAccumulator->Add(frame->GetLeft());
 		_rightAccumulator->Add(frame->GetRight());
 	}
-	virtual bool HasOutput(float absoluteTime) const = 0;
+	virtual bool HasOutput() const = 0;
 
 	/// <summary>
 	/// Function to clear the signal base of all of its internal buffers, and signal history. Any parameters

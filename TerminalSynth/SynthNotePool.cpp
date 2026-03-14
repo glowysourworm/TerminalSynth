@@ -164,26 +164,26 @@ bool SynthNotePool::SetNote(int midiNumber, bool pressed, double absoluteTime) c
 	}
 }
 
-bool SynthNotePool::SetFrame(PlaybackFrame* frame, double absoluteTime, double gain, double leftRight)
+bool SynthNotePool::SetFrame(PlaybackFrame* frame, double gain, double leftRight)
 {
 	// Use local frame to mix the note output
-	PlaybackFrame noteFrame;
+	PlaybackFrame noteFrame(*frame);
 
 	// Engaged
 	for (auto iter = _engagedNotes->begin(); iter != _engagedNotes->end(); ++iter)
 	{
 		// HasOutput() -> Add / Mix Sample
-		if (iter->second->HasOutput(absoluteTime))
-			iter->second->AddSample(&noteFrame, absoluteTime);
+		if (iter->second->HasOutput(frame->GetStreamTime()))
+			iter->second->AddSample(&noteFrame);
 	}
 
 	// Disengaged (also prune collection)
 	for (auto iter = _disengagedNotes->begin(); iter != _disengagedNotes->end();)
 	{
 		// HasOutput (ringing out of the note)
-		if (iter->first->HasOutput(absoluteTime))
+		if (iter->first->HasOutput(frame->GetStreamTime()))
 		{
-			iter->first->AddSample(&noteFrame, absoluteTime);
+			iter->first->AddSample(&noteFrame);
 			iter++;
 		}
 
@@ -196,7 +196,7 @@ bool SynthNotePool::SetFrame(PlaybackFrame* frame, double absoluteTime, double g
 
 	// MIXING THIS RIGHT AWAY FOR NOW
 	// 
-	noteFrame.SetFrame(noteFrame.GetLeft() * gain * (1 - leftRight), noteFrame.GetRight() * gain * leftRight, noteFrame.GetEnvelopeLevel());
+	noteFrame.SetFrame(noteFrame.GetLeft() * gain * (1 - leftRight), noteFrame.GetRight() * gain * leftRight);
 
 	frame->SetFrame(&noteFrame);
 

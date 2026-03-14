@@ -30,6 +30,7 @@ void PortAudioController::Start()
 {
 	// Nothing to do 
 }
+
 int PortAudioController::AudioCallback(
 	const void* input, void* outputBuffer,
 	unsigned long frameCount,
@@ -42,6 +43,9 @@ int PortAudioController::AudioCallback(
 	
 	if (!this->IsStreamOpen())
 		throw new std::exception("Port Audio Controller stream not open! Backend thread still running!");
+
+	if (!this->IsStreamRunning())
+		throw new std::exception("Port Audio Controller stream not running!");
 
 	switch (statusFlags)
 	{
@@ -61,17 +65,9 @@ int PortAudioController::AudioCallback(
 		throw new std::exception("Unhandled port audio status flag:  PortAudioController.cpp");
 	}
 
-	//auto streamInfo = Pa_GetStreamInfo(PortAudioController::Stream);
-
-	// TRY THIS!!! TIME OFFSET!
-	// 
-	//timeInfo->outputBufferDacTime
-	
 	// Audio Callback:  Casting (void*) user data to our synth configuration! And, the output buffer!
 	//
-	auto retValue = (PaStreamCallbackResult)(*_audioCallback)(outputBuffer, PortAudioController::Format, frameCount, timeInfo->outputBufferDacTime, 0, (PlaybackUserData*)userData);
-
-	return 0;
+	(PaStreamCallbackResult)(*_audioCallback)(outputBuffer, PortAudioController::Format, frameCount, timeInfo->outputBufferDacTime, 0, (PlaybackUserData*)userData);
 }
 
 bool PortAudioController::Initialize(PlaybackUserData* playbackData, const AudioCallbackDelegate& audioCallback)
@@ -87,13 +83,18 @@ bool PortAudioController::Initialize(PlaybackUserData* playbackData, const Audio
 
 		auto hostApiIndex = Pa_GetDefaultHostApi();
 
-		//for (int index = 0; index < Pa_GetHostApiCount(); index++)
-		//{
-		//	if (Pa_GetHostApiInfo(index)->type == PaHostApiTypeId::paMME)
-		//		hostApiIndex = index;
-		//}
+		for (int index = 0; index < Pa_GetHostApiCount(); index++)
+		{
+			if (Pa_GetHostApiInfo(index)->type == PaHostApiTypeId::paWASAPI)
+				hostApiIndex = index;
+		}
 
 		auto hostApi = Pa_GetHostApiInfo(hostApiIndex);
+
+		auto hostError = Pa_GetLastHostErrorInfo();
+
+		if (hostError != NULL)
+			HandleError(hostError->errorCode);
 
 		_audioCallback = new AudioCallbackDelegate(audioCallback);
 
@@ -104,6 +105,7 @@ bool PortAudioController::Initialize(PlaybackUserData* playbackData, const Audio
 		//
 		auto selectedDevice = playbackData->GetDeviceRegister()->GetSelectedDevice();
 		auto defaultDeviceIndex = Pa_GetDefaultOutputDevice();
+		bool deviceSelected = false;
 
 		for (int index = 0; index < Pa_GetDeviceCount(); index++)
 		{
@@ -190,7 +192,9 @@ bool PortAudioController::Initialize(PlaybackUserData* playbackData, const Audio
 				deviceInfo->maxOutputChannels, 
 				512,									// The number of output frames should be device / api specific				
 				deviceInfo->defaultLowOutputLatency,
-				index == defaultDeviceIndex);
+			   (index == defaultDeviceIndex) || !deviceSelected);
+
+			deviceSelected = true;
 		}
 
 		// Initialized
@@ -250,7 +254,7 @@ bool PortAudioController::OpenStream(PlaybackUserData* userData)
 
 		// STREAM FORMAT SETTING!
 		PortAudioController::Format = outputDevice->GetDeviceFormat();
-
+		
 		// The typedef callback definition needs a conversion for using a non-static function!
 		//
 		auto error = Pa_OpenStream(&PortAudioController::Stream, 

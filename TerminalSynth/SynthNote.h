@@ -30,8 +30,8 @@ public:
 	~SynthNote();
 
 	unsigned int GetMidiNumber() const;
-	void GetSample(PlaybackFrame* frame, float absoluteTime);
-	void AddSample(PlaybackFrame* frame, float absoluteTime);
+	void GetSample(PlaybackFrame* frame);
+	void AddSample(PlaybackFrame* frame);
 
 
 	bool HasOutput(float absoluteTime);

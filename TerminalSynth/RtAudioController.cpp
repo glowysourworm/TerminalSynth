@@ -219,6 +219,7 @@ bool RtAudioController::OpenStream(PlaybackUserData* userData)
 						true);
 
 		userData->GetPlaybackInfo()->GetStreamInfo()->streamActualLatency = _instance->getStreamLatency();
+		userData->GetPlaybackInfo()->GetStreamInfo()->streamSampleRate = _instance->getStreamSampleRate();
 	}
 	catch (std::exception ex)
 	{

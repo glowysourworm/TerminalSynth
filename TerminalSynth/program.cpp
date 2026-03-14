@@ -92,8 +92,8 @@ int main(int argc, char* argv[], char* envp[])
 	AtomicLock* playbackLock = new AtomicLock();
 
 	// Manual keyboard input
-	//PortAudioController audioController(playbackLock);
-	RtAudioController audioController(playbackLock);
+	PortAudioController audioController(playbackLock);
+	//RtAudioController audioController(playbackLock);
 	MainController controller(&audioController, playbackLock);
 
 	// Primary Shared Pointers:  The OutputSettings* are initialized and maintained by the MainController, with 

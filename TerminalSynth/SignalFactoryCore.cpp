@@ -10,6 +10,8 @@ SignalFactoryCore::SignalFactoryCore(float samplingRate)
 {
 	_randomQuadrantValues = new std::vector<float>();
 	_samplingRate = samplingRate;
+	_signalHigh = SIGNAL_HIGH;
+	_signalLow = SIGNAL_LOW;
 }
 
 SignalFactoryCore::~SignalFactoryCore()
@@ -36,7 +38,7 @@ float SignalFactoryCore::GetFrequency(unsigned int midiNote)
 	return TerminalSynth::GetMidiFrequency(midiNote);		// We need a namespace!
 }
 
-float SignalFactoryCore::GenerateTriangleSample(float frequency, float sampleTime)
+float SignalFactoryCore::GenerateTriangleSample(float frequency, size_t timeCursor, double streamTime)
 {
 	float period = 1 / frequency;
 	float periodQuarter = 0.25f * period;
@@ -45,7 +47,7 @@ float SignalFactoryCore::GenerateTriangleSample(float frequency, float sampleTim
 	float sample = 0;
 
 	// Using modulo arithmetic to get the relative period time
-	float periodTime = fmod(sampleTime, period);
+	float periodTime = fmod(streamTime, period);
 
 	// First Quadrant
 	if (periodTime < periodQuarter)
@@ -74,11 +76,11 @@ float SignalFactoryCore::GenerateTriangleSample(float frequency, float sampleTim
 	return sample;
 }
 
-float SignalFactoryCore::GenerateSquareSample(float frequency, float sampleTime)
+float SignalFactoryCore::GenerateSquareSample(float frequency, size_t timeCursor, double streamTime)
 {
 	// Using modulo arithmetic to get the relative period time
 	float period = 1 / frequency;
-	float periodTime = fmod(sampleTime, period);
+	float periodTime = fmod(streamTime, period);
 	float sample = 0;
 
 	if (periodTime < period / 2.0)
@@ -90,28 +92,28 @@ float SignalFactoryCore::GenerateSquareSample(float frequency, float sampleTime)
 	return sample;
 }
 
-float SignalFactoryCore::GenerateSawtoothSample(float frequency, float sampleTime)
+float SignalFactoryCore::GenerateSawtoothSample(float frequency, size_t timeCursor, double streamTime)
 {
 	// Using modulo arithmetic to get the relative period time
 	float period = 1 / frequency;
-	float periodTime = fmod(sampleTime, period);
+	float periodTime = fmod(streamTime, period);
 
 	return (((_signalHigh - _signalLow) / period) * periodTime) + _signalLow;
 }
 
-float SignalFactoryCore::GenerateSineSample(float frequency, float sampleTime)
+float SignalFactoryCore::GenerateSineSample(float frequency, size_t timeCursor, double streamTime)
 {
-	return ((_signalHigh - _signalLow) * sinf(2.0 * std::numbers::pi * frequency * sampleTime)) + _signalLow;
+	return ((_signalHigh - _signalLow) * sinf(2.0 * std::numbers::pi * frequency * streamTime)) + _signalLow;
 }
 
-float SignalFactoryCore::GenerateRandomSample(float frequency, float absoluteTime)
+float SignalFactoryCore::GenerateRandomSample(float frequency, size_t timeCursor, double streamTime)
 {
 	float period = 1 / frequency;
 	float periodQuarter = 0.25f * period;
 	float sample = 0;
 
 	// Using modulo arithmetic to get the relative period time
-	float periodTime = fmod(absoluteTime, period);
+	float periodTime = fmod(streamTime, period);
 
 	// First Quadrant
 	if (periodTime < periodQuarter)

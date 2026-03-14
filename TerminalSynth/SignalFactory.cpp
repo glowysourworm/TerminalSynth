@@ -12,6 +12,7 @@
 #include <complex>
 #include <cstdlib>
 #include <exception>
+#include <limits>
 #include <vector>
 
 SignalFactory::SignalFactory(const PlaybackInfo* outputSettings)
@@ -110,22 +111,29 @@ WaveTable* SignalFactory::GenerateWaveTable(const OscillatorParameters& paramete
 	float frequency = TerminalSynth::GetMidiFrequency(midiNumber + (parameters.GetOctave() * 12));
 	float period = 1 / frequency;
 
-	// Oversampled Frame Length
-	//int sampleLength = (period * oversampleFactor) * _outputSettings->GetStreamInfo()->streamSampleRate;
-	//float sampleRate = _outputSettings->GetStreamInfo()->streamSampleRate * oversampleFactor;
+	// Parameters
+	int numberHarmonics = 1;
+	float sidebandCents = 0.0f;
+	bool randomPhase = false;
+	float randomPhaseAmplitude = 0.1f;
 
-	int sampleLength = pow(2, 16);				// Need a number greater than the sampling rate
-	float sampleRate = sampleLength / period;
+	// Sample Preparation 
+	int oversampleLength = pow(2, 16);						// Need a number greater than the sampling rate
 
-	WaveTable* result = new WaveTable(WaveTable::Mode::Periodic, sampleLength, sampleRate, _outputSettings->GetStreamInfo()->streamSampleRate);
+	// Sample Playback
+	int sampleLength = period * _outputSettings->GetStreamInfo()->streamSampleRate;
+
+	WaveTable* result = new WaveTable(WaveTable::Mode::Periodic, 
+		sampleLength, 
+		_outputSettings->GetStreamInfo()->streamSampleRate, 
+		_outputSettings->GetStreamInfo()->streamSampleRate);
 
 	// IFFT Wave Generation:  Using harmonic banded frequency.. something or other
 	//
 	// https://zynaddsubfx.sourceforge.io/doc/PADsynth/PADsynth.htm#Sound_examples
 	//
 
-	std::vector<std::complex<double>> waveArray(sampleLength);
-	int numberHarmonics = 10;
+	std::vector<std::complex<double>> waveArray(oversampleLength);
 	
 	// IFFT:  In frequency space, where is our fundamental frequency?
 	// 
@@ -149,11 +157,11 @@ WaveTable* SignalFactory::GenerateWaveTable(const OscillatorParameters& paramete
 		// Harmonic Band: Fundamental * (Sample Length / System Sample Length), which takes the 
 		//				  oversampled domain into account.
 		//
-		float sideBandwidth = TerminalSynth::CentsToHertz(5.0f, frequency * n) - (frequency * n);
+		float sideBandwidth = TerminalSynth::CentsToHertz(sidebandCents, frequency * n) - (frequency * n);
 
 		// Multiply by our sample factor
-		int centerIndex = (int)((frequency * n) / (sampleLength / _outputSettings->GetStreamInfo()->streamSampleRate));
-		int sideBandwidthIndex = sideBandwidth * (sampleLength / _outputSettings->GetStreamInfo()->streamSampleRate);
+		int centerIndex = (int)((frequency * n) * (oversampleLength / _outputSettings->GetStreamInfo()->streamSampleRate));
+		int sideBandwidthIndex = (int)(sideBandwidth * (oversampleLength / _outputSettings->GetStreamInfo()->streamSampleRate));
 
 		if (centerIndex + sideBandwidthIndex >= waveArray.size())
 			continue;
@@ -164,65 +172,57 @@ WaveTable* SignalFactory::GenerateWaveTable(const OscillatorParameters& paramete
 			float gaussWindow = Algorithm::Gaussian3Sigma(index, centerIndex - sideBandwidthIndex, centerIndex + sideBandwidthIndex);
 
 			// Produce a harmonic with random phase
-			waveArray[index] += std::complex<double>(gaussWindow / std::sqrtf(n), rand() / (double)RAND_MAX);
+			waveArray[index] += std::complex<double>(gaussWindow / std::sqrtf(n), randomPhase ? (rand() / (double)RAND_MAX) * randomPhaseAmplitude : 0);
 		}
 	}
 
+	double maxSample = std::numeric_limits<double>::min();
+
 	// IFFT
-	Algorithm::IFFT(&waveArray);
+	Algorithm::IFFT(&waveArray, maxSample);
 
 	SignalFactory* that = this;
 
-	float maxSample = 0;
-
-	for (int index = 0; index < waveArray.size(); index++)
-	{
-		if (waveArray[index].real() > maxSample)
-			maxSample = waveArray[index].real();
-	}
-
 	// Load WaveTable*
-	result->CreateSamplesByFrame([&waveArray, &that, &frequency, &maxSample](int frameIndex, float& leftSample, float& rightSample) {
+	result->CreateSamplesByFrame([&waveArray, &maxSample, &sampleLength](int frameIndex, float& leftSample, float& rightSample) {
 
+		// The oversampled time-domain wave array actually has the right "sample rate" to be put
+		// directly into one period of the output; but with all the harmonic variety added using
+		// the IFFT
+		//
 		leftSample = waveArray[frameIndex].real() / maxSample;
 		rightSample = waveArray[frameIndex].real() / maxSample;
-
-		//leftSample = waveArray[frameIndex].real() / maxSample;
-		//rightSample = waveArray[frameIndex].real() / maxSample;
-
-		//leftSample = that->GenerateSineSample(frequency, sampleTime);
-		//rightSample = that->GenerateSineSample(frequency, sampleTime);
 	});
 
 	return result;
 }
 
-float SignalFactory::GenerateTriangleSample(float frequency, float sampleTime)
+float SignalFactory::GenerateTriangleSample(float frequency, size_t timeCursor, double streamTime)
 {
-	return _core->GenerateTriangleSample(frequency, sampleTime);
+	return _core->GenerateTriangleSample(frequency, timeCursor, streamTime);
 }
 
-float SignalFactory::GenerateSquareSample(float frequency, float sampleTime)
+float SignalFactory::GenerateSquareSample(float frequency, size_t timeCursor, double streamTime)
 {
-	return _core->GenerateSquareSample(frequency, sampleTime);
+	return _core->GenerateSquareSample(frequency, timeCursor, streamTime);
 }
 
-float SignalFactory::GenerateSawtoothSample(float frequency, float sampleTime)
+float SignalFactory::GenerateSawtoothSample(float frequency, size_t timeCursor, double streamTime)
 {
-	return _core->GenerateSawtoothSample(frequency, sampleTime);
+	return _core->GenerateSawtoothSample(frequency, timeCursor, streamTime);
 }
 
-float SignalFactory::GenerateSineSample(float frequency, float sampleTime)
+float SignalFactory::GenerateSineSample(float frequency, size_t timeCursor, double streamTime)
 {
-	return _core->GenerateSineSample(frequency, sampleTime);
+	return _core->GenerateSineSample(frequency, timeCursor, streamTime);
 }
 
-float SignalFactory::GenerateRandomSample(float frequency, float absoluteTime)
+float SignalFactory::GenerateRandomSample(float frequency, size_t timeCursor, double streamTime)
 {
-	return _core->GenerateRandomSample(frequency, absoluteTime);
+	return _core->GenerateRandomSample(frequency, timeCursor, streamTime);
 }
 
-float SignalFactory::GeneratePluckedStringSample(float frequency, float signalHigh, float signalLow, float sampleTime)
+float SignalFactory::GeneratePluckedStringSample(float frequency, float signalHigh, float signalLow, size_t timeCursor, double streamTime)
 {
 	// https://en.wikipedia.org/wiki/Karplus%E2%80%93Strong_string_synthesis
 	//
@@ -235,7 +235,7 @@ float SignalFactory::GeneratePluckedStringSample(float frequency, float signalHi
 	float sample = 0;
 
 	// Noise Attack:  The delay + filter will make the line dissipate
-	if (sampleTime < attackTime)
+	if (streamTime < attackTime)
 	{
 		sample = ((float)rand() / (float)RAND_MAX);
 	}
@@ -245,12 +245,12 @@ float SignalFactory::GeneratePluckedStringSample(float frequency, float signalHi
 	}
 
 	// Process Sample
-	PlaybackFrame frame(0, 0, 1);
-	_combFilter->SetFrame(&frame, sampleTime);
-	_lowPassFilter->SetFrame(&frame, sampleTime);
+	PlaybackFrame frame(0, 0);
+	_combFilter->SetFrame(&frame);
+	_lowPassFilter->SetFrame(&frame);
 
 	// Mix with input
-	frame.SetFrame(frame.GetLeft() + sample, frame.GetRight() + sample, 1);
+	frame.SetFrame(frame.GetLeft() + sample, frame.GetRight() + sample);
 
 	return frame.GetLeft();
 }

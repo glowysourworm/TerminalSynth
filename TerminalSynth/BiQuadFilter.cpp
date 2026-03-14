@@ -69,7 +69,7 @@ void BiQuadFilter::Initialize(const PlaybackInfo* parameters)
 	}
 }
 
-void BiQuadFilter::SetFrame(PlaybackFrame* frame, float absoluteTime)
+void BiQuadFilter::SetFrame(PlaybackFrame* frame)
 {
 	float inputLeft = frame->GetLeft();
 	float inputRight = frame->GetRight();
@@ -90,14 +90,14 @@ void BiQuadFilter::SetFrame(PlaybackFrame* frame, float absoluteTime)
 	_input2->SetFrame(_input1);
 	_input1->SetFrame(frame);
 
-	frame->SetFrame(outputLeft, outputRight, frame->GetEnvelopeLevel());
+	frame->SetFrame(outputLeft, outputRight);
 
 	// Track Output
 	_output2->SetFrame(_output1);
 	_output1->SetFrame(frame);
 }
 
-bool BiQuadFilter::HasOutput(float absoluteTime) const
+bool BiQuadFilter::HasOutput() const
 {
 	return true;
 }

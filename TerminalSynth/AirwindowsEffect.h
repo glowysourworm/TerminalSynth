@@ -3,8 +3,8 @@
 #ifndef AIRWINDOWS_EFFECT_H
 #define AIRWINDOWS_EFFECT_H
 
-#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
+#include "PlaybackInfo.h"
 #include "SignalBase.h"
 #include "SignalSettings.h"
 #include <airwin_consolidated_base.h>
@@ -22,8 +22,8 @@ public:
 	~AirwindowsEffect();
 
 	void Initialize(const PlaybackInfo* outputSettings) override;
-	void SetFrame(PlaybackFrame* frame, float absoluteTime) override;
-	bool HasOutput(float absoluteTime) const override;
+	void SetFrame(PlaybackFrame* frame) override;
+	bool HasOutput() const override;
 
 	void UpdateParameter(int index, float value) override;
 

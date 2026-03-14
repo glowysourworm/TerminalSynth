@@ -16,8 +16,8 @@ public:
 	~ButterworthFilter();
 
 	void Initialize(const PlaybackInfo* parameters) override;
-	void SetFrame(PlaybackFrame* frame, float absoluteTime) override;
-	bool HasOutput(float absoluteTime) const override;
+	void SetFrame(PlaybackFrame* frame) override;
+	bool HasOutput() const override;
 
 	void SetFilter(float cutoff, float resonance);
 
@@ -25,7 +25,7 @@ public:
 
 private:
 
-	float Apply(float sample, float absoluteTime);
+	float Apply(float sample);
 
 private:
 

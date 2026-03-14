@@ -1,5 +1,5 @@
-#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
+#include "PlaybackInfo.h"
 #include "SignalBase.h"
 #include "SignalSettings.h"
 #include "SynthEffect.h"
@@ -16,12 +16,12 @@ void SynthEffect::Initialize(const PlaybackInfo* parameters)
 	SignalBase::Initialize(parameters);
 }
 
-void SynthEffect::SetFrame(PlaybackFrame* frame, float absoluteTime)
+void SynthEffect::SetFrame(PlaybackFrame* frame)
 {
 
 }
 
-bool SynthEffect::HasOutput(float absoluteTime) const
+bool SynthEffect::HasOutput() const
 {
 	return false;
 }

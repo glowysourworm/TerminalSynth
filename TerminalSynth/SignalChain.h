@@ -24,8 +24,8 @@ public:
 
 	void Update(SoundRegistry* effectRegistry, const SignalChainSettings* signalChainSettings);
 
-	void SetFrame(PlaybackFrame* frame, float absoluteTime);
-	bool HasOutput(float absoluteTime) const;
+	void SetFrame(PlaybackFrame* frame);
+	bool HasOutput() const;
 
 private:
 

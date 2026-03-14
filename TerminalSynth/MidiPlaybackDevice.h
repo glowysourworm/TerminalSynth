@@ -205,10 +205,10 @@ int MidiPlaybackDevice::WritePlaybackBuffer(
 		//this->SetMidiSynth(absoluteTime, frameIndex, configuration);
 
 		// Clear Frame
-		_frame->Clear();
+		_frame->ClearSample();
 
 		// Get Samples for N channels
-		_lastOutput = _synth->GetSample(_frame, absoluteTime, gain, leftRightBalance);
+		_lastOutput = _synth->GetSample(_frame, gain, leftRightBalance);
 
 		// Equalizer Output
 		equalizerOutput->AddSample(_frame->GetLeft(), _frame->GetRight());

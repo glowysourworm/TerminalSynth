@@ -1,6 +1,6 @@
 #include "ButterworthFilter.h"
-#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
+#include "PlaybackInfo.h"
 #include "SignalBase.h"
 #include <cmath>
 
@@ -37,17 +37,17 @@ void ButterworthFilter::Initialize(const PlaybackInfo* parameters)
 	SignalBase::Initialize(parameters);
 }
 
-void ButterworthFilter::SetFrame(PlaybackFrame* frame, float absoluteTime)
+void ButterworthFilter::SetFrame(PlaybackFrame* frame)
 {
-	float outputLeft = this->Apply(frame->GetLeft(), absoluteTime);
-	float outputRight = this->Apply(frame->GetRight(), absoluteTime);
+	float outputLeft = this->Apply(frame->GetLeft());
+	float outputRight = this->Apply(frame->GetRight());
 
-	frame->SetFrame(outputLeft, outputRight, frame->GetEnvelopeLevel());
+	frame->SetFrame(outputLeft, outputRight);
 }
 
-bool ButterworthFilter::HasOutput(float absoluteTime) const
+bool ButterworthFilter::HasOutput() const
 {
-	return false;
+	return true;
 }
 
 void ButterworthFilter::SetFilter(float cutoff, float resonance)
@@ -92,7 +92,7 @@ void ButterworthFilter::SetFilter(float cutoff, float resonance)
 	this->coef3 = (bd_tmp - this->t2 * b1) * bd;
 }
 
-float ButterworthFilter::Apply(float sample, float absoluteTime)
+float ButterworthFilter::Apply(float sample)
 {
 	float output = sample * this->outputGain;
 	float new_hist;

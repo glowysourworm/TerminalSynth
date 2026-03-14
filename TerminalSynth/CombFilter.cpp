@@ -1,6 +1,6 @@
 #include "CombFilter.h"
-#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
+#include "PlaybackInfo.h"
 #include "SignalBase.h"
 #include <queue>
 
@@ -40,7 +40,7 @@ void CombFilter::Initialize(const PlaybackInfo* parameters)
 	}
 }
 
-void CombFilter::SetFrame(PlaybackFrame* frame, float absoluteTime)
+void CombFilter::SetFrame(PlaybackFrame* frame)
 {
 	float delay = this->GetParameterValue(0);
 	float gain = this->GetParameterValue(1);
@@ -67,10 +67,10 @@ void CombFilter::SetFrame(PlaybackFrame* frame, float absoluteTime)
 		_bufferR->push(outputR);
 	}
 
-	frame->SetFrame(outputL, outputR, frame->GetEnvelopeLevel());
+	frame->SetFrame(outputL, outputR);
 }
 
-bool CombFilter::HasOutput(float absoluteTime) const
+bool CombFilter::HasOutput() const
 {
 	return this->GetParameterValue(1) > 0.0f;
 }

@@ -29,12 +29,12 @@ private:
 	/// </summary>
 	void Reset(const OscillatorParameters* parameters);
 
-	float GenerateTriangleSample(float frequency, float absoluteTime);
-	float GenerateSquareSample(float frequency, float absoluteTime);
-	float GenerateSawtoothSample(float frequency, float absoluteTime);
-	float GenerateSineSample(float frequency, float absoluteTime);
-	float GenerateRandomSample(float frequency, float absoluteTime);
-	float GeneratePluckedStringSample(float frequency, float signalLow, float signalHigh, float absoluteTime);
+	float GenerateTriangleSample(float frequency, size_t timeCursor, double streamTime);
+	float GenerateSquareSample(float frequency, size_t timeCursor, double streamTime);
+	float GenerateSawtoothSample(float frequency, size_t timeCursor, double streamTime);
+	float GenerateSineSample(float frequency, size_t timeCursor, double streamTime);
+	float GenerateRandomSample(float frequency, size_t timeCursor, double streamTime);
+	float GeneratePluckedStringSample(float frequency, float signalLow, float signalHigh, size_t timeCursor, double streamTime);
 
 private:
 

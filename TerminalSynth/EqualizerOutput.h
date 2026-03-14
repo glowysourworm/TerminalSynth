@@ -45,7 +45,7 @@ public:
 			_leftAccumulators->push_back(new Accumulator<double>(true, _windowLength));
 			_rightAccumulators->push_back(new Accumulator<double>(true, _windowLength));
 
-			_output->push_back(PlaybackFrame(0,0,0));
+			_output->push_back(PlaybackFrame(0,0));
 		}
 	};
 	EqualizerOutput(const EqualizerOutput& copy)
@@ -74,7 +74,7 @@ public:
 			_leftAccumulators->push_back(new Accumulator<double>(true, _windowLength));
 			_rightAccumulators->push_back(new Accumulator<double>(true, _windowLength));
 
-			_output->push_back(PlaybackFrame(0, 0, 0));
+			_output->push_back(PlaybackFrame(0, 0));
 		}
 	}
 	~EqualizerOutput() 
@@ -104,8 +104,10 @@ public:
 		// Ready to perform FFT
 		if (_cursor == _leftFFT->size())
 		{
-			Algorithm::FFT(_leftFFT);
-			Algorithm::FFT(_rightFFT);
+			double leftMax, rightMax;
+
+			Algorithm::FFT(_leftFFT, leftMax);
+			Algorithm::FFT(_rightFFT, rightMax);
 
 			_cursor = 0;
 
@@ -147,7 +149,7 @@ public:
 			{
 				// Set output with accumulator windowed average
 				_output->at(outputIndex).SetFrame(_leftAccumulators->at(outputIndex)->GetAvg() /* / fmax(leftTotalSum, 1) */,
-												  _rightAccumulators->at(outputIndex)->GetAvg() /* / fmax(rightTotalSum, 1) */ , 0);
+												  _rightAccumulators->at(outputIndex)->GetAvg() /* / fmax(rightTotalSum, 1) */);
 			}
 		}
 	}
@@ -160,7 +162,7 @@ public:
 
 		for (int index = 0; index < _output->size() / 2; index++)
 		{
-			destination->at(index).SetFrame(_output->at(index).GetLeft(), _output->at(index).GetRight(), 0);
+			destination->at(index).SetFrame(_output->at(index).GetLeft(), _output->at(index).GetRight());
 		}
 	}
 	
@@ -174,7 +176,7 @@ public:
 
 		for (int index = 0; index < _output->size() / 2; index++)
 		{
-			result->push_back(PlaybackFrame(_output->at(index).GetLeft(), _output->at(index).GetRight(), 0));
+			result->push_back(PlaybackFrame(_output->at(index).GetLeft(), _output->at(index).GetRight()));
 		}
 
 		return result;

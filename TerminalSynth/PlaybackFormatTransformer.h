@@ -4,7 +4,6 @@
 #define PLAYBACK_FORMAT_TRANSFORMER_H
 
 #include "Constant.h"
-#include <bit>
 #include <cstdint>
 #include <exception>
 #include <limits>

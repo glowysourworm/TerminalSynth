@@ -5,8 +5,8 @@
 
 #include "Constant.h"
 #include "OscillatorParameters.h"
-#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
+#include "PlaybackInfo.h"
 #include "SignalFactoryCore.h"
 #include "SignalParameter.h"
 
@@ -35,7 +35,7 @@ public:
 	/// PLAYBACK FRAME IS NOT ALTERED! There should be a const, here, but there's still a problem in 
 	/// the SignalFactory*
 	/// </summary>
-	float GetValue(const PlaybackFrame* frame, double absoluteTime) const;
+	float GetValue(const PlaybackFrame* frame) const;
 
 private:
 

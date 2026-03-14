@@ -5,8 +5,8 @@
 
 #include "Envelope.h"
 #include "OscillatorParameters.h"
-#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
+#include "PlaybackInfo.h"
 #include "SignalChain.h"
 #include "SignalChainSettings.h"
 #include "SoundRegistry.h"
@@ -45,7 +45,7 @@ public:
 	/// <summary>
 	/// Synthesizes a full output at the specified stream time. Returns true if there was output this call.
 	/// </summary>
-	bool SetFrame(PlaybackFrame* frame, double absoluteTime, double gain, double leftRight);
+	bool SetFrame(PlaybackFrame* frame, double gain, double leftRight);
 
 	/// <summary>
 	/// Gets a list of sound banks (sample folders) from the WaveTableCache*

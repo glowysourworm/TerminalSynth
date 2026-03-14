@@ -1,5 +1,5 @@
-#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
+#include "PlaybackInfo.h"
 #include "SignalBase.h"
 #include "SignalChain.h"
 #include "SignalChainSettings.h"
@@ -66,21 +66,21 @@ void SignalChain::Update(SoundRegistry* effectRegistry, const SignalChainSetting
 	}
 }
 
-void SignalChain::SetFrame(PlaybackFrame* frame, float absoluteTime)
+void SignalChain::SetFrame(PlaybackFrame* frame)
 {
 	for (int index = 0; index < _chain->size(); index++)
 	{
-		_chain->at(index)->SetFrame(frame, absoluteTime);
+		_chain->at(index)->SetFrame(frame);
 	}
 }
 
-bool SignalChain::HasOutput(float absoluteTime) const
+bool SignalChain::HasOutput() const
 {
 	bool hasOutput = false;
 
 	for (int index = 0; index < _chain->size() && !hasOutput; index++)
 	{
-		hasOutput |= _chain->at(index)->HasOutput(absoluteTime);
+		hasOutput |= _chain->at(index)->HasOutput();
 	}
 
 	return hasOutput;

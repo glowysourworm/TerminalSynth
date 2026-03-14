@@ -33,7 +33,7 @@ public:
 	/// <summary>
 	/// Synthesizes a full output at the specified stream time. Returns true if there was output this call.
 	/// </summary>
-	bool GetSample(PlaybackFrame* frame, double absoluteTime, float gain, float leftRightBalance);
+	bool GetSample(PlaybackFrame* frame, float gain, float leftRightBalance);
 
 	/// <summary>
 	/// Gets rid of outdated cache. This should be done after the user has stopped playback for a short

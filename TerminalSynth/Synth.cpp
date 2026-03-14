@@ -41,16 +41,16 @@ void Synth::Set(int midiNumber, bool pressed, double absoluteTime)
 {
 	_pianoNotes->SetNote(midiNumber, pressed, absoluteTime);
 }
-bool Synth::GetSample(PlaybackFrame* frame, double absoluteTime, float gain, float leftRightBalance)
+bool Synth::GetSample(PlaybackFrame* frame, float gain, float leftRightBalance)
 {
 	// Primary Synth Voice(s)
-	bool hasOutput = _pianoNotes->SetFrame(frame, absoluteTime, gain, leftRightBalance);
+	bool hasOutput = _pianoNotes->SetFrame(frame, gain, leftRightBalance);
 
 	// Post Processing
-	hasOutput |= _postProcessing->HasOutput(absoluteTime);
+	hasOutput |= _postProcessing->HasOutput();
 
 	//if (_postProcessing->HasOutput(absoluteTime))
-		_postProcessing->SetFrame(frame, absoluteTime);
+		_postProcessing->SetFrame(frame);
 
 	return hasOutput;
 }

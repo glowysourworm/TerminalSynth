@@ -22,9 +22,6 @@ public:
 		_samplingRate = samplingRate;
 		_leftAccumulator = new Accumulator<double>(true);
 		_rightAccumulator = new Accumulator<double>(true);
-		_input = new PlaybackFrame();
-		_output = new PlaybackFrame();
-		_lastSystemTime = 0;
 	};
 
 	/// <summary>
@@ -40,16 +37,11 @@ public:
 		_samplingRate = samplingRate;
 		_leftAccumulator = new Accumulator<double>(true);
 		_rightAccumulator = new Accumulator<double>(true);
-		_input = new PlaybackFrame();
-		_output = new PlaybackFrame();
-		_lastSystemTime = 0;
 	}
 	virtual ~WaveBase()
 	{
 		delete _leftAccumulator;
 		delete _rightAccumulator;
-		delete _input;
-		delete _output;
 	}
 
 	/// <summary>
@@ -64,11 +56,6 @@ public:
 		// Call the class's implementation (modifies the frame)
 		this->SetFrameImpl(frame, zeroTime, absoluteTime);
 
-		// Input / Output Buffer
-		_input->SetFrame(&input);
-		_output->SetFrame(frame->GetLeft(), frame->GetRight(), frame->GetEnvelopeLevel());
-		_lastSystemTime = absoluteTime;
-
 		_leftAccumulator->Add(frame->GetLeft());
 		_rightAccumulator->Add(frame->GetRight());
 	}
@@ -82,8 +69,6 @@ public:
 	{
 		_leftAccumulator->Reset();
 		_rightAccumulator->Reset();
-		_input->Clear();
-		_output->Clear();
 	}
 
 	bool HasClipped() const { return _leftAccumulator->GetAvg() > _signalHigh || _rightAccumulator->GetAvg() > _signalHigh; }
@@ -99,10 +84,6 @@ protected:
 	/// <param name="absoluteTime"></param>
 	virtual void SetFrameImpl(PlaybackFrame* frame, double zeroTime, double absoluteTime) = 0;
 
-	PlaybackFrame GetInput() { return *_input; }
-	PlaybackFrame GetOutput() { return *_output; }
-	double GetLastTime() { return _lastSystemTime; }
-
 public:
 
 	unsigned int GetSamplingRate() const { return _samplingRate; }
@@ -114,11 +95,6 @@ private:
 	unsigned int _samplingRate;
 	Accumulator<double>* _leftAccumulator;
 	Accumulator<double>* _rightAccumulator;
-
-	// (Input / Output) buffering for sample history
-	PlaybackFrame* _input;
-	PlaybackFrame* _output;
-	double _lastSystemTime;
 };
 
 #endif

@@ -154,16 +154,23 @@ int SynthPlaybackDevice::WritePlaybackBuffer(void* playbackBuffer,
 	char leftBuffer[4];
 	char rightBuffer[4];
 
+	// Stream Time:  The samples are generated using the time cursor; but the 
+	//				 stream time is used for some signal processing - usually
+	//				 any envelopes or user interaction is measured in seconds
+	//
+	//				 The stream time and sample cursor may develop a slippage
+	//				 over time. So, it is best to reset both during an idle 
+	//				 period.
+	_frame->ResetStreamTime(streamTime);
+
 	// Calculate frame data (BUFFER SIZE = NUMBER OF CHANNELS x NUMBER OF FRAMES)
 	for (unsigned int frameIndex = 0; frameIndex < numberOfFrames; frameIndex++)
 	{
-		double absoluteTime = streamTime + (frameIndex / (double)_samplingRate);
-
 		// Clear Frame
-		_frame->Clear();
+		_frame->ClearSample();
 
 		// Get Samples for N channels
-		_lastOutput = _synth->GetSample(_frame, absoluteTime, gain, leftRightBalance);
+		_lastOutput = _synth->GetSample(_frame, gain, leftRightBalance);
 
 		// Equalizer Output
 		equalizerOutput->AddSample(_frame->GetLeft(), _frame->GetRight());
@@ -179,6 +186,11 @@ int SynthPlaybackDevice::WritePlaybackBuffer(void* playbackBuffer,
 			outputBuffer[(2 * frameIndex * frameSize) + index] = leftBuffer[index];
 			outputBuffer[(2 * frameIndex * frameSize) + frameSize + index] = rightBuffer[index];
 		}
+
+		// Increment Time:  The buffer index follows the audio output; and the stream time is
+		//					approximated during this block of samples.
+		//
+		_frame->IncrementTimeCursor(1 / (double)_samplingRate);
 	}
 
 	return 0;

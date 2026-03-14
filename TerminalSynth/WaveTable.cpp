@@ -41,7 +41,7 @@ void WaveTable::CreateSamplesByTime(WaveTableSampleGenerateSecondCallback callba
 		float sampleTime = (index / (float)_samplingRate);		// Frame length and sampling rate are both in the scaled domain
 		callback(sampleTime, left, right);
 
-		_frames[index].SetFrame(left, right, 1.0f);
+		_frames[index].SetFrame(left, right);
 	}
 }
 
@@ -54,7 +54,7 @@ void WaveTable::CreateSamplesByFrame(WaveTableSampleGenerateFrameCallback callba
 		float right = 0;
 		callback(index, left, right);
 
-		_frames[index].SetFrame(left, right, 1.0f);
+		_frames[index].SetFrame(left, right);
 	}
 }
 
@@ -88,19 +88,26 @@ float WaveTable::GetSamplingRate() const
 
 void WaveTable::SetFrameImpl(PlaybackFrame* frame, double zeroTime, double absoluteTime)
 {
-	float left = GetLinearSpline(zeroTime, absoluteTime, true);
-	float right = GetLinearSpline(zeroTime, absoluteTime, false);
+	//float left = GetLinearSpline(zeroTime, absoluteTime, true);
+	//float right = GetLinearSpline(zeroTime, absoluteTime, false);
 
-	frame->SetFrame(left, right, frame->GetEnvelopeLevel());
+	size_t playbackIndex = frame->GetTimeCursor() % _frameLength;
+
+	float left = _frames[playbackIndex].GetLeft();
+	float right = _frames[playbackIndex].GetRight();
+
+	frame->SetFrame(left, right);
 }
 
 float WaveTable::GetLinearSpline(double zeroTime, double absoluteTime, bool channelLeft)
 {
 	// The zero time is called by the SynthNote* when it is engaged
-	double sampleTime = absoluteTime - zeroTime;
+	//double sampleTime = absoluteTime - zeroTime;
+
+	double sampleTime = absoluteTime;
 
 	// First, take our oversampled array, and get the necessary points to match it to the spline
-	int bigIndex = sampleTime * _systemSamplingRate /* *(_samplingRate / (float)_systemSamplingRate)*/;			// Expanded to Frame Length (which is oversampled)
+	int bigIndex = sampleTime * _systemSamplingRate * (_samplingRate / (float)_systemSamplingRate);			// Expanded to Frame Length (which is oversampled)
 
 	// Oversampled frame domain
 	int frame0Index = bigIndex % _frameLength;
@@ -110,34 +117,36 @@ float WaveTable::GetLinearSpline(double zeroTime, double absoluteTime, bool chan
 	double y0 = channelLeft ? _frames[frame0Index].GetLeft() : _frames[frame0Index].GetRight();
 	double y1 = channelLeft ? _frames[frame1Index].GetLeft() : _frames[frame1Index].GetRight();
 
+	return y0;
+
 	// Anti-Aliasing (restart the wave period)
 	//if (frame1Index < frame0Index)
 	//	return y0;
 
 	// Can't interpolate (no need to interpolate)
-	if (y0 == y1)
-		return y0;
+	//if (y0 == y1)
+	//	return y0;
 
-	// These time coordinates are calculated in system time (but just for the duration of one buffer length!)
-	double x0 = frame0Index / (double)_samplingRate;
-	double x1 = frame1Index < frame0Index ? (x0 + _frameLength / (double)_samplingRate) : frame1Index / (double)_samplingRate;	// Wrap-around check
-	
-	// y = m * x + b
+	//// These time coordinates are calculated in system time (but just for the duration of one buffer length!)
+	//double x0 = frame0Index / (double)_samplingRate;
+	//double x1 = frame1Index < frame0Index ? (x0 + _frameLength / (double)_samplingRate) : frame1Index / (double)_samplingRate;	// Wrap-around check
 	//
-	// y0 = m * x0 + b
-	// y1 = m * x1 + b
-	//
-	// y1 - y0 = m * (x1 - x0)
-	//
-	// b = y0 - m * x0
-	//
-	double m = (x1 - x0) / (y1 - y0);
-	double b = y0 - (m * x0);
+	//// y = m * x + b
+	////
+	//// y0 = m * x0 + b
+	//// y1 = m * x1 + b
+	////
+	//// y1 - y0 = m * (x1 - x0)
+	////
+	//// b = y0 - m * x0
+	////
+	//double m = (x1 - x0) / (y1 - y0);
+	//double b = y0 - (m * x0);
 
-	// We need to get the closest wave time (in system time coordinates).
-	double waveTime = fmod(sampleTime, _frameLength / (double)_samplingRate);
+	//// We need to get the closest wave time (in system time coordinates).
+	//double waveTime = fmod(sampleTime, _frameLength / (double)_samplingRate);
 
-	return (m * waveTime) + b;
+	//return (m * waveTime) + b;
 }
 //
 //float WaveTable::GetLinearSplineBuffered(double absoluteTime, bool channelLeft)
