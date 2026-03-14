@@ -3,7 +3,10 @@
 A console synthesizer implementation using FTXUI / Port Audio / Airwindows built in native C++ to
 play around with and understand real time audio. 
 
-<audio controls src="/saw-galactic3.wav"></audio>
+<figure>
+  <figcaption>Airwindows Galactic3 + Sawtooth:</figcaption>
+  <audio controls src="/saw-galactic.wav"></audio>
+</figure>
 
 ![Alt text](/screenshot.png)
 
