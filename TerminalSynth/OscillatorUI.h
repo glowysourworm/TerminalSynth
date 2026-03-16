@@ -96,7 +96,7 @@ OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const ftx
 	_soundBankSelectedIndex = new ValueCapture<int>(0);
 	_soundNameSelectedIndex = new ValueCapture<int>(0);
 
-	_octaveUI = new SliderUI(0, 0.0f, 3.0f, 1.0f, "Octave", "Octave {:2.0f}", ftxui::Color::BlueLight);
+	_octaveUI = new SliderUI(0, 0.0f, 3.0f, 1.0f, "Octave", "Octave {:2.0f}", ftxui::Color::Blue, ftxui::Color::BlueLight);
 
 	_soundBankMap = new std::map<std::string, std::vector<std::string>*>();
 

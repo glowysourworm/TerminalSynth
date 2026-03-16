@@ -108,7 +108,7 @@ SynthTabUI::SynthTabUI(const SynthTabModelUI& model)
 	_pluginListUI = new ScrollViewerUI<CheckboxModelUI, CheckboxUI>(0.005);
 	_postProcessingUI = new ScrollViewerUI<SignalNodeModelUI, SignalNodeUI>();
 
-	_envelopeUI = new EnvelopeUI();
+	_envelopeUI = new EnvelopeUI(*model.GetSoundSettings()->GetOscillatorEnvelope());
 	_oscillatorUI = new OscillatorUI(_model->GetSoundBankSettings(), ftxui::Color::White);
 	_envelopeSignalUI = new SignalNodeUI(envelopeModel);
 	_oscillatorSignalUI = new SignalNodeUI(oscillatorModel);

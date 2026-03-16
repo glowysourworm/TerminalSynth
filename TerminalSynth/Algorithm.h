@@ -176,6 +176,32 @@ public:
         // Standard Gaussian centered at the midway point of the window, 3-sigma out.
         return A * std::exp(-0.5 * z * z);
     }
+
+    /// <summary>
+    /// Generates a (non-random) number on the poisson distribution PDF
+    /// </summary>
+    static double Poisson(int x, double lambda)
+    {
+        if (x < 0)
+            throw new std::exception("Invalid Poisson x input:  Algorithm.h");
+
+        if (lambda < 1)
+            throw new std::exception("Invalid Poisson lambda parameter:  Algorithm.h");
+
+        return (pow(lambda, x) * exp(-1 * lambda)) / Factorial(x);
+    }
+
+    static size_t Factorial(int n)
+    {
+        if (n < 0)
+            throw new std::exception("Invalid factorial number:  Algorithm.h");
+
+        if (n == 0)
+            return 1;
+
+        else
+            return n * Factorial(n - 1);
+    }
 };
 
 #endif

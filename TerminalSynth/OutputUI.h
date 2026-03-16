@@ -61,8 +61,8 @@ private:
 
 OutputUI::OutputUI(const std::string& title, const ftxui::Color& titleColor) 
 {
-    _gainUI = new SliderUI(0.85f, 0.00f, 1.0f, 0.01f, "Gain", "Gain:       {:.2f}", titleColor);
-    _leftRightUI = new SliderUI(0.5f, 0.0f, 1.0f, 0.01f, "L/R", "L/R:        {:.2f}", titleColor);
+    _gainUI = new SliderUI(0.85f, 0.00f, 1.0f, 0.01f, "Gain", "Gain:       {:.2f}", titleColor, titleColor);
+    _leftRightUI = new SliderUI(0.5f, 0.0f, 1.0f, 0.01f, "L/R", "L/R:        {:.2f}", titleColor, titleColor);
 
     _deviceList = new std::vector<std::string>();
     _deviceSelectedIndex = new ValueCapture<int>(0);

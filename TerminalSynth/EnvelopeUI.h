@@ -6,17 +6,23 @@
 #include "Envelope.h"
 #include "SliderUI.h"
 #include "UIBase.h"
+#include "ValueCapture.h"
 #include <exception>
+#include <format>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
+#include <ftxui/component/component_options.hpp>
+#include <ftxui/dom/direction.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
+#include <string>
+#include <string_view>
+#include <vector>
 
 class EnvelopeUI : public UIBase<Envelope>
 {
 public:
 
-	EnvelopeUI();
 	EnvelopeUI(const Envelope& initialValue);
 	~EnvelopeUI();
 
@@ -43,29 +49,46 @@ private:
 	ftxui::Component _component;
 
 	// Slider UI's
+	std::vector<SliderUI*>* _attackValues;
+	std::vector<SliderUI*>* _releaseValues;
 	SliderUI* _attack;
-	SliderUI* _decay;
 	SliderUI* _release;
-	SliderUI* _attackPeak;
-	SliderUI* _sustainPeak;
 };
-
-EnvelopeUI::EnvelopeUI()
-{
-	_attack = new SliderUI(0.1f, 0.01f, 1.0f, 0.01f, "Attack", "Attack   (s) {:.2f}", ftxui::Color::White);
-	_decay = new SliderUI(0.1f, 0.01f, 2.0f, 0.01f, "Decay", "Decay    (s) {:.2f}", ftxui::Color::White);
-	_release = new SliderUI(0.3f, 0.01f, 3.0f, 0.01f, "Release", "Release  (s) {:.2f}", ftxui::Color::White);
-	_attackPeak = new SliderUI(0.9f, 0.01f, 1.0f, 0.01f, "Limit", "Limit        {:.2f}", ftxui::Color::White);
-	_sustainPeak = new SliderUI(0.65f, 0.01f, 1.0f, 0.01f, "Sustain", "Sustain      {:.2f}", ftxui::Color::White);
-}
 
 EnvelopeUI::EnvelopeUI(const Envelope& initialValue)
 {
-	_attack = new SliderUI(initialValue.GetAttack(), 0.01f, 1.0f, 0.01f, "Attack", "Attack   (s) {:.2f}", ftxui::Color::White);
-	_decay = new SliderUI(initialValue.GetDecay(), 0.01f, 2.0f, 0.01f, "Decay", "Decay    (s) {:.2f}", ftxui::Color::White);
-	_release = new SliderUI(initialValue.GetRelease(), 0.01f, 3.0f, 0.01f, "Release", "Release  (s) {:.2f}", ftxui::Color::White);
-	_attackPeak = new SliderUI(initialValue.GetAttackPeak(), 0.01f, 1.0f, 0.01f, "Limit", "Limit        {:.2f}", ftxui::Color::White);
-	_sustainPeak = new SliderUI(initialValue.GetSustainPeak(), 0.01f, 1.0f, 0.01f, "Sustain", "Sustain      {:.2f}", ftxui::Color::White);
+	_attack = new SliderUI(initialValue.GetAttackTime(), 0.0f, 1.0f, 0.01f, "Attack", "Attack   (s) {:.2f}", ftxui::Color::White, ftxui::Color::GreenYellow);
+	_release = new SliderUI(initialValue.GetReleaseTime(), 0.0f, 3.0f, 0.01f, "Release", "Release  (s) {:.2f}", ftxui::Color::White, ftxui::Color::GreenYellow);
+
+	_attackValues = new std::vector<SliderUI*>();
+	_releaseValues = new std::vector<SliderUI*>();
+
+	float attackTimeDelta = initialValue.GetAttackTime() / initialValue.GetAttackLength();
+	float releaseTimeDelta = initialValue.GetReleaseTime() / initialValue.GetReleaseLength();
+
+	for (int index = 0; index < initialValue.GetAttackLength(); index++)
+	{
+		float attackTimeStart = attackTimeDelta * index;
+		float attackTimeEnd = attackTimeDelta * (index + 1);
+
+		auto sliderUI = new SliderUI(initialValue.GetAttackValue(index), 0.0f, 1.0f, 0.01f, "Attack", ftxui::Color::Blue, ftxui::Color::BlueLight);
+
+		sliderUI->Initialize(initialValue.GetAttackValue(index));
+
+		_attackValues->push_back(sliderUI);
+	}
+
+	for (int index = 0; index < initialValue.GetReleaseLength(); index++)
+	{
+		float releaseTimeStart = releaseTimeDelta * index;
+		float releaseTimeEnd = releaseTimeDelta * (index + 1);
+
+		auto sliderUI = new SliderUI(initialValue.GetReleaseValue(index), 0.0f, 1.0f, 0.01f, "Release", ftxui::Color::Magenta, ftxui::Color::MagentaLight);
+
+		sliderUI->Initialize(initialValue.GetReleaseValue(index));
+
+		_releaseValues->push_back(sliderUI);
+	}
 }
 
 EnvelopeUI::~EnvelopeUI()
@@ -73,33 +96,55 @@ EnvelopeUI::~EnvelopeUI()
 	UIBase::~UIBase();
 
 	delete _attack;
-	delete _decay;
 	delete _release;
-	delete _attackPeak;
-	delete _sustainPeak;
+
+	for (int index = 0; index < _attackValues->size(); index++)
+	{
+		delete _attackValues->at(index);
+	}
+
+	for (int index = 0; index < _releaseValues->size(); index++)
+	{
+		delete _releaseValues->at(index);
+	}
+
+	delete _attackValues;
+	delete _releaseValues;
 }
 
 void EnvelopeUI::Initialize(const Envelope& envelope)
 {
-	_attack->Initialize(envelope.GetAttack());
-	_decay->Initialize(envelope.GetDecay());
-	_release->Initialize(envelope.GetRelease());
-	_attackPeak->Initialize(envelope.GetAttackPeak());
-	_sustainPeak->Initialize(envelope.GetSustainPeak());
+	_attack->Initialize(envelope.GetAttackTime());
+	_release->Initialize(envelope.GetReleaseTime());
+
+	auto envelopeStack = ftxui::Container::Vertical({});
+
+	for (int index = 0; index < envelope.GetAttackLength(); index++)
+	{
+		_attackValues->at(index)->ToUI(envelope.GetAttackValue(index));
+
+		envelopeStack->Add(_attackValues->at(index)->GetComponent());
+	}
+
+	for (int index = 0; index < envelope.GetReleaseLength(); index++)
+	{
+		_releaseValues->at(index)->ToUI(envelope.GetReleaseValue(index));
+
+		envelopeStack->Add(_releaseValues->at(index)->GetComponent());
+	}
 
 	_component = ftxui::Container::Vertical(
 	{
 		ftxui::Renderer([&] { return ftxui::text("Envelope") | ftxui::color(ftxui::Color::GreenYellow); }),
 		ftxui::Renderer([&] { return ftxui::separator(); }),
 
-		_attack->GetComponent(),
-		_decay->GetComponent(),
-		_release->GetComponent(),
+		envelopeStack,
 
 		ftxui::Renderer([&] { return ftxui::separator(); }),
 
-		_attackPeak->GetComponent(),
-		_sustainPeak->GetComponent()
+		_attack->GetComponent(),
+		_release->GetComponent()
+
 	}) | ftxui::border | ftxui::xflex_grow;
 }
 
@@ -116,10 +161,47 @@ void EnvelopeUI::ServicePendingAction()
 void EnvelopeUI::UpdateComponent()
 {
 	_attack->UpdateComponent();
-	_decay->UpdateComponent();
 	_release->UpdateComponent();
-	_attackPeak->UpdateComponent();
-	_sustainPeak->UpdateComponent();
+
+	// Go ahead and update attack / release times
+	float attackTime, releaseTime;
+
+	_attack->FromUI(attackTime);
+	_release->FromUI(releaseTime);
+
+	float attackTimeDelta = attackTime / _attackValues->size();
+	float releaseTimeDelta = releaseTime / _releaseValues->size();
+
+	for (int index = 0; index < _attackValues->size(); index++)
+	{
+		float attackTimeStart = attackTimeDelta * index;
+		float attackTimeEnd = attackTimeDelta * (index + 1);
+		float attack;
+
+		_attackValues->at(index)->FromUI(attack);
+
+		std::string attackStartStr = std::format("{:.2f}", attackTimeStart);
+		std::string attackEndStr = std::format("{:.2f}", attackTimeEnd);
+		std::string attackStr = std::format("{:.2f}", attack);
+
+		_attackValues->at(index)->SetLabel("Attack  [" + attackStartStr + "-" + attackEndStr + "] (" + attackStr + ")");
+	}
+
+	for (int index = 0; index < _releaseValues->size(); index++)
+	{
+		float releaseTimeStart = releaseTimeDelta * index;
+		float releaseTimeEnd = releaseTimeDelta * (index + 1);
+		float release;
+
+		_releaseValues->at(index)->FromUI(release);
+
+		std::string releaseStartStr = std::format("{:.2f}", releaseTimeStart);
+		std::string releaseEndStr = std::format("{:.2f}", releaseTimeEnd);
+		std::string releaseStr = std::format("{:.2f}", release);
+
+		
+		_releaseValues->at(index)->SetLabel("Release [" + releaseStartStr + "-" + releaseEndStr + "] (" + releaseStr + ")");
+	}
 }
 
 void EnvelopeUI::Tick()
@@ -134,15 +216,29 @@ void EnvelopeUI::FromUI(Envelope& destination)
 
 void EnvelopeUI::FromUI(Envelope* destination)
 {
-	float attack, decay, release, attackPeak, sustainPeak;
+	float attack, release;
 
 	_attack->FromUI(attack);
-	_decay->FromUI(decay);
 	_release->FromUI(release);
-	_attackPeak->FromUI(attackPeak);
-	_sustainPeak->FromUI(sustainPeak);
 
-	destination->Set(attack, decay, 0, release, attackPeak, sustainPeak);
+	destination->SetAttackTime(attack);
+	destination->SetReleaseTime(release);
+
+	for (int index = 0; index < destination->GetAttackLength(); index++)
+	{
+		float attackValue;
+		_attackValues->at(index)->FromUI(attackValue);
+
+		destination->SetAttackValue(index, attackValue);
+	}
+
+	for (int index = 0; index < destination->GetReleaseLength(); index++)
+	{
+		float releaseValue;
+		_releaseValues->at(index)->FromUI(releaseValue);
+
+		destination->SetReleaseValue(index, releaseValue);
+	}
 }
 
 void EnvelopeUI::ToUI(const Envelope& source)
@@ -155,20 +251,38 @@ void EnvelopeUI::ToUI(const Envelope* source)
 
 bool EnvelopeUI::GetDirty() const
 {
-	return _attack->GetDirty() ||
-		   _decay->GetDirty() ||
-		   _release->GetDirty() ||
-		   _attackPeak->GetDirty() ||
-		   _sustainPeak->GetDirty();
+	bool isDirty = false;
+
+	for (int index = 0; index < _attackValues->size(); index++)
+	{
+		isDirty |= _attackValues->at(index)->GetDirty();
+	}
+
+	for (int index = 0; index < _releaseValues->size(); index++)
+	{
+		isDirty |= _releaseValues->at(index)->GetDirty();
+	}
+
+	isDirty |= _attack->GetDirty();
+	isDirty |= _release->GetDirty();
+
+	return isDirty;
 }
 
 void EnvelopeUI::ClearDirty()
 {
 	_attack->ClearDirty();
-	_decay->ClearDirty();
 	_release->ClearDirty();
-	_attackPeak->ClearDirty();
-	_sustainPeak->ClearDirty();
+
+	for (int index = 0; index < _attackValues->size(); index++)
+	{
+		_attackValues->at(index)->ClearDirty();
+	}
+
+	for (int index = 0; index < _releaseValues->size(); index++)
+	{
+		_releaseValues->at(index)->ClearDirty();
+	}
 }
 
 bool EnvelopeUI::HasPendingAction() const

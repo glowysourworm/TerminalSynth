@@ -1,14 +1,60 @@
+#include "Algorithm.h"
+#include "Constant.h"
 #include "Envelope.h"
+#include <algorithm>
+#include <cmath>
+#include <exception>
 
-Envelope::Envelope()
+Envelope::Envelope() : Envelope(EnvelopeShape::Linear, 0.1f, 0.35f, 0.85f, 0.65f)
+{}
+
+Envelope::Envelope(EnvelopeShape shape, float attackSeconds, float releaseSeconds, float attackPeak, float sustainPeak)
 {
-	_attack = 0.1;
-	_decay = 0.2;
-	_sustain = 0.2;
-	_release = 0.3;
+	_attackSeconds = attackSeconds;
+	_releaseSeconds = releaseSeconds;
 
-	_attackPeak = 0.8;
-	_sustainPeak = 0.5;
+	_attack = new float[ATTACK_LENGTH];
+	_release = new float[RELEASE_LENGTH];
+
+	for (int index = 0; index < ATTACK_LENGTH + RELEASE_LENGTH; index++)
+	{
+		switch (shape)
+		{
+		case EnvelopeShape::Linear:
+		{
+			// Attack
+			if (index < ATTACK_LENGTH / 2)
+				_attack[index] = (2 * attackPeak) * (index / (float)ATTACK_LENGTH);
+
+			// Sustain
+			else if (index < ATTACK_LENGTH)
+				_attack[index] = (((2 * (sustainPeak - attackPeak)) / ATTACK_LENGTH) * index) + (2 * attackPeak) - sustainPeak;
+
+			// Release
+			else
+				_release[index - ATTACK_LENGTH] = -1 * (sustainPeak / RELEASE_LENGTH) * (index - RELEASE_LENGTH - ATTACK_LENGTH);
+		}
+		break;
+		case EnvelopeShape::Poisson:
+		{
+			if (index < ATTACK_LENGTH)
+				_attack[index] = Algorithm::Poisson(index, POISSON_LAMBDA_DEFAULT);
+			else
+				_release[index] = Algorithm::Poisson(index, POISSON_LAMBDA_DEFAULT);
+		}
+		break;
+		case EnvelopeShape::Gaussian:
+		{
+			if (index < ATTACK_LENGTH)
+				_attack[index] = Algorithm::Gaussian3Sigma(index,  0, ATTACK_LENGTH - 1);
+			else
+				_release[index] = Algorithm::Gaussian3Sigma(index, ATTACK_LENGTH, RELEASE_LENGTH - 1);
+		}
+		break;
+		default:
+			throw new std::exception("Unhandled envelope shape:  Envelope.cpp");
+		}
+	}
 
 	_engaged = false;
 	_hasEngaged = false;
@@ -18,32 +64,23 @@ Envelope::Envelope()
 	_disEngagedTime = 0;
 }
 
-Envelope::Envelope(float attack, float decay, float sustain, float release, float attackPeak, float sustainPeak)
-{
-	_attack = attack;
-	_decay = decay;
-	_sustain = sustain;
-	_release = release;
-
-	_attackPeak = attackPeak;
-	_sustainPeak = sustainPeak;
-
-	_engaged = false;
-	_hasEngaged = false;
-
-	_disEngagedLevel = 0;
-	_engagedTime = 0;
-	_disEngagedTime = 0;
-}
 Envelope::Envelope(const Envelope& copy)
 {
-	_attack = copy.GetAttack();
-	_decay = copy.GetDecay();
-	_sustain = copy.GetSustain();
-	_release = copy.GetRelease();
+	_attackSeconds = copy.GetAttackTime();
+	_releaseSeconds = copy.GetReleaseTime();
 
-	_attackPeak = copy.GetAttackPeak();
-	_sustainPeak = copy.GetSustainPeak();
+	_attack = new float[ATTACK_LENGTH];
+	_release = new float[RELEASE_LENGTH];
+
+	for (int index = 0; index < ATTACK_LENGTH; index++)
+	{
+		_attack[index] = copy.GetAttackValue(index);
+	}
+
+	for (int index = 0; index < RELEASE_LENGTH; index++)
+	{
+		_release[index] = copy.GetReleaseValue(index);
+	}
 
 	// Defaults
 	_engaged = false;
@@ -55,7 +92,8 @@ Envelope::Envelope(const Envelope& copy)
 }
 Envelope::~Envelope()
 {
-
+	delete[] _attack;
+	delete[] _release;
 }
 
 /// <summary>
@@ -63,55 +101,73 @@ Envelope::~Envelope()
 /// </summary>
 bool Envelope::Update(const Envelope* envelope)
 {
-	bool isDirty = false;
+	bool isDirty = IsEqual(envelope);
 
-	isDirty |= _attack != envelope->GetAttack();
-	isDirty |= _decay != envelope->GetDecay();
-	isDirty |= _sustain != envelope->GetSustain();
-	isDirty |= _release != envelope->GetRelease();
+	_attackSeconds = envelope->GetAttackTime();
+	_releaseSeconds = envelope->GetReleaseTime();
 
-	isDirty |= _attackPeak != envelope->GetAttackPeak();
-	isDirty |= _sustainPeak != envelope->GetSustainPeak();
+	for (int index = 0; index < ATTACK_LENGTH; index++)
+	{
+		_attack[index] = envelope->GetAttackValue(index);
+	}
 
-	_attack = envelope->GetAttack();
-	_decay = envelope->GetDecay();
-	_sustain = envelope->GetSustain();
-	_release = envelope->GetRelease();
-
-	_attackPeak = envelope->GetAttackPeak();
-	_sustainPeak = envelope->GetSustainPeak();
+	for (int index = 0; index < RELEASE_LENGTH; index++)
+	{
+		_release[index] = envelope->GetReleaseValue(index);
+	}
 
 	return isDirty;
 }
 
-void Envelope::Set(float attack, float decay, float sustain, float release, float attackPeak, float sustainPeak)
+float Envelope::GetAttackTime() const
 {
-	_attack = attack;
-	_decay = decay;
-	_sustain = sustain;
-	_release = release;
-
-	_attackPeak = attackPeak;
-	_sustainPeak = sustainPeak;
+	return _attackSeconds;
+}
+float Envelope::GetAttackValue(int index) const
+{
+	return _attack[index];
 }
 
+float Envelope::GetReleaseTime() const
+{
+	return _releaseSeconds;
+}
+float Envelope::GetReleaseValue(int index) const
+{
+	return _release[index];
+}
+int Envelope::GetAttackLength() const
+{
+	return ATTACK_LENGTH;
+}
+int Envelope::GetReleaseLength() const
+{
+	return RELEASE_LENGTH;
+}
+void Envelope::SetAttackValue(int index, float value)
+{
+	_attack[index] = value;
+}
+void Envelope::SetAttackTime(float value)
+{
+	_attackSeconds = value;
+}
+void Envelope::SetReleaseValue(int index, float value)
+{
+	_release[index] = value;
+}
+void Envelope::SetReleaseTime(float value)
+{
+	_releaseSeconds = value;
+}
 void Envelope::Engage(float absoluteTime)
 {
-	float currentLevel = GetEnvelopeLevel(absoluteTime);
+	if (_engaged)
+		return;
 
 	_engaged = true;
 	_hasEngaged = true;
-
-	// Set the engage time with an offset to smoothly transition envelopes
-	if (currentLevel > 0)
-	{
-		// Subtract offset of the attack (ADVANCES ENVELOPE)
-		_engagedTime = absoluteTime - ((currentLevel / _attackPeak) * _attack);
-	}
-	else
-	{
-		_engagedTime = absoluteTime;
-	}
+	_engagedTime = absoluteTime;
 }
 
 void Envelope::DisEngage(float absoluteTime)
@@ -141,11 +197,8 @@ bool Envelope::HasOutput(float absoluteTime)
 	// Check to see whether envelope is completed
 	else
 	{
-		// Calculate time along the release
-		float envelopeTime = absoluteTime - _disEngagedTime;
-
 		// Check release time
-		bool hasOutput = envelopeTime < _release;
+		bool hasOutput = GetEnvelopeLevel(absoluteTime) > 0;
 
 		// Reset
 		if (!hasOutput)
@@ -166,49 +219,14 @@ bool Envelope::IsEngaged()
 	return _engaged;
 }
 
-float Envelope::GetAttack() const
-{
-	return _attack;
-}
-float Envelope::GetDecay() const
-{
-	return _decay;
-}
-float Envelope::GetSustain() const
-{
-	return _sustain;
-}
-float Envelope::GetRelease() const
-{
-	return _release;
-}
-float Envelope::GetAttackPeak() const
-{
-	return _attackPeak;
-}
-float Envelope::GetSustainPeak() const
-{
-	return _sustainPeak;
-}
-
 bool Envelope::operator!=(const Envelope& envelope)
 {
-	return !Compare(envelope);
+	return !IsEqual(&envelope);
 }
 
 bool Envelope::operator==(const Envelope& envelope)
 {
-	return Compare(envelope);
-}
-
-bool Envelope::Compare(const Envelope& envelope)
-{
-	return _attack == envelope.GetAttack() &&
-		_sustain == envelope.GetSustain() &&
-		_decay == envelope.GetDecay() &&
-		_release == envelope.GetRelease() &&
-		_attackPeak == envelope.GetAttackPeak() &&
-		_sustainPeak == envelope.GetSustainPeak();
+	return IsEqual(&envelope);
 }
 
 float Envelope::GetEngageTime()
@@ -229,38 +247,60 @@ float Envelope::GetEnvelopeLevel(float absoluteTime)
 	// Check piece-wise function to get envelope level
 	//
 
+	// Attack
 	if (_engaged)
 	{
 		// Calculate time along the envelope
 		float envelopeTime = absoluteTime - _engagedTime;
 
-		// Attack
-		if (envelopeTime < _attack)
+		float attackDiv = (_attackSeconds / ATTACK_LENGTH);		
+		float attackBucket = envelopeTime / attackDiv;
+		float attackBucketIndex = 0;
+		float lerpValue = std::modf(attackBucket, &attackBucketIndex);
+		int attackIndex = std::min<int>(attackBucketIndex, ATTACK_LENGTH - 1);
+		attackIndex = std::max<int>(attackIndex, 0);
+
+		// Attack Interpolation Finished
+		if (attackBucketIndex >= ATTACK_LENGTH)
 		{
-			return (_attackPeak / _attack) * envelopeTime;
+			return _attack[ATTACK_LENGTH - 1];
 		}
-		// Decay
-		else if (envelopeTime < _attack + _decay)
-		{
-			// Shift axis to put attack peak at zero
-			return (((_sustainPeak - _attackPeak) / _decay) * (envelopeTime - _attack)) + _attackPeak;
-		}
-		// Sustain
+
+		// Attack Interpolate
 		else
 		{
-			return _sustainPeak;
+			int attackIndexPrevious = attackIndex == 0 ? 0 : attackIndex - 1;
+
+			return std::lerp(_attack[attackIndexPrevious], _attack[attackIndex], lerpValue);
 		}
 	}
+
+	// Release
 	else
 	{
 		// Calculate time along the RELEASE
 		float envelopeTime = absoluteTime - _disEngagedTime;
 
-		// Release
-		if (envelopeTime < _release)
+		if (envelopeTime < _releaseSeconds)
 		{
-			// Shift axis to put sustain peak at zero
-			return (((-1 * _disEngagedLevel) / _release) * envelopeTime) + _disEngagedLevel;
+			float releaseDiv = (_releaseSeconds / RELEASE_LENGTH);
+			float releaseBucket = envelopeTime / releaseDiv;
+			float releaseBucketIndex = 0;
+			float lerpValue = std::modf(releaseBucket, &releaseBucketIndex);
+			int releaseIndex = std::min<int>(releaseBucketIndex, RELEASE_LENGTH - 1);
+			releaseIndex = std::max<int>(releaseIndex, 0);
+
+			
+			// Interpolate from Attack (last)
+			if (releaseIndex == 0)
+			{
+				return std::lerp(_disEngagedLevel, _disEngagedLevel * _release[releaseIndex], lerpValue);
+			}
+			else
+			{
+				return std::lerp(_disEngagedLevel * _release[releaseIndex - 1], _disEngagedLevel * _release[releaseIndex], lerpValue);
+			}
+			
 		}
 		else
 			return 0;

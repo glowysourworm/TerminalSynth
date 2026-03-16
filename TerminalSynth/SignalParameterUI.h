@@ -75,10 +75,10 @@ SignalParameterUI::SignalParameterUI(const SignalParameter& model, const std::st
 	_automationEnableModel = new CheckboxModelUI("Automate", model.GetAutomationEnabled(), 0);
 
 	_automationEnableUI = new CheckboxUI(*_automationEnableModel);
-	_valueUI = new SliderUI(model.GetValue(), model.GetMin(), model.GetMax(), (model.GetMax() - model.GetMin()) / 100.0f, model.GetName(), labelFormat, ftxui::Color::White);
-	_automationLowUI = new SliderUI(model.GetAutomationLow(), model.GetMin(), model.GetMax(), (model.GetMax() - model.GetMin()) / 100.0f, "Low", "Low    {:.2f}", ftxui::Color::White);
-	_automationHighUI = new SliderUI(model.GetAutomationHigh(), model.GetMin(), model.GetMax(), (model.GetMax() - model.GetMin()) / 100.0f, "High", "High   {:.2f}", ftxui::Color::White);
-	_automationFrequencyUI = new SliderUI(model.GetAutomationFrequency(), AUTOMATION_FREQ_MIN, AUTOMATION_FREQ_MAX, AUTOMATION_FREQ_MIN , "Freq", "Freq   {:.2f}", ftxui::Color::White);
+	_valueUI = new SliderUI(model.GetValue(), model.GetMin(), model.GetMax(), (model.GetMax() - model.GetMin()) / 100.0f, model.GetName(), labelFormat, ftxui::Color::Blue1, ftxui::Color::Blue3);
+	_automationLowUI = new SliderUI(model.GetAutomationLow(), model.GetMin(), model.GetMax(), (model.GetMax() - model.GetMin()) / 100.0f, "Low", "Low    {:.2f}", ftxui::Color::Blue1, ftxui::Color::Blue3);
+	_automationHighUI = new SliderUI(model.GetAutomationHigh(), model.GetMin(), model.GetMax(), (model.GetMax() - model.GetMin()) / 100.0f, "High", "High   {:.2f}", ftxui::Color::Blue1, ftxui::Color::Blue3);
+	_automationFrequencyUI = new SliderUI(model.GetAutomationFrequency(), AUTOMATION_FREQ_MIN, AUTOMATION_FREQ_MAX, AUTOMATION_FREQ_MIN , "Freq", "Freq   {:.2f}", ftxui::Color::Blue1, ftxui::Color::Blue3);
 
 	_automationTypeChoices = new std::vector<std::string>({
 		"EnvelopeSweep",
