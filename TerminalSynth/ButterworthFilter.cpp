@@ -37,7 +37,7 @@ void ButterworthFilter::Initialize(const PlaybackInfo* parameters)
 	SignalBase::Initialize(parameters);
 }
 
-void ButterworthFilter::SetFrame(PlaybackFrame* frame)
+void ButterworthFilter::SetFrameImpl(PlaybackFrame* frame)
 {
 	float outputLeft = this->Apply(frame->GetLeft());
 	float outputRight = this->Apply(frame->GetRight());

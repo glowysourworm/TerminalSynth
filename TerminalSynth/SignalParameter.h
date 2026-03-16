@@ -4,6 +4,7 @@
 #define SIGNAL_PARAMETER_H
 
 #include "Constant.h"
+#include "Envelope.h"
 #include <exception>
 #include <istream>
 #include <ostream>
@@ -28,6 +29,8 @@ public:
 		_automationOscillatorFrequency = 1.0f;
 		_automationLow = 0.0f;
 		_automationHigh = 1.0f;
+
+		_automationEnvelope = new Envelope();
 	}
 	SignalParameter(const SignalParameter& copy)
 	{
@@ -42,10 +45,13 @@ public:
 		_automationOscillatorFrequency = copy.GetAutomationFrequency();
 		_automationLow = copy.GetAutomationLow();
 		_automationHigh = copy.GetAutomationHigh();
+
+		_automationEnvelope = new Envelope(*copy.GetAutomationEnvelope());
 	}
 	~SignalParameter()
 	{
 		delete _name;
+		delete _automationEnvelope;
 	}
 
 	std::string GetName() const { return *_name; }
@@ -58,6 +64,7 @@ public:
 	float GetAutomationFrequency() const { return _automationOscillatorFrequency; }
 	float GetAutomationLow() const { return _automationLow; }
 	float GetAutomationHigh() const { return _automationHigh; }
+	Envelope* GetAutomationEnvelope() const { return _automationEnvelope; }
 
 	void SetValue(float newValue) { _value = newValue; }
 	void SetAutomationEnabled(bool value) { _automationEnabled = value; }
@@ -66,6 +73,7 @@ public:
 	void SetAutomationLow(float value) { _automationLow = value; }
 	void SetAutomationHigh(float value) { _automationHigh = value; }
 	void SetAutomationFrequency(float value) { _automationOscillatorFrequency = value; }
+	void SetAutomationEnvelope(const Envelope& envelope) { _automationEnvelope->Update(&envelope); }
 
 	bool Update(const SignalParameter* parameter, bool overwrite)
 	{
@@ -80,6 +88,7 @@ public:
 		isDirty |= _automationOscillatorFrequency != parameter->GetAutomationFrequency();
 		isDirty |= _automationLow != parameter->GetAutomationLow();
 		isDirty |= _automationHigh != parameter->GetAutomationHigh();
+		isDirty |= !_automationEnvelope->IsEqual(parameter->GetAutomationEnvelope());
 
 		_automationEnabled = parameter->GetAutomationEnabled();
 		_automationType = parameter->GetAutomationType();
@@ -87,6 +96,8 @@ public:
 		_automationOscillatorFrequency = parameter->GetAutomationFrequency();
 		_automationLow = parameter->GetAutomationLow();
 		_automationHigh = parameter->GetAutomationHigh();
+
+		_automationEnvelope->Update(parameter->GetAutomationEnvelope());
 
 		// Complete Overwrite
 		if (overwrite && *_name != parameter->GetName())
@@ -116,6 +127,8 @@ public:
 		stream << _automationOscillatorFrequency;
 		stream << _automationLow;
 		stream << _automationHigh;
+		
+		_automationEnvelope->Save(stream);
 	}
 	void Read(std::istream& stream)
 	{
@@ -134,6 +147,8 @@ public:
 
 		_automationType = (ParameterAutomationType)automationType;
 		_automationOscillator = (ParameterAutomationOscillator)automationOscillator;
+
+		_automationEnvelope->Read(stream);
 	}
 
 	bool IsEqual(const SignalParameter* other)
@@ -147,7 +162,8 @@ public:
 			_automationOscillator == other->GetAutomationOscillator() &&
 			_automationOscillatorFrequency == other->GetAutomationFrequency() &&
 			_automationLow == other->GetAutomationLow() &&
-			_automationHigh == other->GetAutomationHigh();
+			_automationHigh == other->GetAutomationHigh() &&
+			_automationEnvelope->IsEqual(other->GetAutomationEnvelope());
 	}
 
 private:
@@ -163,6 +179,8 @@ private:
 	float _automationOscillatorFrequency;
 	float _automationLow;
 	float _automationHigh;
+
+	Envelope* _automationEnvelope;
 };
 
 #endif

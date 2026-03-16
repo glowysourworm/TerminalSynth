@@ -40,7 +40,6 @@ void SynthNote::GetSample(PlaybackFrame* frame)
 	_waveTable->SetFrame(frame, _envelope->GetEngageTime(), frame->GetStreamTime());
 
 	float envelopeLevel = _envelope->GetEnvelopeLevel(frame->GetStreamTime());
-	//float envelopeLevel = 1;
 
 	frame->SetFrame(envelopeLevel * frame->GetLeft(), envelopeLevel * frame->GetRight());
 }
@@ -71,9 +70,11 @@ void SynthNote::Engage(float absoluteTime)
 {
 	_waveTable->Clear(_envelope->GetEngageTime(), absoluteTime);
 	_envelope->Engage(absoluteTime);
+	_effectsChain->Engage(absoluteTime);
 }
 
 void SynthNote::DisEngage(float absoluteTime)
 {
 	_envelope->DisEngage(absoluteTime);
+	_effectsChain->DisEngage(absoluteTime);
 }

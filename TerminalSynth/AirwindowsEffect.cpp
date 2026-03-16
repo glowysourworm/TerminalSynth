@@ -4,7 +4,6 @@
 #include "SignalBase.h"
 #include "SignalSettings.h"
 #include <airwin_consolidated_base.h>
-#include <string>
 
 AirwindowsEffect::AirwindowsEffect(const SignalSettings& settings, AudioEffectX* plugin)
 	: SignalBase(settings)
@@ -36,7 +35,6 @@ AirwindowsEffect::~AirwindowsEffect()
 	delete[] _output[1];
 	delete[] _output;
 }
-
 void AirwindowsEffect::Initialize(const PlaybackInfo* parameters)
 {
 	SignalBase::Initialize(parameters);
@@ -48,7 +46,7 @@ void AirwindowsEffect::UpdateParameter(int index, float value)
 	_effect->setParameter(index, value);
 }
 
-void AirwindowsEffect::SetFrame(PlaybackFrame* frame)
+void AirwindowsEffect::SetFrameImpl(PlaybackFrame* frame)
 {
 	// airwindows format:  The effect treats the inputs as dry input, and the outputs as the result. I think 
 	//					   they may have been confused about other audio APIs, which have input as the microphone.
@@ -63,9 +61,6 @@ void AirwindowsEffect::SetFrame(PlaybackFrame* frame)
 	// 
 	//					   Let's see how it sounds!
 	//
-
-	// Parameter Automation
-	SignalBase::SetFrame(frame);
 
 	_input[0][0] = frame->GetLeft();
 	_input[1][0] = frame->GetRight();

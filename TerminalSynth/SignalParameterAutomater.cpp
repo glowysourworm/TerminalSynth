@@ -1,4 +1,5 @@
 #include "Constant.h"
+#include "Envelope.h"
 #include "OscillatorParameters.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
@@ -16,6 +17,7 @@ SignalParameterAutomater::SignalParameterAutomater()
 	_oscillatorParametersRandom = new OscillatorParameters(OscillatorType::BuiltIn, BuiltInOscillators::Random, "", "", 1.0f, ENVELOPE_LOW, ENVELOPE_HIGH);
 	_type = ParameterAutomationType::EnvelopeSweep;
 	_oscillatorType = ParameterAutomationOscillator::Sine;
+	_envelope = new Envelope();
 }
 
 SignalParameterAutomater::~SignalParameterAutomater()
@@ -28,6 +30,8 @@ SignalParameterAutomater::~SignalParameterAutomater()
 
 	delete _frame;
 	delete _oscillatorParameters;
+	delete _oscillatorParametersRandom;
+	delete _envelope;
 }
 
 void SignalParameterAutomater::Initialize(const PlaybackInfo* parameters)
@@ -51,16 +55,30 @@ void SignalParameterAutomater::Update(const SignalParameter* parameter)
 	_oscillatorParameters->SetSignalHigh(parameter->GetAutomationHigh());
 	_oscillatorParametersRandom->SetFrequency(parameter->GetAutomationFrequency());
 
+	_envelope->Update(parameter->GetAutomationEnvelope());
+
 	_signalFactory->Reset(_oscillatorParameters);
 	_signalFactoryRandom->Reset(_oscillatorParametersRandom);
 }
 
+void SignalParameterAutomater::Engage(float absoluteTime)
+{
+	_envelope->Engage(absoluteTime);
+}
+
+void SignalParameterAutomater::DisEngage(float absoluteTime)
+{
+	_envelope->DisEngage(absoluteTime);
+}
+
 float SignalParameterAutomater::GetValue(const PlaybackFrame* frame) const
 {
+	
+
 	switch (_type)
 	{
 	case ParameterAutomationType::EnvelopeSweep:
-		return 1;
+		return _envelope->GetEnvelopeLevel(frame->GetStreamTime());
 		break;
 	case ParameterAutomationType::Oscillator:
 		switch (_oscillatorType)

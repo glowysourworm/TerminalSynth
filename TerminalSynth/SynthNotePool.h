@@ -43,6 +43,11 @@ public:
 	bool SetNote(int midiNumber, bool pressed, double absoluteTime) const;
 
 	/// <summary>
+	/// Returns true if there are any notes pressed
+	/// </summary>
+	bool HasEngagedNotes() const;
+
+	/// <summary>
 	/// Synthesizes a full output at the specified stream time. Returns true if there was output this call.
 	/// </summary>
 	bool SetFrame(PlaybackFrame* frame, double gain, double leftRight);

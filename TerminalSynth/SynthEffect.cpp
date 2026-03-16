@@ -16,7 +16,7 @@ void SynthEffect::Initialize(const PlaybackInfo* parameters)
 	SignalBase::Initialize(parameters);
 }
 
-void SynthEffect::SetFrame(PlaybackFrame* frame)
+void SynthEffect::SetFrameImpl(PlaybackFrame* frame)
 {
 
 }

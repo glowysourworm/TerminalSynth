@@ -82,7 +82,10 @@ void SynthNotePool::EvictOutdatedCache()
 	// The WaveTable* instances are cached based on the OscillatorParameters + MIDI#. So, they aren't
 	// affected by changes to the configuration parameters. 
 }
-
+bool SynthNotePool::HasEngagedNotes() const
+{
+	return _engagedNotes->size() > 0;
+}
 bool SynthNotePool::SetNote(int midiNumber, bool pressed, double absoluteTime) const
 {
 	if (pressed)

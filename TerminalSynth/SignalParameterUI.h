@@ -6,6 +6,7 @@
 #include "CheckboxModelUI.h"
 #include "CheckboxUI.h"
 #include "Constant.h"
+#include "EnvelopeUI.h"
 #include "SignalParameter.h"
 #include "SliderUI.h"
 #include "UIBase.h"
@@ -58,6 +59,7 @@ private:
 	SliderUI* _automationLowUI;
 	SliderUI* _automationHighUI;
 	SliderUI* _automationFrequencyUI;
+	EnvelopeUI* _automationEnvelopeUI;
 
 	ValueCapture<int>* _automationTypeSelectedIndex;
 	ValueCapture<int>* _automationOscillatorSelectedIndex;
@@ -79,6 +81,7 @@ SignalParameterUI::SignalParameterUI(const SignalParameter& model, const std::st
 	_automationLowUI = new SliderUI(model.GetAutomationLow(), model.GetMin(), model.GetMax(), (model.GetMax() - model.GetMin()) / 100.0f, "Low", "Low    {:.2f}", ftxui::Color::Blue1, ftxui::Color::Blue3);
 	_automationHighUI = new SliderUI(model.GetAutomationHigh(), model.GetMin(), model.GetMax(), (model.GetMax() - model.GetMin()) / 100.0f, "High", "High   {:.2f}", ftxui::Color::Blue1, ftxui::Color::Blue3);
 	_automationFrequencyUI = new SliderUI(model.GetAutomationFrequency(), AUTOMATION_FREQ_MIN, AUTOMATION_FREQ_MAX, AUTOMATION_FREQ_MIN , "Freq", "Freq   {:.2f}", ftxui::Color::Blue1, ftxui::Color::Blue3);
+	_automationEnvelopeUI = new EnvelopeUI(*model.GetAutomationEnvelope());
 
 	_automationTypeChoices = new std::vector<std::string>({
 		"EnvelopeSweep",
@@ -104,6 +107,7 @@ SignalParameterUI::~SignalParameterUI()
 	delete _automationLowUI;
 	delete _automationHighUI;
 	delete _automationFrequencyUI;
+	delete _automationEnvelopeUI;
 }
 
 void SignalParameterUI::Initialize(const SignalParameter& initialValue)
@@ -116,6 +120,7 @@ void SignalParameterUI::Initialize(const SignalParameter& initialValue)
 	_automationLowUI->Initialize(initialValue.GetAutomationLow());
 	_automationHighUI->Initialize(initialValue.GetAutomationHigh());
 	_automationFrequencyUI->Initialize(initialValue.GetAutomationFrequency());
+	_automationEnvelopeUI->Initialize(*initialValue.GetAutomationEnvelope());
 
 	auto automationType = ftxui::Dropdown(_automationTypeChoices, _automationTypeSelectedIndex->GetRef());
 	auto automationOscillatorType = ftxui::Dropdown(_automationOscillatorChoices, _automationOscillatorSelectedIndex->GetRef());
@@ -150,11 +155,15 @@ void SignalParameterUI::Initialize(const SignalParameter& initialValue)
 				| ftxui::flex_grow,
 
 			_automationLowUI->GetComponent()
-				| ftxui::Maybe([&]() { return _automationEnableUI->GetIsChecked(); })
+				| ftxui::Maybe([&]() { return _automationEnableUI->GetIsChecked() && _automationTypeSelectedIndex->GetValue() == (int)ParameterAutomationType::Oscillator; })
 				| ftxui::flex_grow,
 
 			_automationHighUI->GetComponent()
-				| ftxui::Maybe([&]() { return _automationEnableUI->GetIsChecked(); })
+				| ftxui::Maybe([&]() { return _automationEnableUI->GetIsChecked() && _automationTypeSelectedIndex->GetValue() == (int)ParameterAutomationType::Oscillator; })
+				| ftxui::flex_grow,
+
+			_automationEnvelopeUI->GetComponent()
+				| ftxui::Maybe([&]() { return _automationEnableUI->GetIsChecked() && _automationTypeSelectedIndex->GetValue() == (int)ParameterAutomationType::EnvelopeSweep; })
 				| ftxui::flex_grow
 
 		}) | ftxui::bgcolor(ftxui::Color::RGBA(0, 0, 255, 20))
@@ -181,6 +190,7 @@ void SignalParameterUI::UpdateComponent()
 	_valueUI->UpdateComponent();
 	_automationEnableUI->UpdateComponent();
 	_automationFrequencyUI->UpdateComponent();
+	_automationEnvelopeUI->UpdateComponent();
 }
 
 void SignalParameterUI::Tick()
@@ -206,6 +216,7 @@ void SignalParameterUI::ToUI(const SignalParameter* source)
 	_automationLowUI->ToUI(source->GetAutomationLow());
 	_automationHighUI->ToUI(source->GetAutomationHigh());
 	_automationFrequencyUI->ToUI(source->GetAutomationFrequency());
+	_automationEnvelopeUI->ToUI(source->GetAutomationEnvelope());
 }
 
 void SignalParameterUI::FromUI(SignalParameter& destination)
@@ -223,6 +234,7 @@ void SignalParameterUI::FromUI(SignalParameter* destination)
 	_automationLowUI->FromUI(automationLow);
 	_automationHighUI->FromUI(automationHigh);
 	_automationFrequencyUI->FromUI(automationFrequency);
+	_automationEnvelopeUI->FromUI(destination->GetAutomationEnvelope());
 
 	_model->SetValue(value);
 	_model->SetAutomationEnabled(_automationEnableModel->GetIsChecked());
@@ -231,6 +243,7 @@ void SignalParameterUI::FromUI(SignalParameter* destination)
 	_model->SetAutomationLow(automationLow);
 	_model->SetAutomationHigh(automationHigh);
 	_model->SetAutomationFrequency(automationFrequency);
+	_model->SetAutomationEnvelope(*destination->GetAutomationEnvelope());
 
 	destination->Update(_model, false);
 }
@@ -243,7 +256,8 @@ bool SignalParameterUI::GetDirty() const
 		_valueUI->GetDirty() ||
 		_automationLowUI->GetDirty() ||
 		_automationHighUI->GetDirty() ||
-		_automationFrequencyUI->GetDirty();
+		_automationFrequencyUI->GetDirty() ||
+		_automationEnvelopeUI->GetDirty();
 }
 
 void SignalParameterUI::ClearDirty()
@@ -255,6 +269,7 @@ void SignalParameterUI::ClearDirty()
 	_automationEnableUI->ClearDirty();
 	_valueUI->ClearDirty();
 	_automationFrequencyUI->ClearDirty();
+	_automationEnvelopeUI->ClearDirty();
 }
 
 bool SignalParameterUI::HasPendingAction() const

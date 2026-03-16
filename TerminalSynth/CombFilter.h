@@ -22,10 +22,13 @@ public:
 	~CombFilter();
 
 	void Initialize(const PlaybackInfo* parameters) override;
-	void SetFrame(PlaybackFrame* frame) override;
 	bool HasOutput() const override;
 
 	void UpdateParameter(int index, float parameterValue) override {};		// Doesn't support parameter automation
+
+protected:
+
+	void SetFrameImpl(PlaybackFrame* frame) override;
 
 private:
 

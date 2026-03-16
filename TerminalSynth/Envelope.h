@@ -10,8 +10,8 @@ class Envelope
 {
 protected:
 
-	const int ATTACK_LENGTH = 8;
-	const int RELEASE_LENGTH = 8;
+	const int ATTACK_LENGTH = 4;
+	const int RELEASE_LENGTH = 4;
 
 	const int POISSON_LAMBDA_DEFAULT = 3;
 

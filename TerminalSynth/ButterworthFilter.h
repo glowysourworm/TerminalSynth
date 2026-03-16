@@ -4,8 +4,8 @@
 #ifndef BUTTERWORTH_FILTER_H
 #define BUTTERWORTH_FILTER_H
 
-#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
+#include "PlaybackInfo.h"
 #include "SignalBase.h"
 
 class ButterworthFilter : public SignalBase
@@ -16,12 +16,15 @@ public:
 	~ButterworthFilter();
 
 	void Initialize(const PlaybackInfo* parameters) override;
-	void SetFrame(PlaybackFrame* frame) override;
 	bool HasOutput() const override;
 
 	void SetFilter(float cutoff, float resonance);
 
 	void UpdateParameter(int index, float value) override {};
+
+protected:
+
+	void SetFrameImpl(PlaybackFrame* frame) override;
 
 private:
 

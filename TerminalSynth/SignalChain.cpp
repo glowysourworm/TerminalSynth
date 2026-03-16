@@ -74,6 +74,21 @@ void SignalChain::SetFrame(PlaybackFrame* frame)
 	}
 }
 
+void SignalChain::Engage(double absoluteTime)
+{
+	for (int index = 0; index < _chain->size(); index++)
+	{
+		_chain->at(index)->Engage(absoluteTime);
+	}
+}
+void SignalChain::DisEngage(double absoluteTime)
+{
+	for (int index = 0; index < _chain->size(); index++)
+	{
+		_chain->at(index)->DisEngage(absoluteTime);
+	}
+}
+
 bool SignalChain::HasOutput() const
 {
 	bool hasOutput = false;

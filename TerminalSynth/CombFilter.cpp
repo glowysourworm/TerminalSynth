@@ -40,7 +40,7 @@ void CombFilter::Initialize(const PlaybackInfo* parameters)
 	}
 }
 
-void CombFilter::SetFrame(PlaybackFrame* frame)
+void CombFilter::SetFrameImpl(PlaybackFrame* frame)
 {
 	float delay = this->GetParameterValue(0);
 	float gain = this->GetParameterValue(1);

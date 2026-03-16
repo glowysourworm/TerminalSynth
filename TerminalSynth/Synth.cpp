@@ -39,7 +39,14 @@ void Synth::Update(SoundRegistry* effectRegistry, const SoundSettings* soundSett
 
 void Synth::Set(int midiNumber, bool pressed, double absoluteTime)
 {
+	// THIS WHOLE LOOP NEEDS TO BE EVENT BASED (w/ the frontend)
+
 	_pianoNotes->SetNote(midiNumber, pressed, absoluteTime);
+
+	if (_pianoNotes->HasEngagedNotes())
+		_postProcessing->Engage(absoluteTime);
+	else
+		_postProcessing->DisEngage(absoluteTime);
 }
 bool Synth::GetSample(PlaybackFrame* frame, float gain, float leftRightBalance)
 {

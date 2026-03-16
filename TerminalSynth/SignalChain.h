@@ -27,6 +27,9 @@ public:
 	void SetFrame(PlaybackFrame* frame);
 	bool HasOutput() const;
 
+	void Engage(double absoluteTime);
+	void DisEngage(double absoluteTime);
+
 private:
 
 	// SHARED POINTERS!  These effects are not created here! They are created and stored by the SoundRegistry*

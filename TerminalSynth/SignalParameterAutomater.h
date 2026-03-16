@@ -4,6 +4,7 @@
 #define SIGNAL_PARAMETER_AUTOMATER_H
 
 #include "Constant.h"
+#include "Envelope.h"
 #include "OscillatorParameters.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
@@ -37,6 +38,16 @@ public:
 	/// </summary>
 	float GetValue(const PlaybackFrame* frame) const;
 
+	/// <summary>
+	/// Engages the parameter automater's envelope (if set)
+	/// </summary>
+	void Engage(float absoluteTime);
+
+	/// <summary>
+	/// Dis-engages the parameter automater's envelope (if set)
+	/// </summary>
+	void DisEngage(float absoluteTime);
+
 private:
 
 	ParameterAutomationType _type;
@@ -49,6 +60,8 @@ private:
 	SignalFactoryCore* _signalFactoryRandom;				// Our local (non-system) version, set up for random value generation
 	OscillatorParameters* _oscillatorParameters;			// These will not be the system values
 	OscillatorParameters* _oscillatorParametersRandom;		// These will not be the system values, set up for random value generation
+
+	Envelope* _envelope;
 };
 
 #endif

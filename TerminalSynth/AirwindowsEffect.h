@@ -8,7 +8,6 @@
 #include "SignalBase.h"
 #include "SignalSettings.h"
 #include <airwin_consolidated_base.h>
-#include <string>
 
 /// <summary>
 /// Airwindows Effect Wrapper:  This will hold a plugin from the airwindows-plugins project. Each plugin will follow the
@@ -21,11 +20,14 @@ public:
 	AirwindowsEffect(const SignalSettings& settings, AudioEffectX* plugin);
 	~AirwindowsEffect();
 
-	void Initialize(const PlaybackInfo* outputSettings) override;
-	void SetFrame(PlaybackFrame* frame) override;
+	void Initialize(const PlaybackInfo* outputSettings) override;	
 	bool HasOutput() const override;
 
 	void UpdateParameter(int index, float value) override;
+
+protected:
+
+	void SetFrameImpl(PlaybackFrame* frame) override;
 
 private:
 

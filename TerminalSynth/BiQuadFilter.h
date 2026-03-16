@@ -75,10 +75,13 @@ public:
 	~BiQuadFilter();
 
 	void Initialize(const PlaybackInfo* parameters) override;
-	void SetFrame(PlaybackFrame* frame) override;
 	bool HasOutput() const override;
 
 	void UpdateParameter(int index, float value) override;
+
+protected:
+
+	void SetFrameImpl(PlaybackFrame* frame) override;
 
 private:
 
