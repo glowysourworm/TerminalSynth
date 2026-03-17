@@ -53,6 +53,13 @@ private:
 	// Octave Selector
 	SliderUI* _octaveUI;
 
+	// Waveshaper Parameters
+	SliderUI* _waveshaperSidebandCentsUI;
+	SliderUI* _waveshaperPhaseAmplitudeUI;
+
+	// Waveshaper Harmonics
+	std::vector<SliderUI*>* _waveshaperUIs;
+
 	// Sound Bank Map
 	std::map<std::string, std::vector<std::string>*>* _soundBankMap;
 
@@ -79,7 +86,8 @@ OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const ftx
 
 	_soundSourceChoices = new std::vector<std::string>({
 		"Oscillators",
-		"Sample Banks"
+		"Sample Banks",
+		"Harmonic Shaper"
 	});
 	_oscillatorItems = new std::vector<std::string>({
 		"Sine",
@@ -97,7 +105,10 @@ OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const ftx
 	_soundNameSelectedIndex = new ValueCapture<int>(0);
 
 	_octaveUI = new SliderUI(0, 0.0f, 3.0f, 1.0f, "Octave", "Octave {:2.0f}", ftxui::Color::Blue, ftxui::Color::BlueLight);
+	_waveshaperSidebandCentsUI = new SliderUI(0, 0.0f, 1.0f, 0.01f, "Sideband", "Sideband        {:.2f}", ftxui::Color::Blue, ftxui::Color::BlueLight);
+	_waveshaperPhaseAmplitudeUI = new SliderUI(0, 0.0f, 1.0f, 0.01f, "Phase Amplitude", "Phase Amplitude {:.2f}", ftxui::Color::Blue, ftxui::Color::BlueLight);
 
+	_waveshaperUIs = new std::vector<SliderUI*>();
 	_soundBankMap = new std::map<std::string, std::vector<std::string>*>();
 
 	for (int index = 0; index < soundBanks.size(); index++)
@@ -118,6 +129,16 @@ OscillatorUI::~OscillatorUI()
 		delete iter->second;
 	}
 
+	for (int index = 0; index < _waveshaperUIs->size(); index++)
+	{
+		// ~SliderUI
+		delete _waveshaperUIs->at(index);
+	}
+
+	delete _waveshaperUIs;
+	delete _waveshaperSidebandCentsUI;
+	delete _waveshaperPhaseAmplitudeUI;
+
 	delete _soundBankItems;
 	delete _soundNameItems;
 	delete _soundSourceChoices;
@@ -134,6 +155,23 @@ OscillatorUI::~OscillatorUI()
 void OscillatorUI::Initialize(const OscillatorParameters& parameters)
 {
 	_octaveUI->Initialize(parameters.GetOctave());
+	_waveshaperSidebandCentsUI->Initialize(parameters.GetWaveshaperSidebandCents());
+	_waveshaperPhaseAmplitudeUI->Initialize(parameters.GetWaveshaperRandomPhaseAmplitude());
+
+	auto waveshaperContainer = ftxui::Container::Vertical({
+		_waveshaperSidebandCentsUI->GetComponent(),
+		_waveshaperPhaseAmplitudeUI->GetComponent(),
+	});
+
+	// Waveshaper UI
+	for (int index = 0; index < parameters.GetWaveshaperHarmonics()->size(); index++)
+	{
+		SliderUI* sliderUI = new SliderUI(parameters.GetWaveshaperHarmonics()->at(index), 0, 1.0f, 0.01f, "Harmonic", "Harmonic [" + std::to_string(index) + "] ({:.2f})", ftxui::Color::Orange3, ftxui::Color::Orange1);
+		sliderUI->Initialize(parameters.GetWaveshaperHarmonics()->at(index));
+		_waveshaperUIs->push_back(sliderUI);
+
+		waveshaperContainer->Add(sliderUI->GetComponent());
+	}
 
 	auto soundSourceChoiceUI = ftxui::Dropdown(_soundSourceChoices, _soundSourceChoiceIndex->GetRef());
 	auto oscillatorItemsUI = ftxui::Dropdown(_oscillatorItems, _oscillatorSelectedIndex->GetRef());
@@ -141,13 +179,17 @@ void OscillatorUI::Initialize(const OscillatorParameters& parameters)
 	auto soundNameItemsUI = ftxui::Dropdown(_soundNameItems, _soundNameSelectedIndex->GetRef());
 
 	_component = ftxui::Container::Vertical({
+
 			ftxui::Renderer([&] { return ftxui::text("Oscillator") | ftxui::color(ftxui::Color::GreenYellow); }),
 			ftxui::Renderer([&] { return ftxui::separator(); }),
 			soundSourceChoiceUI,
 			oscillatorItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 0; }),
 			soundBankItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 1; }),
 			soundNameItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 1; }),
-			_octaveUI->GetComponent() | ftxui::border
+			_octaveUI->GetComponent() | ftxui::border,
+
+			waveshaperContainer | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 2; }) | ftxui::border
+
 		}) | ftxui::CatchEvent([&] (ftxui::Event event) {
 
 			// Passthrough
@@ -173,6 +215,13 @@ void OscillatorUI::ServicePendingAction()
 void OscillatorUI::UpdateComponent()
 {
 	_octaveUI->UpdateComponent();
+	_waveshaperSidebandCentsUI->UpdateComponent();
+	_waveshaperPhaseAmplitudeUI->UpdateComponent();
+
+	for (int index = 0; index < _waveshaperUIs->size(); index++)
+	{
+		_waveshaperUIs->at(index)->UpdateComponent();
+	}
 
 	if (_soundBankSelectedIndex->HasChanged())
 	{
@@ -201,8 +250,6 @@ void OscillatorUI::ToUI(const OscillatorParameters& source)
 
 void OscillatorUI::ToUI(const OscillatorParameters* source)
 {
-	//_octaveUI->ToUI(source->GetOctave());
-
 	_soundSourceChoiceIndex->SetValue((int)source->GetType());
 	_oscillatorSelectedIndex->SetValue((int)source->GetBuiltInType());
 
@@ -238,7 +285,17 @@ void OscillatorUI::ToUI(const OscillatorParameters* source)
 
 bool OscillatorUI::GetDirty() const
 {
-	return _soundSourceChoiceIndex->HasChanged() ||
+	bool isDirty = false;
+
+	for (int index = 0; index < _waveshaperUIs->size(); index++)
+	{
+		isDirty |= _waveshaperUIs->at(index)->GetDirty();
+	}
+
+	return isDirty || 
+		_waveshaperSidebandCentsUI->GetDirty() ||
+		_waveshaperPhaseAmplitudeUI->GetDirty() ||
+		_soundSourceChoiceIndex->HasChanged() ||
 		_oscillatorSelectedIndex->HasChanged() ||
 		_soundBankSelectedIndex->HasChanged() ||
 		_soundNameSelectedIndex->HasChanged() ||
@@ -247,6 +304,13 @@ bool OscillatorUI::GetDirty() const
 
 void OscillatorUI::ClearDirty()
 {
+	for (int index = 0; index < _waveshaperUIs->size(); index++)
+	{
+		_waveshaperUIs->at(index)->ClearDirty();
+	}
+
+	_waveshaperSidebandCentsUI->ClearDirty();
+	_waveshaperPhaseAmplitudeUI->ClearDirty();
 	_soundSourceChoiceIndex->Clear();
 	_oscillatorSelectedIndex->Clear();
 	_soundBankSelectedIndex->Clear();
@@ -270,8 +334,20 @@ void OscillatorUI::FromUI(OscillatorParameters& destination)
 
 void OscillatorUI::FromUI(OscillatorParameters* destination)
 {
-	float octave;
+	float octave, waveshaperPhaseAmplitude, waveshaperSidebandCents;
+
 	_octaveUI->FromUI(octave);
+	_waveshaperPhaseAmplitudeUI->FromUI(waveshaperPhaseAmplitude);
+	_waveshaperSidebandCentsUI->FromUI(waveshaperSidebandCents);
+
+	for (int index = 0; index < _waveshaperUIs->size(); index++)
+	{
+		float waveshaperValue;
+
+		_waveshaperUIs->at(index)->FromUI(waveshaperValue);
+
+		destination->GetWaveshaperHarmonics()->at(index) = waveshaperValue;
+	}
 
 	destination->SetOctave((unsigned int)ceil(octave));
 	destination->SetType((OscillatorType)_soundSourceChoiceIndex->GetValue());

@@ -14,7 +14,8 @@ enum class AudioStreamFormat
 
 enum class OscillatorType : int {
 	BuiltIn,
-	SampleBased
+	SampleBased,
+	HarmonicShaper
 };
 enum class EnvelopeShape : int {
 	Linear = 0,
@@ -26,8 +27,7 @@ enum class BuiltInOscillators : int {
 	Square = 1,
 	Triangle = 2,
 	Sawtooth = 3,
-	SynthesizedStringPluck = 4,
-	Random = 5
+	SynthesizedStringPluck = 4
 };
 enum class ParameterAutomationType : int {
 	EnvelopeSweep = 0,

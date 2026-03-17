@@ -5,13 +5,19 @@
 
 #include "Constant.h"
 #include "Utility.h"
+#include <cmath>
 #include <istream>
 #include <ostream>
 #include <string>
 #include <type_traits>
+#include <vector>
 
 class OscillatorParameters
 {
+public:
+
+	const int WAVESHAPER_HARMONICS_COUNT = 10;
+
 public:
 
 	OscillatorParameters()
@@ -24,6 +30,15 @@ public:
 		_signalLow = SIGNAL_LOW;
 		_signalHigh = SIGNAL_HIGH;
 		_octave = 0;
+
+		_waveshaperSidebandCents = 0.0f;
+		_waveshaperRandomPhaseAmplitude = 0.0f;
+		_waveshaperHarmonics = new std::vector<float>(WAVESHAPER_HARMONICS_COUNT);
+
+		for (int index = 0; index < _waveshaperHarmonics->size(); index++)
+		{
+			_waveshaperHarmonics->at(index) = 1 / std::sqrt(index + 1);
+		}
 	}
 
 	/// <summary>
@@ -45,6 +60,15 @@ public:
 		_signalLow = signalLow;
 		_signalHigh = signalHigh;
 		_octave = 0;
+
+		_waveshaperSidebandCents = 0.0f;
+		_waveshaperRandomPhaseAmplitude = 0.0f;
+		_waveshaperHarmonics = new std::vector<float>(WAVESHAPER_HARMONICS_COUNT);
+
+		for (int index = 0; index < _waveshaperHarmonics->size(); index++)
+		{
+			_waveshaperHarmonics->at(index) = 1 / std::sqrt(index + 1);
+		}
 	}
 	OscillatorParameters(const OscillatorParameters& copy)
 	{
@@ -56,11 +80,16 @@ public:
 		_signalLow = copy.GetSignalLow();
 		_signalHigh = copy.GetSignalHigh();
 		_octave = copy.GetOctave();
+		
+		_waveshaperSidebandCents = copy.GetWaveshaperSidebandCents();
+		_waveshaperRandomPhaseAmplitude = copy.GetWaveshaperRandomPhaseAmplitude();
+		_waveshaperHarmonics = new std::vector<float>(*copy.GetWaveshaperHarmonics());
 	}
 	~OscillatorParameters()
 	{
 		delete _soundBank;
 		delete _soundName;
+		delete _waveshaperHarmonics;
 	}
 
 	float GetFrequency() const { return _frequency; }
@@ -71,6 +100,9 @@ public:
 	std::string GetSoundName() const { return *_soundName; }
 	OscillatorType GetType() const { return _type; }
 	BuiltInOscillators GetBuiltInType() const { return _builtInType; }
+	float GetWaveshaperSidebandCents() const { return _waveshaperSidebandCents; }
+	float GetWaveshaperRandomPhaseAmplitude() const { return _waveshaperRandomPhaseAmplitude; }
+	std::vector<float>* GetWaveshaperHarmonics() const { return _waveshaperHarmonics; }
 
 	void SetFrequency(float value) { _frequency = value; }
 	void SetSignalLow(float value) { _signalLow = value; }
@@ -88,6 +120,8 @@ public:
 	}
 	void SetType(OscillatorType value) { _type = value; }
 	void SetBuiltInType(BuiltInOscillators value) { _builtInType = value; }
+	void SetWaveshaperSidebandCents(float value) { _waveshaperSidebandCents = value; }
+	void SetWaveshaperRandomPhaseAmplitude(float value) { _waveshaperRandomPhaseAmplitude = value; }
 
 	size_t GetHashCode() const
 	{
@@ -126,6 +160,15 @@ public:
 		isDirty |= _type != source->GetType();
 		isDirty |= _builtInType != source->GetBuiltInType();
 		isDirty |= _octave != source->GetOctave();
+		isDirty |= _waveshaperSidebandCents != source->GetWaveshaperSidebandCents();
+		isDirty |= _waveshaperRandomPhaseAmplitude != source->GetWaveshaperRandomPhaseAmplitude();
+
+		for (int index = 0; index < _waveshaperHarmonics->size(); index++)
+		{
+			isDirty |= _waveshaperHarmonics->at(index) != source->GetWaveshaperHarmonics()->at(index);
+
+			_waveshaperHarmonics->at(index) = source->GetWaveshaperHarmonics()->at(index);
+		}
 		
 		_soundBank->clear();
 		_soundName->clear();
@@ -163,6 +206,13 @@ public:
 		stream << _signalHigh;
 		stream << (int)_type;
 		stream << (int)_builtInType;
+		stream << _waveshaperSidebandCents;
+		stream << _waveshaperRandomPhaseAmplitude;
+
+		for (int index = 0; index < _waveshaperHarmonics->size(); index++)
+		{
+			stream << _waveshaperHarmonics->at(index);
+		}
 
 	}
 	void Read(std::istream& stream)
@@ -177,6 +227,13 @@ public:
 		stream >> _signalHigh;
 		stream >> type;
 		stream >> builtInType;
+		stream >> _waveshaperSidebandCents;
+		stream >> _waveshaperRandomPhaseAmplitude;
+
+		for (int index = 0; index < _waveshaperHarmonics->size(); index++)
+		{
+			stream >> _waveshaperHarmonics->at(index);
+		}
 
 		_type = (OscillatorType)type;
 		_builtInType = (BuiltInOscillators)builtInType;
@@ -186,6 +243,12 @@ public:
 
 	bool IsEqual(const OscillatorParameters* other) const
 	{
+		for (int index = 0; index < _waveshaperHarmonics->size(); index++)
+		{
+			if (_waveshaperHarmonics->at(index) != other->GetWaveshaperHarmonics()->at(index))
+				return false;
+		}
+
 		return *_soundBank == other->GetSoundBank() &&
 			*_soundName == other->GetSoundName() &&
 			_frequency == other->GetFrequency() &&
@@ -193,13 +256,21 @@ public:
 			_signalLow == other->GetSignalLow() &&
 			_signalHigh == other->GetSignalHigh() &&
 			_type == other->GetType() &&
-			_builtInType == other->GetBuiltInType();
+			_builtInType == other->GetBuiltInType() &&
+			_waveshaperRandomPhaseAmplitude == other->GetWaveshaperRandomPhaseAmplitude() &&
+			_waveshaperSidebandCents == other->GetWaveshaperSidebandCents();
 	}
 
 private:
 
 	bool IsEqual(const OscillatorParameters& other)
 	{
+		for (int index = 0; index < _waveshaperHarmonics->size(); index++)
+		{
+			if (_waveshaperHarmonics->at(index) != other.GetWaveshaperHarmonics()->at(index))
+				return false;
+		}
+
 		return other.GetSoundName() == this->GetSoundName() &&
 			other.GetSoundBank() == this->GetSoundBank() &&
 			other.GetFrequency() == this->GetFrequency() &&
@@ -207,7 +278,9 @@ private:
 			other.GetSignalHigh() == this->GetSignalHigh() &&
 			other.GetType() == this->GetType() &&
 			other.GetBuiltInType() == this->GetBuiltInType() &&
-			other.GetOctave() == this->GetOctave();
+			other.GetOctave() == this->GetOctave() &&
+			other.GetWaveshaperRandomPhaseAmplitude() == this->GetWaveshaperRandomPhaseAmplitude() &&
+			other.GetWaveshaperSidebandCents() == this->GetWaveshaperSidebandCents();
 	}
 
 private:
@@ -220,6 +293,11 @@ private:
 	float _signalHigh;
 	OscillatorType _type;
 	BuiltInOscillators _builtInType;
+
+	float _waveshaperSidebandCents;
+	float _waveshaperRandomPhaseAmplitude;
+	
+	std::vector<float>* _waveshaperHarmonics;
 };
 
 #endif

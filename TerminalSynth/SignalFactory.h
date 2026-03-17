@@ -24,6 +24,11 @@ public:
 
 private:
 
+	WaveTable* GenerateOscillatorWaveTable(const OscillatorParameters& parameters, int midiNumber, float waveSamplingRate);
+	WaveTable* GenerateHarmonicWaveTable(const OscillatorParameters& parameters, int midiNumber, float waveSamplingRate);
+
+private:
+
 	/// <summary>
 	/// Sets the signal factory for the specified oscillator parameters, and resets all filters
 	/// </summary>

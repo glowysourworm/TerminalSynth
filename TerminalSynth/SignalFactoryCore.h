@@ -14,6 +14,10 @@ class SignalFactoryCore
 {
 public:
 
+	const int RANDOM_OSCILLATOR_LENGTH = 8;
+
+public:
+
 	SignalFactoryCore(float samplingRate);
 	~SignalFactoryCore();
 

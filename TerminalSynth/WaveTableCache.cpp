@@ -188,14 +188,16 @@ bool WaveTableCache::CreateWaveTable(WTCacheKey_SoundBank* cacheKey)
 	return true;
 }
 
-bool WaveTableCache::CreateWaveTable(WTCacheKey_Oscillator* cacheKey)
+bool WaveTableCache::CreateWaveTable(const OscillatorParameters& parameters, int midiNumber)
 {
 	try
 	{
 		// (MEMORY!) ~WaveTableCache
-		WaveTable* waveTable = _signalFactory->GenerateWaveTable(*cacheKey->GetParameters(), cacheKey->GetMidiNote(), 0);	// TODO: WAVE SAMPLE RATE
+		WaveTable* waveTable = _signalFactory->GenerateWaveTable(parameters, midiNumber, 0);	// TODO: WAVE SAMPLE RATE
 
-		_cacheOscillator->insert(std::make_pair(cacheKey->GetHashCode(), waveTable));
+		WTCacheKey_Oscillator cacheKey(parameters, midiNumber, _oscillatorSamplingRate);
+
+		_cacheOscillator->insert(std::make_pair(cacheKey.GetHashCode(), waveTable));
 	}
 	catch (std::exception ex)
 	{
@@ -252,7 +254,10 @@ WaveTable* WaveTableCache::Get(const OscillatorParameters& parameters, int midiN
 	// New WaveTable*
 	if (!_cacheOscillator->contains(cacheKey->GetHashCode()))
 	{
-		if (!CreateWaveTable(cacheKey))
+		// NOTE*** THE FUNCTION OF THE WAVE TABLE NEEDS REFACTORING:  It should be where there are preparations made that
+		//		   take some time.. otherwise, the oscillators can be calculated in real time. The cache key won't take
+		//		   into account all the oscillator parameters (it got bigger...)
+		if (!CreateWaveTable(parameters, midiNumber))
 			throw new std::exception("Unable to create wave table for oscillator:  WaveTableCache.cpp");
 	}
 

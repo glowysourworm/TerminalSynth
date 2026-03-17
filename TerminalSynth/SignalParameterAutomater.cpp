@@ -14,7 +14,7 @@ SignalParameterAutomater::SignalParameterAutomater()
 	_signalFactory = nullptr;
 	_signalFactoryRandom = nullptr;
 	_oscillatorParameters = new OscillatorParameters(OscillatorType::BuiltIn, BuiltInOscillators::Sine, "", "", 1.0f, ENVELOPE_LOW, ENVELOPE_HIGH);
-	_oscillatorParametersRandom = new OscillatorParameters(OscillatorType::BuiltIn, BuiltInOscillators::Random, "", "", 1.0f, ENVELOPE_LOW, ENVELOPE_HIGH);
+	_oscillatorParametersRandom = new OscillatorParameters(OscillatorType::BuiltIn, BuiltInOscillators::Sawtooth, "", "", 1.0f, ENVELOPE_LOW, ENVELOPE_HIGH);
 	_type = ParameterAutomationType::EnvelopeSweep;
 	_oscillatorType = ParameterAutomationOscillator::Sine;
 	_envelope = new Envelope();

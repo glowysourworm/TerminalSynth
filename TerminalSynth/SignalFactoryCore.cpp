@@ -1,6 +1,7 @@
 #include "Constant.h"
 #include "OscillatorParameters.h"
 #include "SignalFactoryCore.h"
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <numbers>
@@ -21,15 +22,13 @@ SignalFactoryCore::~SignalFactoryCore()
 
 void SignalFactoryCore::Reset(const OscillatorParameters* parameters)
 {
-	delete _randomQuadrantValues;
-
-	_randomQuadrantValues = new std::vector<float>();
 	_signalHigh = parameters->GetSignalHigh();
 	_signalLow = parameters->GetSignalLow();
+	_randomQuadrantValues->clear();
 
-	for (int index = 0; index < 4; index++)
+	for (int index = 0; index < RANDOM_OSCILLATOR_LENGTH; index++)
 	{
-		_randomQuadrantValues->push_back(((rand() / (float)RAND_MAX) * (parameters->GetSignalHigh() - parameters->GetSignalLow())) + parameters->GetSignalLow());
+		_randomQuadrantValues->push_back(((_signalHigh - _signalLow) * (rand() / (float)RAND_MAX)) + _signalLow);
 	}
 }
 
@@ -109,35 +108,17 @@ float SignalFactoryCore::GenerateSineSample(float frequency, size_t timeCursor, 
 float SignalFactoryCore::GenerateRandomSample(float frequency, size_t timeCursor, double streamTime)
 {
 	float period = 1 / frequency;
-	float periodQuarter = 0.25f * period;
-	float sample = 0;
 
 	// Using modulo arithmetic to get the relative period time
 	float periodTime = fmod(streamTime, period);
 
-	// First Quadrant
-	if (periodTime < periodQuarter)
-	{
-		sample = _randomQuadrantValues->at(0);
-	}
+	float periodDiv = (period / _randomQuadrantValues->size());
+	float periodBucket = periodTime / periodDiv;
 
-	// Second Quadrant
-	else if (periodTime < (2.0 * periodQuarter))
-	{
-		sample = _randomQuadrantValues->at(1);
-	}
+	float periodBucketIndex = 0;
+	float remainder = std::modf(periodBucket, &periodBucketIndex);
+	int periodIndex = std::min<int>(periodBucketIndex, _randomQuadrantValues->size() - 1);
+	periodIndex = std::max<int>(periodIndex, 0);
 
-	// Third Quadrant
-	else if (periodTime < 3.0 * periodQuarter)
-	{
-		sample = _randomQuadrantValues->at(2);
-	}
-
-	// Fourth Quadrant
-	else
-	{
-		sample = _randomQuadrantValues->at(3);
-	}
-
-	return sample;
+	return _randomQuadrantValues->at(periodIndex);
 }

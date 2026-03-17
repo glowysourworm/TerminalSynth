@@ -6,17 +6,13 @@
 #include "Envelope.h"
 #include "SliderUI.h"
 #include "UIBase.h"
-#include "ValueCapture.h"
 #include <exception>
 #include <format>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
-#include <ftxui/component/component_options.hpp>
-#include <ftxui/dom/direction.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
 #include <string>
-#include <string_view>
 #include <vector>
 
 class EnvelopeUI : public UIBase<Envelope>
@@ -71,7 +67,7 @@ EnvelopeUI::EnvelopeUI(const Envelope& initialValue)
 		float attackTimeStart = attackTimeDelta * index;
 		float attackTimeEnd = attackTimeDelta * (index + 1);
 
-		auto sliderUI = new SliderUI(initialValue.GetAttackValue(index), 0.0f, 1.0f, 0.01f, "Attack", ftxui::Color::Blue, ftxui::Color::BlueLight);
+		auto sliderUI = new SliderUI(initialValue.GetAttackValue(index), 0.0f, 1.0f, 0.01f, "Attack", ftxui::Color::Blue, ftxui::Color::Blue3);
 
 		sliderUI->Initialize(initialValue.GetAttackValue(index));
 
@@ -83,7 +79,7 @@ EnvelopeUI::EnvelopeUI(const Envelope& initialValue)
 		float releaseTimeStart = releaseTimeDelta * index;
 		float releaseTimeEnd = releaseTimeDelta * (index + 1);
 
-		auto sliderUI = new SliderUI(initialValue.GetReleaseValue(index), 0.0f, 1.0f, 0.01f, "Release", ftxui::Color::Magenta, ftxui::Color::MagentaLight);
+		auto sliderUI = new SliderUI(initialValue.GetReleaseValue(index), 0.0f, 1.0f, 0.01f, "Release", ftxui::Color::Magenta, ftxui::Color::Magenta3);
 
 		sliderUI->Initialize(initialValue.GetReleaseValue(index));
 

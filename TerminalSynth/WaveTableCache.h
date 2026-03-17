@@ -66,7 +66,7 @@ private:
 	/// <summary>
 	/// Creates WaveTable* instance for the oscillator, and puts it in the cache.
 	/// </summary>
-	bool CreateWaveTable(WTCacheKey_Oscillator* cacheKey);
+	bool CreateWaveTable(const OscillatorParameters& parameters, int midiNumber);
 
 private:
 
