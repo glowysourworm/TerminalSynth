@@ -3,10 +3,10 @@
 #ifndef SIGNAL_CHAIN_H
 #define SIGNAL_CHAIN_H
 
-#include "PlaybackInfo.h"
 #include "PlaybackFrame.h"
-#include "SignalBase.h"
+#include "PlaybackInfo.h"
 #include "SignalChainSettings.h"
+#include "SignalParameterizedBase.h"
 #include "SoundRegistry.h"
 #include <vector>
 
@@ -25,7 +25,7 @@ public:
 	void Update(SoundRegistry* effectRegistry, const SignalChainSettings* signalChainSettings);
 
 	void SetFrame(PlaybackFrame* frame);
-	bool HasOutput() const;
+	bool HasOutput(double absoluteTime) const;
 
 	void Engage(double absoluteTime);
 	void DisEngage(double absoluteTime);
@@ -33,7 +33,7 @@ public:
 private:
 
 	// SHARED POINTERS!  These effects are not created here! They are created and stored by the SoundRegistry*
-	std::vector<SignalBase*>* _chain;
+	std::vector<SignalParameterizedBase*>* _chain;
 };
 
 #endif

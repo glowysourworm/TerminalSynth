@@ -8,8 +8,8 @@
 #include "SignalChain.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
-#include "SynthNotePool.h"
 #include "SynthSettings.h"
+#include "SynthVoicePool.h"
 
 // Class to define static piano notes and store their names / frequencies w.r.t. the SDL keyboard
 // defined inputs.
@@ -25,27 +25,20 @@ public:
 	void Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters);
 
 	// Update Configuration
-	void Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings);
+	void Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings, const PlaybackInfo* parameters);
 
 	// Sets midi notes on / off
-	void Set(int midiNumber, bool pressed, double absoluteTime);
+	void SetNote(int midiNumber, bool pressed, double absoluteTime);
 
 	/// <summary>
 	/// Synthesizes a full output at the specified stream time. Returns true if there was output this call.
 	/// </summary>
 	bool GetSample(PlaybackFrame* frame, float gain, float leftRightBalance);
 
-	/// <summary>
-	/// Gets rid of outdated cache. This should be done after the user has stopped playback for a short
-	/// period of time; but may be checked in real time; and will not process without the proper conditions
-	/// from the note pool.
-	/// </summary>
-	void PruneNotePool();
-
 private:
 
 	// Synth Notes by Midi Number
-	SynthNotePool* _pianoNotes;
+	SynthVoicePool* _notePool;
 
 	// Post-processing effects	
 	SignalChain* _postProcessing;

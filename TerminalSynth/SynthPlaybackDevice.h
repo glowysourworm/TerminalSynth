@@ -24,7 +24,7 @@ public:
 	~SynthPlaybackDevice();
 
 	bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) override;
-	bool Update(SoundRegistry* effectRegistry, const SynthSettings* configuration) override;
+	bool Update(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) override;
 	bool SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration) override;
 
 	int WritePlaybackBuffer(
@@ -86,9 +86,9 @@ bool SynthPlaybackDevice::Initialize(const SoundRegistry* effectRegistry, const 
 	return _initialized;
 }
 
-bool SynthPlaybackDevice::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration)
+bool SynthPlaybackDevice::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters)
 {
-	_synth->Update(effectRegistry, configuration->GetDefaultSoundSettings());
+	_synth->Update(effectRegistry, configuration->GetDefaultSoundSettings(), parameters);
 
 	return true;
 }
@@ -123,16 +123,16 @@ bool SynthPlaybackDevice::SetForPlayback(unsigned int numberOfFrames, double str
 		int midiNote = configuration->GetMidiNote((WindowsKeyCodes)keyCode);
 
 		// Engage / Dis-Engage
-		_synth->Set(midiNote, isPressed, streamTime);
+		_synth->SetNote(midiNote, isPressed, streamTime);
 
 		pressedKeys |= isPressed;
 	}
 
-	if (!pressedKeys)
-	{
-		// Check outdated synth note cache (prune for configuration changes)
-		_synth->PruneNotePool();
-	}
+	//if (!pressedKeys)
+	//{
+	//	// Check outdated synth note cache (prune for configuration changes)
+	//	_synth->PruneNotePool();
+	//}
 
 	return pressedKeys;
 }

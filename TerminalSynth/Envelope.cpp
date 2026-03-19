@@ -2,59 +2,20 @@
 #include "Constant.h"
 #include "Envelope.h"
 #include <algorithm>
-#include <cmath>
 #include <exception>
 
-Envelope::Envelope() : Envelope(EnvelopeShape::Linear, 0.1f, 0.35f, 0.85f, 0.65f)
+Envelope::Envelope() : Envelope(EnvelopeShape::Linear, 0.1, 0.15, 0.35, 0.85, 0.65)
 {}
 
-Envelope::Envelope(EnvelopeShape shape, float attackSeconds, float releaseSeconds, float attackPeak, float sustainPeak)
+Envelope::Envelope(EnvelopeShape shape, double attack, double decay, double release, double attackPeak, double sustainPeak)
 {
-	_attackSeconds = attackSeconds;
-	_releaseSeconds = releaseSeconds;
+	_attack = attack;
+	_release = release;
+	_decay = decay;
+	_attackPeak = attackPeak;
+	_sustainPeak = sustainPeak;
 
-	_attack = new float[ATTACK_LENGTH];
-	_release = new float[RELEASE_LENGTH];
-
-	for (int index = 0; index < ATTACK_LENGTH + RELEASE_LENGTH; index++)
-	{
-		switch (shape)
-		{
-		case EnvelopeShape::Linear:
-		{
-			// Attack
-			if (index < ATTACK_LENGTH / 2)
-				_attack[index] = (2 * attackPeak) * (index / (float)ATTACK_LENGTH);
-
-			// Sustain
-			else if (index < ATTACK_LENGTH)
-				_attack[index] = (((2 * (sustainPeak - attackPeak)) / ATTACK_LENGTH) * index) + (2 * attackPeak) - sustainPeak;
-
-			// Release
-			else
-				_release[index - ATTACK_LENGTH] = -1 * (sustainPeak / RELEASE_LENGTH) * (index - RELEASE_LENGTH - ATTACK_LENGTH);
-		}
-		break;
-		case EnvelopeShape::Poisson:
-		{
-			if (index < ATTACK_LENGTH)
-				_attack[index] = Algorithm::Poisson(index, POISSON_LAMBDA_DEFAULT);
-			else
-				_release[index] = Algorithm::Poisson(index, POISSON_LAMBDA_DEFAULT);
-		}
-		break;
-		case EnvelopeShape::Gaussian:
-		{
-			if (index < ATTACK_LENGTH)
-				_attack[index] = Algorithm::Gaussian3Sigma(index,  0, ATTACK_LENGTH - 1);
-			else
-				_release[index] = Algorithm::Gaussian3Sigma(index, ATTACK_LENGTH, RELEASE_LENGTH - 1);
-		}
-		break;
-		default:
-			throw new std::exception("Unhandled envelope shape:  Envelope.cpp");
-		}
-	}
+	_shape = shape;
 
 	_engaged = false;
 	_hasEngaged = false;
@@ -66,21 +27,11 @@ Envelope::Envelope(EnvelopeShape shape, float attackSeconds, float releaseSecond
 
 Envelope::Envelope(const Envelope& copy)
 {
-	_attackSeconds = copy.GetAttackTime();
-	_releaseSeconds = copy.GetReleaseTime();
-
-	_attack = new float[ATTACK_LENGTH];
-	_release = new float[RELEASE_LENGTH];
-
-	for (int index = 0; index < ATTACK_LENGTH; index++)
-	{
-		_attack[index] = copy.GetAttackValue(index);
-	}
-
-	for (int index = 0; index < RELEASE_LENGTH; index++)
-	{
-		_release[index] = copy.GetReleaseValue(index);
-	}
+	_attack = copy.GetAttack();
+	_release = copy.GetRelease();
+	_attackPeak = copy.GetAttackPeak();
+	_sustainPeak = copy.GetSustainPeak();
+	_shape = copy.GetShape();
 
 	// Defaults
 	_engaged = false;
@@ -91,10 +42,7 @@ Envelope::Envelope(const Envelope& copy)
 	_disEngagedTime = 0;
 }
 Envelope::~Envelope()
-{
-	delete[] _attack;
-	delete[] _release;
-}
+{}
 
 /// <summary>
 /// Returns true if there were changes to the envelope
@@ -103,64 +51,64 @@ bool Envelope::Update(const Envelope* envelope)
 {
 	bool isDirty = IsEqual(envelope);
 
-	_attackSeconds = envelope->GetAttackTime();
-	_releaseSeconds = envelope->GetReleaseTime();
-
-	for (int index = 0; index < ATTACK_LENGTH; index++)
-	{
-		_attack[index] = envelope->GetAttackValue(index);
-	}
-
-	for (int index = 0; index < RELEASE_LENGTH; index++)
-	{
-		_release[index] = envelope->GetReleaseValue(index);
-	}
+	_attack = envelope->GetAttack();
+	_release = envelope->GetRelease();
+	_attackPeak = envelope->GetAttackPeak();
+	_sustainPeak = envelope->GetSustainPeak();
+	_shape = envelope->GetShape();
 
 	return isDirty;
 }
 
-float Envelope::GetAttackTime() const
+double Envelope::GetAttack() const
 {
-	return _attackSeconds;
+	return _attack;
 }
-float Envelope::GetAttackValue(int index) const
+double Envelope::GetAttackPeak() const
 {
-	return _attack[index];
+	return _attackPeak;
 }
-
-float Envelope::GetReleaseTime() const
+double Envelope::GetDecay() const
 {
-	return _releaseSeconds;
+	return _decay;
 }
-float Envelope::GetReleaseValue(int index) const
+double Envelope::GetRelease() const
 {
-	return _release[index];
+	return _release;
 }
-int Envelope::GetAttackLength() const
+EnvelopeShape Envelope::GetShape() const
 {
-	return ATTACK_LENGTH;
+	return _shape;
 }
-int Envelope::GetReleaseLength() const
+double Envelope::GetSustainPeak() const
 {
-	return RELEASE_LENGTH;
+	return _sustainPeak;
 }
-void Envelope::SetAttackValue(int index, float value)
+void Envelope::SetAttack(double value)
 {
-	_attack[index] = value;
+	_attack = value;
 }
-void Envelope::SetAttackTime(float value)
+void Envelope::SetAttackPeak(double value)
 {
-	_attackSeconds = value;
+	_attackPeak = value;
 }
-void Envelope::SetReleaseValue(int index, float value)
+void Envelope::SetDecay(double value)
 {
-	_release[index] = value;
+	_decay = value;
 }
-void Envelope::SetReleaseTime(float value)
+void Envelope::SetRelease(double value)
 {
-	_releaseSeconds = value;
+	_release = value;
 }
-void Envelope::Engage(float absoluteTime)
+void Envelope::SetShape(EnvelopeShape value)
+{
+	_shape = value;
+}
+void Envelope::SetSustainPeak(double value)
+{
+	_sustainPeak = value;
+}
+void Envelope::Engage(double absoluteTime)
 {
 	if (_engaged)
 		return;
@@ -170,7 +118,7 @@ void Envelope::Engage(float absoluteTime)
 	_engagedTime = absoluteTime;
 }
 
-void Envelope::DisEngage(float absoluteTime)
+void Envelope::DisEngage(double absoluteTime)
 {
 	if (!_engaged)
 		return;
@@ -185,7 +133,7 @@ void Envelope::DisEngage(float absoluteTime)
 	_disEngagedTime = absoluteTime;
 }
 
-bool Envelope::HasOutput(float absoluteTime)
+bool Envelope::HasOutput(double absoluteTime)
 {
 	if (!_hasEngaged)
 		return false;
@@ -229,17 +177,17 @@ bool Envelope::operator==(const Envelope& envelope)
 	return IsEqual(&envelope);
 }
 
-float Envelope::GetEngageTime()
+double Envelope::GetEngageTime()
 {
 	return _engagedTime;
 }
 
-float Envelope::GetDisEngageTime()
+double Envelope::GetDisEngageTime()
 {
 	return _disEngagedTime;
 }
 
-float Envelope::GetEnvelopeLevel(float absoluteTime)
+double Envelope::GetEnvelopeLevel(double absoluteTime)
 {
 	if (!_hasEngaged)
 		return 0;
@@ -253,26 +201,7 @@ float Envelope::GetEnvelopeLevel(float absoluteTime)
 		// Calculate time along the envelope
 		float envelopeTime = absoluteTime - _engagedTime;
 
-		float attackDiv = (_attackSeconds / ATTACK_LENGTH);		
-		float attackBucket = envelopeTime / attackDiv;
-		float attackBucketIndex = 0;
-		float lerpValue = std::modf(attackBucket, &attackBucketIndex);
-		int attackIndex = std::min<int>(attackBucketIndex, ATTACK_LENGTH - 1);
-		attackIndex = std::max<int>(attackIndex, 0);
-
-		// Attack Interpolation Finished
-		if (attackBucketIndex >= ATTACK_LENGTH)
-		{
-			return _attack[ATTACK_LENGTH - 1];
-		}
-
-		// Attack Interpolate
-		else
-		{
-			int attackIndexPrevious = attackIndex == 0 ? 0 : attackIndex - 1;
-
-			return std::lerp(_attack[attackIndexPrevious], _attack[attackIndex], lerpValue);
-		}
+		return GetEnvelopeLevelImpl(envelopeTime);
 	}
 
 	// Release
@@ -281,28 +210,103 @@ float Envelope::GetEnvelopeLevel(float absoluteTime)
 		// Calculate time along the RELEASE
 		float envelopeTime = absoluteTime - _disEngagedTime;
 
-		if (envelopeTime < _releaseSeconds)
+		if (envelopeTime < _release)
 		{
-			float releaseDiv = (_releaseSeconds / RELEASE_LENGTH);
-			float releaseBucket = envelopeTime / releaseDiv;
-			float releaseBucketIndex = 0;
-			float lerpValue = std::modf(releaseBucket, &releaseBucketIndex);
-			int releaseIndex = std::min<int>(releaseBucketIndex, RELEASE_LENGTH - 1);
-			releaseIndex = std::max<int>(releaseIndex, 0);
-
-			
-			// Interpolate from Attack (last)
-			if (releaseIndex == 0)
-			{
-				return std::lerp(_disEngagedLevel, _disEngagedLevel * _release[releaseIndex], lerpValue);
-			}
-			else
-			{
-				return std::lerp(_disEngagedLevel * _release[releaseIndex - 1], _disEngagedLevel * _release[releaseIndex], lerpValue);
-			}
-			
+			return GetEnvelopeLevelImpl(envelopeTime);
 		}
 		else
 			return 0;
+	}
+}
+
+double Envelope::GetEnvelopeLevelImpl(double envelopeTime)
+{
+	switch (_shape)
+	{
+	case EnvelopeShape::Linear:
+	{
+		if (_engaged)
+		{
+			// Attack
+			if (envelopeTime < _attack)
+				return _attackPeak * (envelopeTime / _attack);
+
+			// Decay
+			else if (envelopeTime < _attack + _decay)
+				return (1 / _decay) * ((_sustainPeak - _attackPeak) * (envelopeTime - 1) + (_attackPeak * _decay));
+
+			// Sustain
+			else
+				return _sustainPeak;
+		}
+
+		// Release
+		else
+			return (-1 * (_disEngagedLevel / _release) * envelopeTime) + (_disEngagedLevel * ((_disEngagedTime / _release) + 1));
+	}
+	break;
+	case EnvelopeShape::Gamma:
+	{
+		if (_engaged)
+		{
+			// Gamma Distributrion PDF
+			// 
+			// Peak "Mode" = (alpha - 1) * theta
+			// 
+			// For spread, try [alpha * theta = attack + decay + release] and [(alpha - 1) * theta = attack]
+			//
+			double gammaValue = Algorithm::GammaDistribution(envelopeTime, (_attack / (_release + _decay)) + 1, _release + _decay);
+
+			// Attack
+			if (envelopeTime < _attack)
+				return gammaValue;
+
+			// Decay
+			else if (envelopeTime < _attack + _decay)
+				return gammaValue;
+
+			else
+				return std::max(gammaValue, _sustainPeak);
+		}
+
+		// Release (Linear)
+		else
+		{
+			return (-1 * (_disEngagedLevel / _release) * envelopeTime) + (_disEngagedLevel * ((_disEngagedTime / _release) + 1));
+		}
+	}
+	break;
+	case EnvelopeShape::Gaussian:
+	{
+		if (_engaged)
+		{
+			// Gaussian Distributrion PDF
+			// 
+			// Mean:  Attack
+			// Sigma: Attack + Decay + Release
+			// 
+			double gaussianValue = Algorithm::Gaussian(envelopeTime, _attack, _attack + _decay + _release);
+
+			// Attack
+			if (envelopeTime < _attack)
+				return gaussianValue;
+
+			// Decay
+			else if (envelopeTime < _attack + _decay)
+				return gaussianValue;
+
+			else
+				return std::max(gaussianValue, _sustainPeak);
+		}
+
+		// Release (Linear)
+		else
+		{
+			return (-1 * (_disEngagedLevel / _release) * envelopeTime) + (_disEngagedLevel * ((_disEngagedTime / _release) + 1));
+		}
+	}
+	break;
+	default:
+		throw new std::exception("Unhandled envelope shape:  Envelope.cpp");
 	}
 }

@@ -2,11 +2,11 @@
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
 #include "SignalBase.h"
+#include "SignalParameterizedBase.h"
 #include "SignalSettings.h"
 #include <airwin_consolidated_base.h>
 
-AirwindowsEffect::AirwindowsEffect(const SignalSettings& settings, AudioEffectX* plugin)
-	: SignalBase(settings)
+AirwindowsEffect::AirwindowsEffect(const SignalSettings& settings, AudioEffectX* plugin) : SignalParameterizedBase(settings)
 {
 	//_effect = new kCathedral(0);
 	_input = new float* [2];
@@ -70,7 +70,7 @@ void AirwindowsEffect::SetFrameImpl(PlaybackFrame* frame)
 	frame->SetFrame(_output[0][0], _output[1][0]);
 }
 
-bool AirwindowsEffect::HasOutput() const
+bool AirwindowsEffect::HasOutput(double absoluteTime) const
 {
 	return true;
 }

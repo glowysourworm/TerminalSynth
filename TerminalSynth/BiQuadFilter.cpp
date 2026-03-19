@@ -1,7 +1,7 @@
 #include "BiQuadFilter.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
-#include "SignalBase.h"
+#include "SignalParameterizedBase.h"
 #include <cmath>
 #include <exception>
 #include <numbers>
@@ -14,7 +14,7 @@ BiQuadFilter::BiQuadFilter(FilterType filterType, unsigned int samplingRate, flo
 	: BiQuadFilter(filterType, samplingRate, 1.0f, corner, resonance)
 {}
 
-BiQuadFilter::BiQuadFilter(FilterType filterType, unsigned int samplingRate, float dbGain, float corner, float resonance)
+BiQuadFilter::BiQuadFilter(FilterType filterType, unsigned int samplingRate, float dbGain, float corner, float resonance) : SignalParameterizedBase("BiQuadFilter")
 {
 	_type = filterType;
 
@@ -47,7 +47,7 @@ BiQuadFilter::~BiQuadFilter()
 
 void BiQuadFilter::Initialize(const PlaybackInfo* parameters)
 {
-	SignalBase::Initialize(parameters);
+	//SignalParameterizedBase::Initialize(parameters);
 
 	this->AddParameter("GainDb", 0.01f, 3.0f, _dbGain);					// [0,1] -> [0.01dB, 3dB]
 	this->AddParameter("Corner", 0.0f, _samplingRate / 4.0f, _corner);	// Set based on the sampling rate [0, F_s / 4]
@@ -97,7 +97,7 @@ void BiQuadFilter::SetFrameImpl(PlaybackFrame* frame)
 	_output1->SetFrame(frame);
 }
 
-bool BiQuadFilter::HasOutput() const
+bool BiQuadFilter::HasOutput(double absoluteTime) const
 {
 	return true;
 }

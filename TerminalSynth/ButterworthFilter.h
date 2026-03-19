@@ -1,14 +1,14 @@
 #pragma once
-#define BUDDA_Q_SCALE 6.f
 
 #ifndef BUTTERWORTH_FILTER_H
 #define BUTTERWORTH_FILTER_H
+#define BUDDA_Q_SCALE 6.f
 
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
-#include "SignalBase.h"
+#include "SignalParameterizedBase.h"
 
-class ButterworthFilter : public SignalBase
+class ButterworthFilter : public SignalParameterizedBase
 {
 public:
 
@@ -16,7 +16,7 @@ public:
 	~ButterworthFilter();
 
 	void Initialize(const PlaybackInfo* parameters) override;
-	bool HasOutput() const override;
+	bool HasOutput(double absoluteTime) const override;
 
 	void SetFilter(float cutoff, float resonance);
 

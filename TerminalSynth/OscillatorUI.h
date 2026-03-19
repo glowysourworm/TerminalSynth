@@ -94,7 +94,8 @@ OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const ftx
 		"Square",
 		"Triangle",
 		"Sawtooth",
-		"SynthesizedStringPluck"
+		"SynthesizedStringPluck",
+		"STK Voice"
 	});
 	_soundBankItems = new std::vector<std::string>(soundBanks);
 	_soundNameItems = new std::vector<std::string>(soundNames);

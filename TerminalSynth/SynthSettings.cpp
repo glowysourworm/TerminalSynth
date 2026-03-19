@@ -1,5 +1,4 @@
 #include "Constant.h"
-#include "SignalChainSettings.h"
 #include "SoundBankSettings.h"
 #include "SoundSettings.h"
 #include "SynthNoteMap.h"

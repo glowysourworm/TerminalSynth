@@ -10,6 +10,7 @@
 #include "PlaybackInfo.h"
 #include "PlaybackUserData.h"
 #include "SynthSettings.h"
+#include <Stk.h>
 #include <chrono>
 #include <cmath>
 #include <ftxui/component/event.hpp>
@@ -54,7 +55,7 @@ bool MainController::Initialize(PlaybackUserData* userData)
 {
 	_userData = userData;
 
-	// RT / PORT AUDIO
+	// PORT AUDIO (Sampling Rate)
 	bool success = _audioController->Initialize(
 		userData,
 		std::bind(&PlaybackController::ProcessAudioCallback,
@@ -66,8 +67,11 @@ bool MainController::Initialize(PlaybackUserData* userData)
 			std::placeholders::_5,
 			std::placeholders::_6));
 
-	// RT AUDIO -> Open Stream (SynthSettings*)(PlaybackParameteres*) (INITIALIZE!)
+	// AUDIO -> Open Stream (SynthSettings*)(PlaybackParameteres*) (INITIALIZE!) (Sampling Rate Verify)
 	success &= _audioController->OpenStream(_userData);
+
+	// STK (global sampling rate)
+	stk::Stk::setSampleRate(userData->GetPlaybackInfo()->GetStreamInfo()->streamSampleRate);
 
 	// -> Effect Registry, Airwindows Plugins:  Require sampling rate! (Set by audio controller after stream is open)
 	success &= userData->Initialize();

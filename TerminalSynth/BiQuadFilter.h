@@ -5,8 +5,7 @@
 
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
-#include "SignalBase.h"
-#include "SignalSettings.h"
+#include "SignalParameterizedBase.h"
 
 /// <summary>
 /// Bi-Quad Filter with multiple uses:  (please see https://webaudio.github.io/Audio-EQ-Cookbook/audio-eq-cookbook.html). 
@@ -15,7 +14,7 @@
 /// Parameter 1:  Corner Frequency (All Filter Types)
 /// Parameter 2:  Q (Resonance, Bandwidth, or Shelf Slope depending on filter type)
 /// </summary>
-class BiQuadFilter : public SignalBase
+class BiQuadFilter : public SignalParameterizedBase
 {
 public:
 
@@ -75,7 +74,7 @@ public:
 	~BiQuadFilter();
 
 	void Initialize(const PlaybackInfo* parameters) override;
-	bool HasOutput() const override;
+	bool HasOutput(double absoluteTime) const override;
 
 	void UpdateParameter(int index, float value) override;
 

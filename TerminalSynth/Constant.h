@@ -20,14 +20,15 @@ enum class OscillatorType : int {
 enum class EnvelopeShape : int {
 	Linear = 0,
 	Gaussian = 1,
-	Poisson = 2
+	Gamma = 2
 };
 enum class BuiltInOscillators : int {
 	Sine = 0,
 	Square = 1,
 	Triangle = 2,
 	Sawtooth = 3,
-	SynthesizedStringPluck = 4
+	SynthesizedStringPluck = 4,
+	StkVoice = 5
 };
 enum class ParameterAutomationType : int {
 	EnvelopeSweep = 0,

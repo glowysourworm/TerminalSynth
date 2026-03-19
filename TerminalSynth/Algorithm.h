@@ -7,6 +7,7 @@
 #include <complex>
 #include <exception>
 #include <limits>
+#include <numbers>
 #include <vector>
 
 class Algorithm
@@ -126,6 +127,17 @@ public:
     }
 
     /// <summary>
+    /// Generates a standard gaussian with the provided mean and sigma values
+    /// </summary>
+    static double Gaussian(double x, double mean, double sigma)
+    {
+        double z = (x - mean) / sigma;
+        double A = (1 / (sigma * std::sqrt(2 * std::numbers::pi)));
+
+        return A * exp(-0.5 * z * z);
+    }
+
+    /// <summary>
     /// Generates a Guassian window function value. https://en.wikipedia.org/wiki/Window_function
     /// </summary>
     /// <param name="sigma">Standard deviation, should be less than 0.5 for this function</param>
@@ -175,6 +187,20 @@ public:
 
         // Standard Gaussian centered at the midway point of the window, 3-sigma out.
         return A * std::exp(-0.5 * z * z);
+    }
+
+    /// <summary>
+    /// Calculates a value from the PDF of the Gamma distribution. The alpha and theta parameters
+    /// are the canonical parameters of shape and scale.
+    /// </summary>
+    static double GammaDistribution(double x, double alpha, double theta)
+    {
+        if (alpha < 1)
+            throw new std::exception("Must call gamma distribution function with alpha >= 1");
+
+        double gammaAlpha = std::tgamma(alpha);
+        
+        return (1 / gammaAlpha * pow(theta, alpha)) * pow(x, alpha - 1) * exp((-1 * x) / theta);
     }
 
     /// <summary>

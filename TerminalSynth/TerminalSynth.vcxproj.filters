@@ -126,9 +126,6 @@
     <ClCompile Include="Synth.cpp">
       <Filter>Source Files\Synth</Filter>
     </ClCompile>
-    <ClCompile Include="SynthNote.cpp">
-      <Filter>Source Files\Synth</Filter>
-    </ClCompile>
     <ClCompile Include="SynthNoteMap.cpp">
       <Filter>Source Files\Synth</Filter>
     </ClCompile>
@@ -159,7 +156,7 @@
     <ClCompile Include="SignalFactory.cpp">
       <Filter>Source Files\Signal</Filter>
     </ClCompile>
-    <ClCompile Include="SynthNotePool.cpp">
+    <ClCompile Include="SynthVoicePool.cpp">
       <Filter>Source Files\Synth</Filter>
     </ClCompile>
     <ClCompile Include="WaveTable.cpp">
@@ -189,9 +186,6 @@
     <ClCompile Include="SoundFileReader.cpp">
       <Filter>Source Files\Utility</Filter>
     </ClCompile>
-    <ClCompile Include="SynthNoteCache.cpp">
-      <Filter>Source Files\Synth</Filter>
-    </ClCompile>
     <ClCompile Include="SignalParameterAutomater.cpp">
       <Filter>Source Files\Signal</Filter>
     </ClCompile>
@@ -203,6 +197,9 @@
     </ClCompile>
     <ClCompile Include="PlaybackUserData.cpp">
       <Filter>Source Files\ModelPlayback</Filter>
+    </ClCompile>
+    <ClCompile Include="SynthVoiceDirect.cpp">
+      <Filter>Source Files\Synth</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -234,9 +231,6 @@
       <Filter>Header Files\Signal</Filter>
     </ClInclude>
     <ClInclude Include="Synth.h">
-      <Filter>Header Files\Synth</Filter>
-    </ClInclude>
-    <ClInclude Include="SynthNote.h">
       <Filter>Header Files\Synth</Filter>
     </ClInclude>
     <ClInclude Include="SynthPlaybackDevice.h">
@@ -290,7 +284,7 @@
     <ClInclude Include="SignalBase.h">
       <Filter>Header Files\Signal</Filter>
     </ClInclude>
-    <ClInclude Include="SynthNotePool.h">
+    <ClInclude Include="SynthVoicePool.h">
       <Filter>Header Files\Synth</Filter>
     </ClInclude>
     <ClInclude Include="MainUI.h">
@@ -383,9 +377,6 @@
     <ClInclude Include="SoundFileReader.h">
       <Filter>Header Files\Utility</Filter>
     </ClInclude>
-    <ClInclude Include="SynthNoteCache.h">
-      <Filter>Header Files\Synth</Filter>
-    </ClInclude>
     <ClInclude Include="SignalNodeUI.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
@@ -463,6 +454,18 @@
     </ClInclude>
     <ClInclude Include="MetricUIInfo.h">
       <Filter>Header Files\ModelPlayback</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthVoiceBase.h">
+      <Filter>Header Files\Synth</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthVoiceDirect.h">
+      <Filter>Header Files\Synth</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthVoiceWaveTable.h">
+      <Filter>Header Files\Synth</Filter>
+    </ClInclude>
+    <ClInclude Include="SignalParameterizedBase.h">
+      <Filter>Header Files\Signal</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

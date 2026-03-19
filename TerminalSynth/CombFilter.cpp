@@ -1,10 +1,10 @@
 #include "CombFilter.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
-#include "SignalBase.h"
+#include "SignalParameterizedBase.h"
 #include <queue>
 
-CombFilter::CombFilter(float delaySeconds, float gain, bool feedback)
+CombFilter::CombFilter(float delaySeconds, float gain, bool feedback) : SignalParameterizedBase("CombFilter")
 {
 	_bufferL = new std::queue<float>();
 	_bufferR = new std::queue<float>();
@@ -22,7 +22,7 @@ CombFilter::~CombFilter()
 
 void CombFilter::Initialize(const PlaybackInfo* parameters)
 {
-	SignalBase::Initialize(parameters);
+	//SignalParameterizedBase::Initialize(parameters);
 
 	this->AddParameter("Delay", 0.01f, 1.0f, _delaySeconds);
 	this->AddParameter("Gain", 0.0f, 1.0f, _gain);
@@ -70,7 +70,7 @@ void CombFilter::SetFrameImpl(PlaybackFrame* frame)
 	frame->SetFrame(outputL, outputR);
 }
 
-bool CombFilter::HasOutput() const
+bool CombFilter::HasOutput(double absoluteTime) const
 {
 	return this->GetParameterValue(1) > 0.0f;
 }

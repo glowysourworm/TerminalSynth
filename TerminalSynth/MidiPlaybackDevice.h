@@ -9,7 +9,6 @@
 #include "MidiEventList.h"
 #include "MidiFile.h"
 #include "PlaybackDevice.h"
-#include "PlaybackFormatTransformer.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
 #include "SoundRegistry.h"
@@ -26,7 +25,7 @@ public:
 	~MidiPlaybackDevice();
 
 	bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) override;
-	bool Update(SoundRegistry* effectRegistry, const SynthSettings* configuration) override;
+	bool Update(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) override;
 	bool GetLastOutput() const override;
 	bool SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration) override;
 	int WritePlaybackBuffer(
@@ -122,9 +121,9 @@ bool MidiPlaybackDevice::Initialize(const SoundRegistry* effectRegistry, const S
 	return _initialized;
 }
 
-bool MidiPlaybackDevice::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration)
+bool MidiPlaybackDevice::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters)
 {
-	_synth->Update(effectRegistry, configuration->GetDefaultSoundSettings());
+	_synth->Update(effectRegistry, configuration->GetDefaultSoundSettings(), parameters);
 
 	return true;
 }
@@ -161,13 +160,13 @@ void MidiPlaybackDevice::SetMidiSynth(double currentStreamTime, int currentFrame
 		// Note On
 		if (midiEvent.isNoteOn())
 		{
-			synth->Set(midiEvent.getKeyNumber(), true, currentTime);
+			synth->SetNote(midiEvent.getKeyNumber(), true, currentTime);
 		}
 
 		// Note Off
 		else if (midiEvent.isNoteOff())
 		{
-			synth->Set(midiEvent.getKeyNumber(), false, currentTime);
+			synth->SetNote(midiEvent.getKeyNumber(), false, currentTime);
 		}
 	});
 }

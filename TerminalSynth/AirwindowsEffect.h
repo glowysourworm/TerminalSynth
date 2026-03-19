@@ -5,7 +5,7 @@
 
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
-#include "SignalBase.h"
+#include "SignalParameterizedBase.h"
 #include "SignalSettings.h"
 #include <airwin_consolidated_base.h>
 
@@ -13,7 +13,7 @@
 /// Airwindows Effect Wrapper:  This will hold a plugin from the airwindows-plugins project. Each plugin will follow the
 /// FilterBase initialization path; and has already been properly loaded by the application.
 /// </summary>
-class AirwindowsEffect : public SignalBase
+class AirwindowsEffect : public SignalParameterizedBase
 {
 public:
 
@@ -21,7 +21,7 @@ public:
 	~AirwindowsEffect();
 
 	void Initialize(const PlaybackInfo* outputSettings) override;	
-	bool HasOutput() const override;
+	bool HasOutput(double absoluteTime) const override;
 
 	void UpdateParameter(int index, float value) override;
 

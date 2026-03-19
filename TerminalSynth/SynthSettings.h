@@ -3,7 +3,6 @@
 #ifndef SYNTH_CONFIGURATION_H
 #define SYNTH_CONFIGURATION_H
 
-#include "SignalChainSettings.h"
 #include "SoundBankSettings.h"
 #include "SoundSettings.h"
 #include "SynthNoteMap.h"

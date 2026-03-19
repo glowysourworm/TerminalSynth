@@ -77,9 +77,9 @@ int PlaybackController::ProcessAudioCallback(void* outputBuffer, AudioStreamForm
 	if (configuration->IsDirty())
 	{
 		if (_midiMode)
-			_midiDevice->Update(effectRegistry, configuration);
+			_midiDevice->Update(effectRegistry, configuration, outputSettings);
 		else
-			_synthDevice->Update(effectRegistry, configuration);
+			_synthDevice->Update(effectRegistry, configuration, outputSettings);
 
 		configuration->ClearDirty();
 	}

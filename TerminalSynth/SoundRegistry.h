@@ -6,7 +6,7 @@
 #include "AirwindowsEffect.h"
 #include "AirwindowsEffectLoader.h"
 #include "PlaybackInfo.h"
-#include "SignalBase.h"
+#include "SignalParameterizedBase.h"
 #include "SignalSettings.h"
 #include <AirwinRegistry.h>
 #include <AirwinRegistryEntry.h>
@@ -57,13 +57,13 @@ public:
 	/// be managed by the SoundRegistry so we don't allocate memory in real time. Multiple
 	/// instances are allowed for the same effect name based on SignalBase* pointer uniqueness.
 	/// </summary>
-	SignalBase* Checkout(const std::string& name) const;
+	SignalParameterizedBase* Checkout(const std::string& name) const;
 
 	/// <summary>
 	/// Effect use has been terminated by the user, so the memory may be freed at some 
 	/// idle time from the application controllers; or on exit.
 	/// </summary>
-	void Checkin(SignalBase* effect);
+	void Checkin(SignalParameterizedBase* effect);
 
 private:
 
@@ -74,10 +74,10 @@ private:
 	std::map<std::string, AirwinRegistryEntry*>* _registryEntries;
 
 	// Instances of our SignalBase* effects
-	std::map<std::string, std::vector<SignalBase*>*>* _effectInstances;
+	std::map<std::string, std::vector<SignalParameterizedBase*>*>* _effectInstances;
 
 	// Instances that are being used
-	std::map<std::string, std::vector<SignalBase*>*>* _effectInstancesCheckedOut;
+	std::map<std::string, std::vector<SignalParameterizedBase*>*>* _effectInstancesCheckedOut;
 
 	const PlaybackInfo* _outputSettings;
 };
@@ -86,8 +86,8 @@ SoundRegistry::SoundRegistry()
 {
 	_airwinEffectRegistry = new AirwinRegistry();
 	_registryEntries = new std::map<std::string, AirwinRegistryEntry*>();
-	_effectInstances = new std::map<std::string, std::vector<SignalBase*>*>();
-	_effectInstancesCheckedOut = new std::map<std::string, std::vector<SignalBase*>*>();
+	_effectInstances = new std::map<std::string, std::vector<SignalParameterizedBase*>*>();
+	_effectInstancesCheckedOut = new std::map<std::string, std::vector<SignalParameterizedBase*>*>();
 	_outputSettings = nullptr;
 }
 
@@ -144,8 +144,8 @@ bool SoundRegistry::Initialize(const PlaybackInfo* outputSettings, std::vector<S
 
 		// Store to registry maps
 		_registryEntries->insert(std::make_pair(pluginList.at(index), pluginEntry));
-		_effectInstances->insert(std::make_pair(pluginList.at(index), new std::vector<SignalBase*>()));					// MEMORY! ~SoundRegistry
-		_effectInstancesCheckedOut->insert(std::make_pair(pluginList.at(index), new std::vector<SignalBase*>()));		// MEMORY! ~SoundRegistry
+		_effectInstances->insert(std::make_pair(pluginList.at(index), new std::vector<SignalParameterizedBase*>()));					// MEMORY! ~SoundRegistry
+		_effectInstancesCheckedOut->insert(std::make_pair(pluginList.at(index), new std::vector<SignalParameterizedBase*>()));		    // MEMORY! ~SoundRegistry
 
 		// Airwindows Instance!
 		AudioEffectX* effect = pluginEntry->CreateEffect(_outputSettings->GetStreamInfo()->streamSampleRate);
@@ -186,7 +186,7 @@ std::string SoundRegistry::GetName(int index) const
 	return iter->first;
 }
 
-SignalBase* SoundRegistry::Checkout(const std::string& name) const
+SignalParameterizedBase* SoundRegistry::Checkout(const std::string& name) const
 {
 	if (!_registryEntries->contains(name))
 		throw new std::exception("Effect name not found in SoundRegistry*");
@@ -194,7 +194,7 @@ SignalBase* SoundRegistry::Checkout(const std::string& name) const
 	// Available Instances
 	if (_effectInstances->at(name)->size() > 0)
 	{
-		SignalBase* instance = _effectInstances->at(name)->back();
+		SignalParameterizedBase* instance = _effectInstances->at(name)->back();
 
 		_effectInstancesCheckedOut->at(name)->push_back(instance);
 		_effectInstances->at(name)->pop_back();
@@ -224,7 +224,7 @@ SignalBase* SoundRegistry::Checkout(const std::string& name) const
 	return wrappedEffect;
 }
 
-void SoundRegistry::Checkin(SignalBase* effect)
+void SoundRegistry::Checkin(SignalParameterizedBase* effect)
 {
 	if (!_effectInstancesCheckedOut->contains(effect->GetName()))
 		throw new std::exception("Effect name not found (Checked Out) in SoundRegistry*");

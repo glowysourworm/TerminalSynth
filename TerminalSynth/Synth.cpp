@@ -4,66 +4,72 @@
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
 #include "Synth.h"
-#include "SynthNotePool.h"
 #include "SynthSettings.h"
+#include "SynthVoicePool.h"
 
 Synth::Synth(const SynthSettings* configuration, unsigned int numberOfChannels, unsigned int samplingRate)
 {
 	_numberOfChannels = numberOfChannels;
 	_samplingRate = samplingRate;
 	_postProcessing = new SignalChain();
-	_pianoNotes = nullptr;	
+	_notePool = nullptr;
 }
 
 Synth::~Synth()
 {
-	delete _pianoNotes;
 	delete _postProcessing;
+
+	if (_notePool != nullptr)
+		delete _notePool;
 }
 
 void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters)
 {
-	_pianoNotes = new SynthNotePool(effectRegistry, configuration, parameters, 10);
+	_notePool = new SynthVoicePool(effectRegistry, configuration->GetCurrentSoundSettings(), parameters, 10);
 	_postProcessing->Initialize(effectRegistry, configuration->GetDefaultSoundSettings()->GetPostProcessing(), parameters);
 }
 
-void Synth::Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings)
+void Synth::Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings, const PlaybackInfo* parameters)
 {
 	_postProcessing->Update(effectRegistry, soundSettings->GetPostProcessing());
-	_pianoNotes->Update(effectRegistry, 
-						soundSettings->GetOscillatorParameters(), 
-						soundSettings->GetOscillatorEnvelope(),
-						soundSettings->GetSignalChain(),
-						_samplingRate);
+	_notePool->Update(effectRegistry, soundSettings, parameters);
 }
 
-void Synth::Set(int midiNumber, bool pressed, double absoluteTime)
+void Synth::SetNote(int midiNumber, bool pressed, double absoluteTime)
 {
 	// THIS WHOLE LOOP NEEDS TO BE EVENT BASED (w/ the frontend)
 
-	_pianoNotes->SetNote(midiNumber, pressed, absoluteTime);
+	bool isEngaged = _notePool->IsEngaged(midiNumber);
 
-	if (_pianoNotes->HasEngagedNotes())
+	if (isEngaged && pressed)
+		return;
+
+	// Note Off
+	else if (isEngaged && !pressed)
+		_notePool->NoteOff(midiNumber, absoluteTime);
+
+	// Note On
+	else if (!isEngaged && pressed)
+		_notePool->NoteOn(midiNumber, absoluteTime);
+
+	// Post-Processing (All Notes)
+	if (_notePool->HasEngagedNotes())
 		_postProcessing->Engage(absoluteTime);
 	else
 		_postProcessing->DisEngage(absoluteTime);
 }
 bool Synth::GetSample(PlaybackFrame* frame, float gain, float leftRightBalance)
 {
-	// Primary Synth Voice(s)
-	bool hasOutput = _pianoNotes->SetFrame(frame, gain, leftRightBalance);
+	bool hasOutput = false;
+
+	// Primary Synth Voice(s) (Also, prunes note pool)
+	_notePool->SetFrame(frame);
 
 	// Post Processing
-	hasOutput |= _postProcessing->HasOutput();
+	hasOutput |= _postProcessing->HasOutput(frame->GetStreamTime());
 
 	//if (_postProcessing->HasOutput(absoluteTime))
 		_postProcessing->SetFrame(frame);
 
 	return hasOutput;
-}
-
-void Synth::PruneNotePool()
-{
-	if (_pianoNotes->CanEvictCache())
-		_pianoNotes->EvictOutdatedCache();
 }

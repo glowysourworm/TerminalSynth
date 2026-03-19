@@ -27,7 +27,7 @@ public:
 	/// Update of playback device with current settings
 	/// </summary>
 	/// <returns>Returns true if device is ready, otherwise false for some sort of error</returns>
-	virtual bool Update(SoundRegistry* effectRegistry, const SynthSettings* configuration) = 0;
+	virtual bool Update(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) = 0;
 
 	/// <summary>
 	/// Returns true if the synth had output last call to WritePlaybackBuffer. This output means there's more in the 

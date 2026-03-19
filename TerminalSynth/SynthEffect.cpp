@@ -1,11 +1,11 @@
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
-#include "SignalBase.h"
+#include "SignalParameterizedBase.h"
 #include "SignalSettings.h"
 #include "SynthEffect.h"
 #include <string>
 
-SynthEffect::SynthEffect(const std::string& name, const SignalSettings& parameters) : SignalBase(parameters)
+SynthEffect::SynthEffect(const std::string& name, const SignalSettings& parameters) : SignalParameterizedBase(parameters)
 {
 }
 SynthEffect::~SynthEffect()
@@ -13,7 +13,7 @@ SynthEffect::~SynthEffect()
 }
 void SynthEffect::Initialize(const PlaybackInfo* parameters)
 {
-	SignalBase::Initialize(parameters);
+	//SignalParameterizedBase::Initialize(parameters);
 }
 
 void SynthEffect::SetFrameImpl(PlaybackFrame* frame)
@@ -21,7 +21,7 @@ void SynthEffect::SetFrameImpl(PlaybackFrame* frame)
 
 }
 
-bool SynthEffect::HasOutput() const
+bool SynthEffect::HasOutput(double absoluteTime) const
 {
 	return false;
 }

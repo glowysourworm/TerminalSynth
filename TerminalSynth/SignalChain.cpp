@@ -1,15 +1,15 @@
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
-#include "SignalBase.h"
 #include "SignalChain.h"
 #include "SignalChainSettings.h"
+#include "SignalParameterizedBase.h"
 #include "SignalSettings.h"
 #include "SoundRegistry.h"
 #include <vector>
 
 SignalChain::SignalChain()
 {
-	_chain = new std::vector<SignalBase*>();
+	_chain = new std::vector<SignalParameterizedBase*>();
 }
 
 SignalChain::~SignalChain()
@@ -32,7 +32,7 @@ void SignalChain::Initialize(const SoundRegistry* effectRegistry, const SignalCh
 			continue;
 
 		// Get an instance from the SoundRegistry* cache (DO NOT DELETE!)
-		SignalBase* effect = effectRegistry->Checkout(settings->GetName());
+		SignalParameterizedBase* effect = effectRegistry->Checkout(settings->GetName());
 
 		_chain->push_back(effect);
 	}
@@ -57,7 +57,7 @@ void SignalChain::Update(SoundRegistry* effectRegistry, const SignalChainSetting
 			continue;
 
 		// DO NOT DELETE! (these are all handled by the SoundRegistry*)
-		SignalBase* effect = effectRegistry->Checkout(settings->GetName());
+		SignalParameterizedBase* effect = effectRegistry->Checkout(settings->GetName());
 
 		// OPTIMIZE!
 		effect->Update(settings);
@@ -89,13 +89,13 @@ void SignalChain::DisEngage(double absoluteTime)
 	}
 }
 
-bool SignalChain::HasOutput() const
+bool SignalChain::HasOutput(double absoluteTime) const
 {
 	bool hasOutput = false;
 
 	for (int index = 0; index < _chain->size() && !hasOutput; index++)
 	{
-		hasOutput |= _chain->at(index)->HasOutput();
+		hasOutput |= _chain->at(index)->HasOutput(absoluteTime);
 	}
 
 	return hasOutput;

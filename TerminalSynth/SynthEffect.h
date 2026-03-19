@@ -5,11 +5,11 @@
 
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
-#include "SignalBase.h"
+#include "SignalParameterizedBase.h"
 #include "SignalSettings.h"
 #include <string>
 
-class SynthEffect : public SignalBase
+class SynthEffect : public SignalParameterizedBase
 {
 public:
 
@@ -17,7 +17,7 @@ public:
 	~SynthEffect();
 
 	void Initialize(const PlaybackInfo* parameters) override;
-	bool HasOutput() const override;
+	bool HasOutput(double absoluteTime) const override;
 
 	void UpdateParameter(int index, float value) override;
 

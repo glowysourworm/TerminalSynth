@@ -8,28 +8,21 @@
 
 class Envelope
 {
-protected:
-
-	const int ATTACK_LENGTH = 4;
-	const int RELEASE_LENGTH = 4;
-
-	const int POISSON_LAMBDA_DEFAULT = 3;
-
 public:
 	Envelope();
-	Envelope(EnvelopeShape shape, float attackSeconds, float releaseSeconds, float attackPeak, float sustainPeak);
+	Envelope(EnvelopeShape shape, double attack, double decay, double release, double attackPeak, double sustainPeak);
 	Envelope(const Envelope& copy);
 	~Envelope();
 
 	bool Update(const Envelope* envelope);
 
-	void Engage(float absoluteTime);
-	void DisEngage(float absoluteTime);
-	bool HasOutput(float absoluteTime);
+	void Engage(double absoluteTime);
+	void DisEngage(double absoluteTime);
+	bool HasOutput(double absoluteTime);
 	bool IsEngaged();
-	float GetEnvelopeLevel(float absoluteTime);
-	float GetEngageTime();
-	float GetDisEngageTime();
+	double GetEnvelopeLevel(double absoluteTime);
+	double GetEngageTime();
+	double GetDisEngageTime();
 
 	bool operator!=(const Envelope& envelope);
 	bool operator==(const Envelope& envelope);
@@ -38,72 +31,71 @@ public:
 
 	void Save(std::ostream& stream)
 	{
-		for (int index = 0; index < ATTACK_LENGTH; index++)
-		{
-			stream << _attack[index];
-		}
-
-		for (int index = 0; index < RELEASE_LENGTH; index++)
-		{
-			stream << _release[index];
-		}
+		stream << (int)_shape;
+		stream << _attack;
+		stream << _decay;
+		stream << _release;
+		stream << _attackPeak;
+		stream << _sustainPeak;
 	}
 	void Read(std::istream& stream) 
 	{
-		for (int index = 0; index < ATTACK_LENGTH; index++)
-		{
-			stream >> _attack[index];
-		}
+		int envelopeShape;
 
-		for (int index = 0; index < RELEASE_LENGTH; index++)
-		{
-			stream >> _release[index];
-		}
+		stream >> envelopeShape;
+		stream >> _attack;
+		stream >> _decay;
+		stream >> _release;
+		stream >> _attackPeak;
+		stream >> _sustainPeak;
+
+		_shape = (EnvelopeShape)envelopeShape;
 	}
 
 	bool IsEqual(const Envelope* other)
 	{
 		bool result = true;
 
-		result &= _attackSeconds == other->GetAttackTime();
-		result &= _releaseSeconds == other->GetReleaseTime();
-
-		for (int index = 0; index < ATTACK_LENGTH; index++)
-		{
-			result &= other->GetAttackValue(index) == _attack[index];
-		}
-
-		for (int index = 0; index < RELEASE_LENGTH; index++)
-		{
-			result &= other->GetReleaseValue(index) == _release[index];
-		}
+		result &= _shape == other->GetShape();
+		result &= _attack == other->GetAttack();
+		result &= _decay == other->GetDecay();
+		result &= _release == other->GetRelease();
+		result &= _attackPeak == other->GetAttackPeak();
+		result &= _sustainPeak == other->GetSustainPeak();
 
 		return result;
 	}
 
 public:
 
-	float GetAttackTime() const;
-	float GetAttackValue(int index) const;
-	void SetAttackValue(int index, float value);
-	void SetAttackTime(float value);
+	EnvelopeShape GetShape() const;
+	double GetAttack() const;
+	double GetDecay() const;
+	double GetRelease() const;
+	double GetAttackPeak() const;
+	double GetSustainPeak() const;
 
-	float GetReleaseTime() const;
-	float GetReleaseValue(int index) const;
-	void SetReleaseValue(int index, float value);
-	void SetReleaseTime(float value);
-
-	int GetAttackLength() const;
-	int GetReleaseLength() const;
+	void SetShape(EnvelopeShape value);
+	void SetAttack(double value);
+	void SetDecay(double value);
+	void SetRelease(double value);
+	void SetAttackPeak(double value);
+	void SetSustainPeak(double value);
 
 private:
 
-	float _attackSeconds;
-	float _releaseSeconds;
+	double GetEnvelopeLevelImpl(double envelopeTime);
 
-	// Attack / Release Values
-	float* _attack;
-	float* _release;
+private:
+
+	EnvelopeShape _shape;
+
+	double _attack;
+	double _decay;
+	double _release;
+
+	double _attackPeak;
+	double _sustainPeak;
 
 	// Values stored when SynthNote is pressed / released
 	//
@@ -113,8 +105,8 @@ private:
 
 	// Absolute time values when voice is engaged / dis-engaged
 	//
-	float _engagedTime;
-	float _disEngagedTime;
-	float _disEngagedLevel;
+	double _engagedTime;
+	double _disEngagedTime;
+	double _disEngagedLevel;
 };
 #endif

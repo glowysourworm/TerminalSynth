@@ -5,6 +5,7 @@
 #include "SynthSettings.h"
 #include "Windows.h"
 #include "WindowsKeyCodes.h"
+#include <Stk.h>
 #include <string>
 
 /// <summary>
@@ -84,6 +85,11 @@ int main(int argc, char* argv[], char* envp[])
 		soundBankDirectory = std::string(argv[1]);
 	}
 
+	if (argc > 2)
+	{
+		stk::Stk::setRawwavePath(std::string(argv[2]));
+	}
+
 	// This pointer is shared (see controllers)
 	//
 	AtomicLock* playbackLock = new AtomicLock();
@@ -114,4 +120,3 @@ int main(int argc, char* argv[], char* envp[])
 
 	return 0;
 }
-

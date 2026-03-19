@@ -5,7 +5,7 @@
 
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
-#include "SignalBase.h"
+#include "SignalParameterizedBase.h"
 #include <queue>
 
 /// <summary>
@@ -13,7 +13,7 @@
 /// Parameter 1:  Gain
 /// Parameter 2:  Feedback (bool)
 /// </summary>
-class CombFilter : public SignalBase
+class CombFilter : public SignalParameterizedBase
 {
 public:
 
@@ -22,7 +22,7 @@ public:
 	~CombFilter();
 
 	void Initialize(const PlaybackInfo* parameters) override;
-	bool HasOutput() const override;
+	bool HasOutput(double absoluteTime) const override;
 
 	void UpdateParameter(int index, float parameterValue) override {};		// Doesn't support parameter automation
 
