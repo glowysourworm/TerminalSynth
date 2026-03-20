@@ -158,7 +158,7 @@ void SynthInformationUI::Initialize(const OutputModelUI& settings)
 				ftxui::separator(),
 				ftxui::text("Airwindows:"),
 				ftxui::text("FTXUI:"),
-				ftxui::text("RT Audio:"),
+				ftxui::text("STK (Stanford):"),
 				ftxui::text("libsndfile:"),
 				ftxui::separator(),
 

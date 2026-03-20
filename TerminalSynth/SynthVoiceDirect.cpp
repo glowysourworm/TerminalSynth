@@ -70,6 +70,9 @@ void SynthVoiceDirect::SetFrameImpl(PlaybackFrame* frame)
 			case BuiltInOscillators::StkFlute:
 				sample = _core->GenerateFluteSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
 				break;
+			case BuiltInOscillators::StkFMVoices:
+				sample = _core->GenerateFMVoicesSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
 			case BuiltInOscillators::StkGuitar:
 				sample = _core->GenerateGuitarSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
 				break;

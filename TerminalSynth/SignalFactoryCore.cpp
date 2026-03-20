@@ -4,6 +4,7 @@
 #include <BeeThree.h>
 #include <Clarinet.h>
 #include <Drummer.h>
+#include <FMVoices.h>
 #include <Flute.h>
 #include <Guitar.h>
 #include <HevyMetl.h>
@@ -14,7 +15,6 @@
 #include <Shakers.h>
 #include <Sitar.h>
 #include <TubeBell.h>
-#include <Twang.h>
 #include <VoicForm.h>
 #include <Whistle.h>
 #include <Wurley.h>
@@ -31,13 +31,14 @@ SignalFactoryCore::SignalFactoryCore(float samplingRate)
 	_stkB3 = new stk::BeeThree();
 	_stkClarinet = new stk::Clarinet();
 	_stkDrummer = new stk::Drummer();
+	_stkFMVoices = new stk::FMVoices();
 	_stkFlute = new stk::Flute(440);
 	_stkGuitar = new stk::Guitar();
 	_stkHevyMetl = new stk::HevyMetl();
 	_stkMandolin = new stk::Mandolin(440);
 	_stkMoog = new stk::Moog();
 	_stkSaxofony = new stk::Saxofony(440);
-	_stkShakers = new stk::Shakers();
+	_stkShakers = new stk::Shakers(10);
 	_stkSitar = new stk::Sitar();
 	_stkTubeBell = new stk::TubeBell();
 	_stkVoicForm = new stk::VoicForm();
@@ -56,6 +57,7 @@ SignalFactoryCore::~SignalFactoryCore()
 	delete _stkClarinet;
 	delete _stkDrummer;
 	delete _stkFlute;
+	delete _stkFMVoices;
 	delete _stkGuitar;
 	delete _stkHevyMetl;
 	delete _stkMandolin;
@@ -102,6 +104,16 @@ void SignalFactoryCore::Reset(const OscillatorParameters* parameters)
 	_stkFlute->clear();
 	_stkFlute->noteOn(parameters->GetFrequency(), 1);
 
+	_stkFMVoices->clear();
+	_stkFMVoices->setFrequency(parameters->GetFrequency());
+	_stkFMVoices->setRatio(0, 0.1);
+	_stkFMVoices->setRatio(1, 0.15);
+	_stkFMVoices->setRatio(2, 0.2);
+	_stkFMVoices->setRatio(3, 0.25);
+	_stkFMVoices->setModulationDepth(0.05);
+	_stkFMVoices->setModulationSpeed(6);
+	_stkFMVoices->noteOn(parameters->GetFrequency(), 1);
+
 	_stkGuitar->clear();
 	_stkGuitar->noteOn(parameters->GetFrequency(), 1);
 
@@ -118,7 +130,7 @@ void SignalFactoryCore::Reset(const OscillatorParameters* parameters)
 	_stkSaxofony->noteOn(parameters->GetFrequency(), 1);
 
 	_stkShakers->clear();
-	_stkShakers->noteOn(parameters->GetFrequency(), 1);
+	_stkShakers->noteOn(parameters->GetFrequency(), 100);
 
 	_stkSitar->clear();
 	_stkSitar->noteOn(parameters->GetFrequency(), 1);
@@ -257,6 +269,10 @@ float SignalFactoryCore::GenerateClarinetSample(float frequency, size_t timeCurs
 float SignalFactoryCore::GenerateDrummerSample(float frequency, size_t timeCursor, double streamTime)
 {
 	return _stkDrummer->tick();
+}
+float SignalFactoryCore::GenerateFMVoicesSample(float frequency, size_t timeCursor, double streamTime)
+{
+	return _stkFMVoices->tick();
 }
 float SignalFactoryCore::GenerateFluteSample(float frequency, size_t timeCursor, double streamTime)
 {

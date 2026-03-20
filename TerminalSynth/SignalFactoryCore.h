@@ -7,6 +7,7 @@
 #include <BeeThree.h>
 #include <Clarinet.h>
 #include <Drummer.h>
+#include <FMVoices.h>
 #include <Flute.h>
 #include <Guitar.h>
 #include <HevyMetl.h>
@@ -55,6 +56,7 @@ public:
 	float GenerateClarinetSample(float frequency, size_t timeCursor, double streamTime);
 	float GenerateDrummerSample(float frequency, size_t timeCursor, double streamTime);
 	float GenerateFluteSample(float frequency, size_t timeCursor, double streamTime);
+	float GenerateFMVoicesSample(float frequency, size_t timeCursor, double streamTime);
 	float GenerateGuitarSample(float frequency, size_t timeCursor, double streamTime);
 	float GenerateHevyMetlSample(float frequency, size_t timeCursor, double streamTime);
 	float GenerateMandolinSample(float frequency, size_t timeCursor, double streamTime);
@@ -80,6 +82,7 @@ private:
 	stk::Clarinet* _stkClarinet;
 	stk::Drummer* _stkDrummer;
 	stk::Flute* _stkFlute;
+	stk::FMVoices* _stkFMVoices;
 	stk::Guitar* _stkGuitar;
 	stk::HevyMetl* _stkHevyMetl;
 	stk::Mandolin* _stkMandolin;

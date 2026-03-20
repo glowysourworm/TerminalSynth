@@ -100,6 +100,7 @@ OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const ftx
 		"STK Clarinet",
 		"STK Drummer",
 		"STK Flute",
+		"STK FM Voices",
 		"STK Guitar",
 		"STK Heavy Metal",
 		"STK Mandolin",

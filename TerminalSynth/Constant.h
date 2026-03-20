@@ -33,6 +33,7 @@ enum class BuiltInOscillators : int {
 	StkClarinet,
 	StkDrummer,
 	StkFlute,
+	StkFMVoices,
 	StkGuitar,
 	StkHevyMetl,
 	StkMandolin,
