@@ -277,6 +277,8 @@
     <ClInclude Include="AirwindowsEffect.h" />
     <ClInclude Include="AirwindowsEffectLoader.h" />
     <ClInclude Include="AtomicLock.h" />
+    <ClInclude Include="InputModelUI.h" />
+    <ClInclude Include="InputUI.h" />
     <ClInclude Include="MetricAudioInfo.h" />
     <ClInclude Include="BiQuadFilter.h" />
     <ClInclude Include="CheckboxModelUI.h" />
@@ -327,8 +329,8 @@
     <ClInclude Include="SignalParameterUI.h" />
     <ClInclude Include="SoundSettings.h" />
     <ClInclude Include="StreamInfo.h" />
-    <ClInclude Include="SynthTabModelUI.h" />
-    <ClInclude Include="SynthTabUI.h" />
+    <ClInclude Include="EffectsModelUI.h" />
+    <ClInclude Include="EffectsUI.h" />
     <ClInclude Include="SignalFactory.h" />
     <ClInclude Include="SignalBase.h" />
     <ClInclude Include="SignalNodeModelUI.h" />

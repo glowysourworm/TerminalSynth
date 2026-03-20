@@ -3,9 +3,10 @@
 #ifndef MAIN_UI_H
 #define MAIN_UI_H
 
+#include "EffectsUI.h"
+#include "InputUI.h"
 #include "MainModelUI.h"
 #include "SynthInformationUI.h"
-#include "SynthTabUI.h"
 #include "UIBase.h"
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/screen/color.hpp>
@@ -47,18 +48,15 @@ private:
 	ftxui::Component _tabControlMenu;
 	ftxui::Color _buttonColor;
 
-	// Output Tab
-	ftxui::Component _outputTab;
-
 	float* _scrollY;
 	int* _tabIndex;
 
 	MainModelUI* _model;
 
+	// Tabs
 	SynthInformationUI* _synthInformationUI;
-	
-	// Synth Tab
-	SynthTabUI* _synthTabUI;
+	InputUI* _inputUI;
+	EffectsUI* _effectsUI;
 
 };
 

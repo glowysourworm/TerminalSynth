@@ -5,7 +5,7 @@
 
 #include "ModelUI.h"
 #include "UIBase.h"
-#include <cmath>
+#include <algorithm>
 #include <concepts>
 #include <exception>
 #include <ftxui/component/component.hpp>
@@ -155,12 +155,12 @@ ScrollViewerUI<TModel, T>::ScrollViewerUI(float scrollDeltaY)
 		if (event.mouse().button == ftxui::Mouse::Button::WheelUp && *_isMouseOver)
 		{
 			// Set Mouse Wheel (clipped [0,1])
-			*_scrollY = fminf(fmaxf(*_scrollY - _scrollDeltaY, 0), 1);
+			*_scrollY = std::min<float>(std::max<float>(*_scrollY - _scrollDeltaY, 0), 1);
 		}
 		else if (event.mouse().button == ftxui::Mouse::Button::WheelDown && *_isMouseOver)
 		{
 			// Set Mouse Wheel (clipped [0,1])
-			*_scrollY = fminf(fmaxf(*_scrollY + _scrollDeltaY, 0), 1);
+			*_scrollY = std::min<float>(std::max<float>(*_scrollY + _scrollDeltaY, 0), 1);
 		}
 
 		// Pass through

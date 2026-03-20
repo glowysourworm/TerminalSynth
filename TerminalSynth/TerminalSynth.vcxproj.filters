@@ -302,7 +302,7 @@
     <ClInclude Include="SignalChain.h">
       <Filter>Header Files\Signal</Filter>
     </ClInclude>
-    <ClInclude Include="SynthTabUI.h">
+    <ClInclude Include="EffectsUI.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
     <ClInclude Include="SynthEffect.h">
@@ -416,7 +416,7 @@
     <ClInclude Include="MainModelUI.h">
       <Filter>Header Files\ModelUI</Filter>
     </ClInclude>
-    <ClInclude Include="SynthTabModelUI.h">
+    <ClInclude Include="EffectsModelUI.h">
       <Filter>Header Files\ModelUI</Filter>
     </ClInclude>
     <ClInclude Include="Algorithm.h">
@@ -466,6 +466,12 @@
     </ClInclude>
     <ClInclude Include="SignalParameterizedBase.h">
       <Filter>Header Files\Signal</Filter>
+    </ClInclude>
+    <ClInclude Include="InputUI.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="InputModelUI.h">
+      <Filter>Header Files\ModelUI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -7,15 +7,13 @@
 #include "CheckboxModelUI.h"
 #include "CheckboxUI.h"
 #include "EffectUI.h"
-#include "EnvelopeUI.h"
-#include "OscillatorUI.h"
+#include "EffectsModelUI.h"
 #include "ScrollViewerUI.h"
 #include "SignalChainSettings.h"
 #include "SignalNodeModelUI.h"
 #include "SignalNodeUI.h"
 #include "SignalSettings.h"
 #include "SoundSettings.h"
-#include "SynthTabModelUI.h"
 #include "UIBase.h"
 #include "ValueCapture.h"
 #include <exception>
@@ -28,24 +26,24 @@
 #include <utility>
 #include <vector>
 
-class SynthTabUI : public UIBase<SynthTabModelUI>
+class EffectsUI : public UIBase<EffectsModelUI>
 {
 public:
 
-	SynthTabUI(const SynthTabModelUI& synthSettings);
-	~SynthTabUI();
+	EffectsUI(const EffectsModelUI& initialValue);
+	~EffectsUI();
 
-	void Initialize(const SynthTabModelUI& initialValue) override;
+	void Initialize(const EffectsModelUI& initialValue) override;
 	ftxui::Component GetComponent() override;
 
 	void ServicePendingAction() override;
 	void UpdateComponent() override;
 	void Tick() override;
 
-	void ToUI(const SynthTabModelUI& source) override;
-	void ToUI(const SynthTabModelUI* source) override;
-	void FromUI(SynthTabModelUI& destination) override;
-	void FromUI(SynthTabModelUI* destination) override;
+	void ToUI(const EffectsModelUI& source) override;
+	void ToUI(const EffectsModelUI* source) override;
+	void FromUI(EffectsModelUI& destination) override;
+	void FromUI(EffectsModelUI* destination) override;
 
 	bool HasPendingAction() const override;
 	void ClearPendingAction() override;
@@ -60,16 +58,11 @@ private:
 private:
 
 	ftxui::Component _component;
-	ftxui::Component _signalInputContainer;
 	ftxui::Component _signalEffectsContainer;
 	ftxui::Component _signalChainContainer;
 	ftxui::Component _editorContainer;
 
-	SynthTabModelUI* _model;
-
 	// Editors
-	OscillatorUI* _oscillatorUI;
-	EnvelopeUI* _envelopeUI;
 	ActiveEditorUI* _activeEditorUI;
 
 	// Scroll Viewers
@@ -85,10 +78,6 @@ private:
 
 	ValueCapture<int>* _effectCategorySelectedIndex;
 
-	// Static Signal Chain Elements
-	SignalNodeUI* _oscillatorSignalUI;
-	SignalNodeUI* _envelopeSignalUI;
-
 	// EffectUI instances by name
 	std::map<std::string, EffectUI*>* _effectUIs;
 
@@ -96,10 +85,9 @@ private:
 	bool _isDirty;
 };
 
-SynthTabUI::SynthTabUI(const SynthTabModelUI& model)
+EffectsUI::EffectsUI(const EffectsModelUI& model)
 {
 	_isDirty = false;
-	_model = new SynthTabModelUI(model);
 	_activeEditorUI = new ActiveEditorUI();
 
 	SignalNodeModelUI envelopeModel("Envelope", true, false, false, false, 0);
@@ -107,11 +95,6 @@ SynthTabUI::SynthTabUI(const SynthTabModelUI& model)
 
 	_pluginListUI = new ScrollViewerUI<CheckboxModelUI, CheckboxUI>(0.005);
 	_postProcessingUI = new ScrollViewerUI<SignalNodeModelUI, SignalNodeUI>();
-
-	_envelopeUI = new EnvelopeUI(*model.GetSoundSettings()->GetOscillatorEnvelope());
-	_oscillatorUI = new OscillatorUI(_model->GetSoundBankSettings(), ftxui::Color::White);
-	_envelopeSignalUI = new SignalNodeUI(envelopeModel);
-	_oscillatorSignalUI = new SignalNodeUI(oscillatorModel);
 
 	_effectCategories = new std::vector<std::string>();
 	_effectsByCategory = new std::map<std::string, std::vector<std::string>*>();
@@ -122,12 +105,7 @@ SynthTabUI::SynthTabUI(const SynthTabModelUI& model)
 	_pluginModels = new std::map<std::string, CheckboxModelUI*>();
 	_effectUIs = new std::map<std::string, EffectUI*>();
 
-	_oscillatorUI->Initialize(*_model->GetSoundSettings()->GetOscillatorParameters());
-	_envelopeUI->Initialize(*_model->GetSoundSettings()->GetOscillatorEnvelope());
-	_oscillatorSignalUI->Initialize(oscillatorModel);
-	_envelopeSignalUI->Initialize(envelopeModel);
-
-	auto effectRegistry = _model->GetEffectRegistry();
+	auto effectRegistry = model.GetEffectRegistryList();
 
 	// Effect Registry
 	for (int index = 0; index < effectRegistry->size(); index++)
@@ -138,19 +116,19 @@ SynthTabUI::SynthTabUI(const SynthTabModelUI& model)
 		if (!_effectsByCategory->contains(element->GetCategory()))
 		{
 			_effectCategories->push_back(element->GetCategory());
-			_effectsByCategory->insert(std::make_pair(element->GetCategory(), new std::vector<std::string>()));		// MEMORY! ~SynthTabUI
+			_effectsByCategory->insert(std::make_pair(element->GetCategory(), new std::vector<std::string>()));		// MEMORY! ~EffectsUI
 		}
 
 		// List By Category
 		_effectsByCategory->at(element->GetCategory())->push_back(element->GetName());
 
-		// (MEMORY!) ~SynthTabUI
+		// (MEMORY!) ~EffectsUI
 		EffectUI* effectUI = new EffectUI(element->GetName(), element->GetCategory(), element->GetInfoText(), ftxui::Color::White);
 
-		// (MEMORY!) ~SynthTabUI
+		// (MEMORY!) ~EffectsUI
 		SignalNodeModelUI* signalModelUI = new SignalNodeModelUI(element->GetName(), true, true, true, true, index);
 
-		// (MEMORY!) ~SynthTabUI
+		// (MEMORY!) ~EffectsUI
 		CheckboxModelUI* checkboxModelUI = new CheckboxModelUI(element->GetName(), false, index);
 
 		// Plugin List UI (FIRST CATEGORY)
@@ -164,7 +142,7 @@ SynthTabUI::SynthTabUI(const SynthTabModelUI& model)
 		_pluginModels->insert(std::make_pair(element->GetName(), checkboxModelUI));
 	}
 }
-SynthTabUI::~SynthTabUI()
+EffectsUI::~EffectsUI()
 {
 	// MEMORY! (EffectUI*)
 	for (auto iter = _effectUIs->begin(); iter != _effectUIs->end(); ++iter)
@@ -200,23 +178,14 @@ SynthTabUI::~SynthTabUI()
 	delete _effectCategorySelectedIndex;
 
 	// Editors
-	delete _oscillatorUI;
-	delete _envelopeUI;
 	delete _activeEditorUI;
 
 	// Scroll Viewers
 	delete _pluginListUI;
 	delete _postProcessingUI;
-
-	// Signal Input
-	delete _oscillatorSignalUI;
-	delete _envelopeSignalUI;
-
-	// Model
-	delete _model;
 }
 
-void SynthTabUI::Initialize(const SynthTabModelUI& model)
+void EffectsUI::Initialize(const EffectsModelUI& model)
 {	
 	auto categoryDropdown = ftxui::Dropdown(_effectCategories, _effectCategorySelectedIndex->GetRef());
 
@@ -224,7 +193,7 @@ void SynthTabUI::Initialize(const SynthTabModelUI& model)
 
 	_signalEffectsContainer = ftxui::Container::Vertical({
 
-		ftxui::Renderer([&] {return ftxui::text("Signal Effects") | ftxui::color(ftxui::Color::GreenYellow); }),
+		ftxui::Renderer([&] {return ftxui::text("Effects Chain") | ftxui::color(ftxui::Color::GreenYellow); }),
 		ftxui::Renderer([&] {return ftxui::separator(); }),
 
 		// Signal Effects (ScrollViewerUI)
@@ -232,21 +201,9 @@ void SynthTabUI::Initialize(const SynthTabModelUI& model)
 
 	}) | ftxui::border;
 
-	// Signal Chain
-	_signalInputContainer = ftxui::Container::Vertical({
-
-		ftxui::Renderer([&] {return ftxui::text("Signal Input") | ftxui::color(ftxui::Color::GreenYellow); }),
-		ftxui::Renderer([&] {return ftxui::separator(); }),
-		_oscillatorSignalUI->GetComponent() | ftxui::xflex_grow,
-		_envelopeSignalUI->GetComponent() | ftxui::xflex_grow
-	});
-
 	_signalChainContainer = ftxui::Container::Vertical({
 
-		// Signal Input
-		_signalInputContainer | ftxui::border,
-
-		// Signal Effects (ScrollViewerUI)
+		// Effects Chain (ScrollViewerUI)
 		_signalEffectsContainer | ftxui::yflex_shrink,
 	});
 
@@ -274,14 +231,12 @@ void SynthTabUI::Initialize(const SynthTabModelUI& model)
 	});
 }
 
-ftxui::Component SynthTabUI::GetComponent()
+ftxui::Component EffectsUI::GetComponent()
 {
-	return ftxui::Renderer(_component, [&] {
-		return _component->Render();
-	});
+	return _component;
 }
 
-void SynthTabUI::ServicePendingAction()
+void EffectsUI::ServicePendingAction()
 {
 	// Category Selector
 	if (_effectCategorySelectedIndex->HasChanged())
@@ -290,24 +245,6 @@ void SynthTabUI::ServicePendingAction()
 
 		// Clear Pending
 		_effectCategorySelectedIndex->Clear();
-	}
-
-	// Envelope / Oscillator Signal Nodes
-	if (_oscillatorSignalUI->HasPendingAction())
-	{
-		_editorContainer->DetachAllChildren();
-		_editorContainer->Add(_oscillatorUI->GetComponent());
-
-		// Clear Pending
-		_oscillatorSignalUI->ClearPendingAction();
-	}
-	if (_envelopeSignalUI->HasPendingAction())
-	{
-		_editorContainer->DetachAllChildren();
-		_editorContainer->Add(_envelopeUI->GetComponent());
-
-		// Clear Pending
-		_envelopeSignalUI->ClearPendingAction();
 	}
 
 	// Plugin List (Changes)
@@ -428,7 +365,7 @@ void SynthTabUI::ServicePendingAction()
 	}
 }
 
-void SynthTabUI::OnChangeCategory()
+void EffectsUI::OnChangeCategory()
 {
 	std::string currentCategory = _effectCategories->at(_effectCategorySelectedIndex->GetValue());
 
@@ -462,56 +399,45 @@ void SynthTabUI::OnChangeCategory()
 	}
 }
 
-void SynthTabUI::UpdateComponent()
+void EffectsUI::UpdateComponent()
 {
-	_oscillatorUI->UpdateComponent();
-	_envelopeUI->UpdateComponent();
-	
 	// This will contain dummy text if there is no active editor
 	_activeEditorUI->UpdateComponent();
-
-	// Static Signal Chain Elements
-	_oscillatorSignalUI->UpdateComponent();
-	_envelopeSignalUI->UpdateComponent();
 
 	// Scroll Viewers
 	_postProcessingUI->UpdateComponent();
 	_pluginListUI->UpdateComponent();
 }
 
-void SynthTabUI::Tick()
+void EffectsUI::Tick()
 {
-	_oscillatorUI->Tick();
-	_envelopeUI->Tick();
-
 	// This will contain dummy text if there is no active editor
 	_activeEditorUI->Tick();
-
-	// Static Signal Chain Elements
-	_oscillatorSignalUI->Tick();
-	_envelopeSignalUI->Tick();
 
 	// Scroll Viewers
 	_postProcessingUI->Tick();
 	_pluginListUI->Tick();
 }
 
-void SynthTabUI::ToUI(const SynthTabModelUI& source)
+void EffectsUI::ToUI(const EffectsModelUI& source)
 {
 	
 }
 
-void SynthTabUI::ToUI(const SynthTabModelUI* source)
+void EffectsUI::ToUI(const EffectsModelUI* source)
 {
 }
 
-void SynthTabUI::FromUI(SynthTabModelUI& destination)
+void EffectsUI::FromUI(EffectsModelUI& destination)
 {
 	throw new std::exception("Pleaes use the pointer version of this function FromUI(..)");
 }
 
-void SynthTabUI::FromUI(SynthTabModelUI* destination)
+void EffectsUI::FromUI(EffectsModelUI* destination)
 {
+	// Post Processing (for update)
+	SignalChainSettings* postProcessing = destination->GetSoundSettings()->GetPostProcessing();
+
 	// Effects (check for changes)
 	// 
 	for (int index = 0; index < _postProcessingUI->GetUICount(); index++)
@@ -526,44 +452,37 @@ void SynthTabUI::FromUI(SynthTabModelUI* destination)
 		_postProcessingUI->FromUI(modelName, model);
 
 		// Add (if enabled)
-		if (!_model->GetSoundSettings()->GetPostProcessing()->Contains(modelName))
+		if (!postProcessing->Contains(modelName))
 		{
 			// Effect Settings 
 			SignalSettings settings;
 			settings.SetIsEnabled(model->GetEnabled());
 			_effectUIs->at(modelName)->FromUI(settings);
-			_model->GetSoundSettings()->GetPostProcessing()->Add(settings);
+			postProcessing->Add(settings);
 		}
 
 		// Update
 		else
 		{
 			// Effect Settings (already heaped)
-			SignalSettings* settings = _model->GetSoundSettings()->GetPostProcessing()->Get(modelName);
+			SignalSettings* settings = postProcessing->Get(modelName);
 			settings->SetIsEnabled(model->GetEnabled());
 			_effectUIs->at(modelName)->FromUI(settings);
 		}
 	}
 
 	// Remove SignalChainSettings*
-	for (int index = _model->GetSoundSettings()->GetPostProcessing()->GetCount() - 1; index >= 0; index--)
+	for (int index = postProcessing->GetCount() - 1; index >= 0; index--)
 	{
 		// Remove
 		if (index >= _postProcessingUI->GetUICount())
 		{
-			_model->GetSoundSettings()->GetPostProcessing()->RemoveAt(index);
+			postProcessing->RemoveAt(index);
 		}
 	}
-
-	// Signal Input (settings)
-	_oscillatorUI->FromUI(_model->GetSoundSettings()->GetOscillatorParameters());
-	_envelopeUI->FromUI(_model->GetSoundSettings()->GetOscillatorEnvelope());
-
-	// -> Update
-	_model->Update(destination->GetSoundSettings(), destination->GetSoundBankSettings());
 }
 
-bool SynthTabUI::HasPendingAction() const
+bool EffectsUI::HasPendingAction() const
 {
 	// This is left over from our Tick() function - which should have
 	// a much higher frequency than the UpdateComponent / ToUI / FromUI 
@@ -579,20 +498,14 @@ bool SynthTabUI::HasPendingAction() const
 
 	// Signal Nodes (enabled / disabled)
 	hasPendingAction |= _postProcessingUI->HasPendingAction();
-	hasPendingAction |= _oscillatorSignalUI->HasPendingAction();
-	hasPendingAction |= _envelopeSignalUI->HasPendingAction();
 
 	// Active Effect Editor
 	hasPendingAction |= _activeEditorUI->HasPendingAction();
 
-	// Signal Input Editors
-	hasPendingAction |= _oscillatorUI->HasPendingAction();
-	hasPendingAction |= _envelopeUI->HasPendingAction();
-
 	return hasPendingAction;
 }
 
-void SynthTabUI::ClearPendingAction()
+void EffectsUI::ClearPendingAction()
 {
 	// Category Chooser
 	_effectCategorySelectedIndex->Clear();
@@ -602,16 +515,12 @@ void SynthTabUI::ClearPendingAction()
 
 	// Signal Nodes (hover, edit, remove, move up, move down)
 	_postProcessingUI->ClearPendingAction();
-	_oscillatorSignalUI->ClearPendingAction();
-	_envelopeSignalUI->ClearPendingAction();
 
 	// Effects (settings) (should not be any actions)
 	_activeEditorUI->ClearPendingAction();
-	_oscillatorUI->ClearPendingAction();
-	_envelopeUI->ClearPendingAction();
 }
 
-bool SynthTabUI::GetDirty() const
+bool EffectsUI::GetDirty() const
 {
 	// This is left over from our UpdateComponent() function - which should have
 	// a much higher frequency than the ToUI / FromUI functions. This is controlled
@@ -624,33 +533,23 @@ bool SynthTabUI::GetDirty() const
 
 	// Signal Nodes (enabled / disabled)
 	isDirty |= _postProcessingUI->GetDirty();
-	isDirty |= _oscillatorSignalUI->GetDirty();
-	isDirty |= _envelopeSignalUI->GetDirty();
 
 	// Active Effect Editor
 	isDirty |= _activeEditorUI->GetDirty();
 	
-	// Signal Input Editors
-	isDirty |= _oscillatorUI->GetDirty();
-	isDirty |= _envelopeUI->GetDirty();
-
 	return isDirty;
 }
 
-void SynthTabUI::ClearDirty()
+void EffectsUI::ClearDirty()
 {
 	// Plugin List (enabled / disabled)
 	_pluginListUI->ClearDirty();
 
 	// Signal Nodes (enabled / disabled)
 	_postProcessingUI->ClearDirty();
-	_oscillatorSignalUI->ClearDirty();
-	_envelopeSignalUI->ClearDirty();
 
 	// Effects (settings)
 	_activeEditorUI->ClearDirty();
-	_oscillatorUI->ClearDirty();
-	_envelopeUI->ClearDirty();
 
 	_isDirty = false;
 }

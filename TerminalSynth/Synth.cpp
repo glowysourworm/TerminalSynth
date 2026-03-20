@@ -27,7 +27,7 @@ Synth::~Synth()
 void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters)
 {
 	_notePool = new SynthVoicePool(effectRegistry, configuration->GetCurrentSoundSettings(), parameters, 10);
-	_postProcessing->Initialize(effectRegistry, configuration->GetDefaultSoundSettings()->GetPostProcessing(), parameters);
+	_postProcessing->Initialize(effectRegistry, configuration->GetCurrentSoundSettings()->GetPostProcessing(), parameters);
 	_octave = configuration->GetCurrentSoundSettings()->GetOscillatorParameters()->GetOctave();
 }
 

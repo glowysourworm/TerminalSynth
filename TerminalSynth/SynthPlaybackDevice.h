@@ -88,7 +88,7 @@ bool SynthPlaybackDevice::Initialize(const SoundRegistry* effectRegistry, const 
 
 bool SynthPlaybackDevice::Update(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters)
 {
-	_synth->Update(effectRegistry, configuration->GetDefaultSoundSettings(), parameters);
+	_synth->Update(effectRegistry, configuration->GetCurrentSoundSettings(), parameters);
 
 	return true;
 }

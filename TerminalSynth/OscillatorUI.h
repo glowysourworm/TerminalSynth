@@ -25,7 +25,7 @@ class OscillatorUI : public UIBase<OscillatorParameters>
 {
 public:
 
-	OscillatorUI(const SoundBankSettings* soundBankSettings, const ftxui::Color& labelColor);
+	OscillatorUI(const SoundBankSettings* soundBankSettings, const OscillatorParameters& parameters);
 	~OscillatorUI();
 
 	void Initialize(const OscillatorParameters& parameters) override;
@@ -78,7 +78,7 @@ private:
 
 };
 
-OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const ftxui::Color& labelColor)
+OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const OscillatorParameters& parameters)
 {
 	std::vector<std::string> soundBanks = soundBankSettings->GetSoundBanks();
 	std::string initialSoundBank = soundBanks.size() > 0 ? soundBanks[0] : "";

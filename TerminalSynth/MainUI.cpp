@@ -1,16 +1,15 @@
 #pragma once
 
+#include "EffectsUI.h"
+#include "InputUI.h"
 #include "MainModelUI.h"
 #include "MainUI.h"
-#include "SoundSettings.h"
 #include "SynthInformationUI.h"
-#include "SynthTabUI.h"
 #include <exception>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/component/event.hpp>
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
 #include <string>
 #include <vector>
@@ -21,13 +20,15 @@ MainUI::MainUI(const MainModelUI& model)
 
 	// Tab Headers
 	_tabHeaders = new std::vector<std::string>({
-		"Output",
-		"Synth",
+		"About",
+		"Input",
+		"Effects",
 		"Midi"
 	});
 
 	_synthInformationUI = new SynthInformationUI("Terminal Synth", ftxui::Color::GreenYellow);
-	_synthTabUI = new SynthTabUI(*model.GetSynthTabModelUI());
+	_inputUI = new InputUI(*model.GetInputModelUI());
+	_effectsUI = new EffectsUI(*model.GetEffectsModelUI());
 
 	_scrollY = new float(0);
 	_tabIndex = new int(0);
@@ -35,7 +36,8 @@ MainUI::MainUI(const MainModelUI& model)
 
 MainUI::~MainUI()
 {
-	delete _synthTabUI;
+	delete _inputUI;
+	delete _effectsUI;
 	delete _tabHeaders;
 	delete _scrollY;
 	delete _tabIndex;
@@ -45,7 +47,8 @@ MainUI::~MainUI()
 void MainUI::Initialize(const MainModelUI& model)
 {
 	_synthInformationUI->Initialize(*_model->GetOutputModelUI());
-	_synthTabUI->Initialize(*_model->GetSynthTabModelUI());
+	_inputUI->Initialize(*_model->GetInputModelUI());
+	_effectsUI->Initialize(*_model->GetEffectsModelUI());
 
 	_buttonColor = ftxui::Color::RGBA(0, 0, 255, 50);
 
@@ -53,19 +56,14 @@ void MainUI::Initialize(const MainModelUI& model)
 
 	});
 
-	// Output Tab
-	_outputTab = ftxui::Container::Vertical({
-
-		_synthInformationUI->GetComponent() | ftxui::flex_grow,
-	});
-
 	// Primary UI
 	_tabControlMenu = ftxui::Menu(_tabHeaders, _tabIndex, ftxui::MenuOption::HorizontalAnimated());
 
 	_tabControl = ftxui::Container::Tab({
 
-		_outputTab,
-		_synthTabUI->GetComponent(),
+		_synthInformationUI->GetComponent(),
+		_inputUI->GetComponent(),
+		_effectsUI->GetComponent(),
 		midiSettings,
 
 	}, _tabIndex);
@@ -73,13 +71,6 @@ void MainUI::Initialize(const MainModelUI& model)
 	_mainControl = ftxui::Container::Vertical({
 		_tabControlMenu,
 		_tabControl,
-
-		//ftxui::Button("Save", [&] {
-
-
-
-		//}) | ftxui::bgcolor(_buttonColor) | ftxui::align_right
-
 	}) | ftxui::CatchEvent([&](ftxui::Event event) {
 
 		// Passthrough
@@ -98,41 +89,53 @@ ftxui::Component MainUI::GetComponent()
 
 void MainUI::ServicePendingAction()
 {
-	// Output Tab
+	// About Tab
 	if (*_tabIndex == 0)
 	{
 		_synthInformationUI->ServicePendingAction();
 	}
 
-	// Synth Tab
+	// Input Tab
 	else if (*_tabIndex == 1)
 	{
-		_synthTabUI->ServicePendingAction();
+		_inputUI->ServicePendingAction();
+	}
+
+	// Effects Tab
+	else if (*_tabIndex == 2)
+	{
+		_effectsUI->ServicePendingAction();
 	}
 
 	// MIDI Tab
-	else if (*_tabIndex == 2)
+	else if (*_tabIndex == 3)
 	{
-
+		
 	}
 }
 
 void MainUI::UpdateComponent()
 {
-	// Output Tab
+	// About Tab
 	if (*_tabIndex == 0)
 	{
 		_synthInformationUI->UpdateComponent();
 	}
 
-	// Synth Tab
+	// Input Tab
 	else if (*_tabIndex == 1)
 	{
-		_synthTabUI->UpdateComponent();
+		_inputUI->UpdateComponent();
+	}
+
+	// Effects Tab
+	else if (*_tabIndex == 2)
+	{
+		_effectsUI->UpdateComponent();
 	}
 
 	// MIDI Tab
-	else if (*_tabIndex == 2)
+	else if (*_tabIndex == 3)
 	{
 
 	}
@@ -140,20 +143,26 @@ void MainUI::UpdateComponent()
 
 void MainUI::Tick()
 {
-	// Output Tab
+	// About Tab
 	if (*_tabIndex == 0)
 	{
 		_synthInformationUI->Tick();
 	}
 
-	// Synth Tab
+	// Input Tab
 	else if (*_tabIndex == 1)
 	{
-		_synthTabUI->Tick();
+		_inputUI->Tick();
+	}
+
+	// Effects Tab
+	else if (*_tabIndex == 2)
+	{
+		_effectsUI->Tick();
 	}
 
 	// MIDI Tab
-	else if (*_tabIndex == 2)
+	else if (*_tabIndex == 3)
 	{
 
 	}
@@ -166,9 +175,29 @@ void MainUI::FromUI(MainModelUI& destination)
 
 void MainUI::FromUI(MainModelUI* destination)
 {
-	// Synth Tab UI
-	_synthTabUI->FromUI(destination->GetSynthTabModelUI());
-	_synthInformationUI->FromUI(destination->GetOutputModelUI());
+	// About Tab
+	if (*_tabIndex == 0)
+	{
+		_synthInformationUI->FromUI(destination->GetOutputModelUI());
+	}
+
+	// Input Tab
+	else if (*_tabIndex == 1)
+	{
+		_inputUI->FromUI(destination->GetInputModelUI());
+	}
+
+	// Effects Tab
+	else if (*_tabIndex == 2)
+	{
+		_effectsUI->FromUI(destination->GetEffectsModelUI());
+	}
+
+	// MIDI Tab
+	else if (*_tabIndex == 3)
+	{
+
+	}
 }
 
 void MainUI::ToUI(const MainModelUI& source)
@@ -190,22 +219,116 @@ void MainUI::ToUI(const MainModelUI* source)
 
 bool MainUI::GetDirty() const
 {
-	return _synthTabUI->GetDirty() || _synthInformationUI->GetDirty();
+	// These may be run per-tab
+
+	// About Tab
+	if (*_tabIndex == 0)
+	{
+		return _synthInformationUI->GetDirty();
+	}
+
+	// Input Tab
+	else if (*_tabIndex == 1)
+	{
+		return _inputUI->GetDirty();
+	}
+
+	// Effects Tab
+	else if (*_tabIndex == 2)
+	{
+		return _effectsUI->GetDirty();
+	}
+
+	// MIDI Tab
+	else if (*_tabIndex == 3)
+	{
+
+	}
 }
 
 void MainUI::ClearDirty()
 {
-	_synthTabUI->ClearDirty();
-	_synthInformationUI->ClearDirty();
+	// These may be run per-tab
+
+	// About Tab
+	if (*_tabIndex == 0)
+	{
+		_synthInformationUI->ClearDirty();
+	}
+
+	// Input Tab
+	else if (*_tabIndex == 1)
+	{
+		_inputUI->ClearDirty();
+	}
+
+	// Effects Tab
+	else if (*_tabIndex == 2)
+	{
+		_effectsUI->ClearDirty();
+	}
+
+	// MIDI Tab
+	else if (*_tabIndex == 3)
+	{
+
+	}
 }
 
 bool MainUI::HasPendingAction() const
 {
-	return _synthTabUI->HasPendingAction() || _synthInformationUI->HasPendingAction();
+	// These may be run per-tab
+
+	// About Tab
+	if (*_tabIndex == 0)
+	{
+		return _synthInformationUI->HasPendingAction();
+	}
+
+	// Input Tab
+	else if (*_tabIndex == 1)
+	{
+		return _inputUI->HasPendingAction();
+	}
+
+	// Effects Tab
+	else if (*_tabIndex == 2)
+	{
+		return _effectsUI->HasPendingAction();
+	}
+
+	// MIDI Tab
+	else if (*_tabIndex == 3)
+	{
+
+	}
 }
 
 void MainUI::ClearPendingAction()
 {
-	_synthTabUI->ClearPendingAction();
-	_synthInformationUI->ClearPendingAction();
+	// These may be run per-tab
+
+	// About Tab
+	if (*_tabIndex == 0)
+	{
+		_synthInformationUI->ClearPendingAction();
+	}
+
+	// Input Tab
+	else if (*_tabIndex == 1)
+	{
+		_inputUI->ClearPendingAction();
+	}
+
+	// Effects Tab
+	else if (*_tabIndex == 2)
+	{
+		_effectsUI->ClearPendingAction();
+	}
+
+	// MIDI Tab
+	else if (*_tabIndex == 3)
+	{
+
+	}
 }
