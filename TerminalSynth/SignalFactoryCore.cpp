@@ -46,7 +46,7 @@ float SignalFactoryCore::GenerateTriangleSample(float frequency, size_t timeCurs
 	float sample = 0;
 
 	// Using modulo arithmetic to get the relative period time
-	float periodTime = fmod(streamTime, period);
+	float periodTime = fmod(timeCursor / (float)_samplingRate, period);
 
 	// First Quadrant
 	if (periodTime < periodQuarter)
@@ -79,7 +79,7 @@ float SignalFactoryCore::GenerateSquareSample(float frequency, size_t timeCursor
 {
 	// Using modulo arithmetic to get the relative period time
 	float period = 1 / frequency;
-	float periodTime = fmod(streamTime, period);
+	float periodTime = fmod(timeCursor / (float)_samplingRate, period);
 	float sample = 0;
 
 	if (periodTime < period / 2.0)
@@ -95,7 +95,7 @@ float SignalFactoryCore::GenerateSawtoothSample(float frequency, size_t timeCurs
 {
 	// Using modulo arithmetic to get the relative period time
 	float period = 1 / frequency;
-	float periodTime = fmod(streamTime, period);
+	float periodTime = fmod(timeCursor / (float)_samplingRate, period);
 
 	return (((_signalHigh - _signalLow) / period) * periodTime) + _signalLow;
 }
@@ -110,7 +110,7 @@ float SignalFactoryCore::GenerateRandomSample(float frequency, size_t timeCursor
 	float period = 1 / frequency;
 
 	// Using modulo arithmetic to get the relative period time
-	float periodTime = fmod(streamTime, period);
+	float periodTime = fmod(timeCursor / (float)_samplingRate, period);
 
 	float periodDiv = (period / _randomQuadrantValues->size());
 	float periodBucket = periodTime / periodDiv;

@@ -18,6 +18,7 @@ class SignalChain
 public:
 
 	SignalChain();
+	SignalChain(const SignalChain& copy);
 	~SignalChain();
 
 	void Initialize(const SoundRegistry* effectRegistry, const SignalChainSettings* signalChainSettings, const PlaybackInfo* parameters);
@@ -29,6 +30,11 @@ public:
 
 	void Engage(double absoluteTime);
 	void DisEngage(double absoluteTime);
+
+protected:
+
+	//SHARED POINTERS!  These effects are held by the SoundRegistry*
+	std::vector<SignalParameterizedBase*>* GetChain() const { return _chain; }
 
 private:
 

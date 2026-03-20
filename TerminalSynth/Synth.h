@@ -45,6 +45,7 @@ private:
 
 	unsigned int _numberOfChannels;
 	unsigned int _samplingRate;
+	unsigned int _octave;
 };
 
 #endif

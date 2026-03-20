@@ -12,7 +12,8 @@ Synth::Synth(const SynthSettings* configuration, unsigned int numberOfChannels, 
 	_numberOfChannels = numberOfChannels;
 	_samplingRate = samplingRate;
 	_postProcessing = new SignalChain();
-	_notePool = nullptr;
+	_notePool = nullptr; 
+	_octave = configuration->GetCurrentSoundSettings()->GetOscillatorParameters()->GetOctave();
 }
 
 Synth::~Synth()
@@ -27,12 +28,14 @@ void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings*
 {
 	_notePool = new SynthVoicePool(effectRegistry, configuration->GetCurrentSoundSettings(), parameters, 10);
 	_postProcessing->Initialize(effectRegistry, configuration->GetDefaultSoundSettings()->GetPostProcessing(), parameters);
+	_octave = configuration->GetCurrentSoundSettings()->GetOscillatorParameters()->GetOctave();
 }
 
 void Synth::Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings, const PlaybackInfo* parameters)
 {
 	_postProcessing->Update(effectRegistry, soundSettings->GetPostProcessing());
 	_notePool->Update(effectRegistry, soundSettings, parameters);
+	_octave = soundSettings->GetOscillatorParameters()->GetOctave();
 }
 
 void Synth::SetNote(int midiNumber, bool pressed, double absoluteTime)

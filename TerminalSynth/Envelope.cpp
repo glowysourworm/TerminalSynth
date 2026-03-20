@@ -28,6 +28,7 @@ Envelope::Envelope(EnvelopeShape shape, double attack, double decay, double rele
 Envelope::Envelope(const Envelope& copy)
 {
 	_attack = copy.GetAttack();
+	_decay = copy.GetDecay();
 	_release = copy.GetRelease();
 	_attackPeak = copy.GetAttackPeak();
 	_sustainPeak = copy.GetSustainPeak();
@@ -52,6 +53,7 @@ bool Envelope::Update(const Envelope* envelope)
 	bool isDirty = IsEqual(envelope);
 
 	_attack = envelope->GetAttack();
+	_decay = envelope->GetDecay();
 	_release = envelope->GetRelease();
 	_attackPeak = envelope->GetAttackPeak();
 	_sustainPeak = envelope->GetSustainPeak();
@@ -195,32 +197,26 @@ double Envelope::GetEnvelopeLevel(double absoluteTime)
 	// Check piece-wise function to get envelope level
 	//
 
-	// Attack
 	if (_engaged)
 	{
-		// Calculate time along the envelope
-		float envelopeTime = absoluteTime - _engagedTime;
-
-		return GetEnvelopeLevelImpl(envelopeTime);
+		return GetEnvelopeLevelImpl(absoluteTime);
 	}
-
-	// Release
 	else
 	{
-		// Calculate time along the RELEASE
-		float envelopeTime = absoluteTime - _disEngagedTime;
+		if (absoluteTime - _disEngagedTime < _release)
+			return GetEnvelopeLevelImpl(absoluteTime);
 
-		if (envelopeTime < _release)
-		{
-			return GetEnvelopeLevelImpl(envelopeTime);
-		}
 		else
 			return 0;
 	}
 }
 
-double Envelope::GetEnvelopeLevelImpl(double envelopeTime)
+double Envelope::GetEnvelopeLevelImpl(double absoluteTime)
 {
+	double envelopeTime = absoluteTime - _engagedTime;
+	double envelopeTimeDisEngage = _disEngagedTime - _engagedTime;
+	double result = 0;
+
 	switch (_shape)
 	{
 	case EnvelopeShape::Linear:
@@ -229,20 +225,25 @@ double Envelope::GetEnvelopeLevelImpl(double envelopeTime)
 		{
 			// Attack
 			if (envelopeTime < _attack)
-				return _attackPeak * (envelopeTime / _attack);
+				result = (_attackPeak / _attack) * envelopeTime;
 
 			// Decay
 			else if (envelopeTime < _attack + _decay)
-				return (1 / _decay) * ((_sustainPeak - _attackPeak) * (envelopeTime - 1) + (_attackPeak * _decay));
+			{
+				double decaySlope = _attack / _decay;
+				double slope = (_sustainPeak - _attackPeak) / _decay;
+
+				result = (slope * (envelopeTime - _attack)) + _attackPeak;
+			}
 
 			// Sustain
 			else
-				return _sustainPeak;
+				result = _sustainPeak;
 		}
 
 		// Release
 		else
-			return (-1 * (_disEngagedLevel / _release) * envelopeTime) + (_disEngagedLevel * ((_disEngagedTime / _release) + 1));
+			result = ((-1 * (_sustainPeak / _release)) * envelopeTime) + (_sustainPeak * (envelopeTimeDisEngage / _release)) + _disEngagedLevel;
 	}
 	break;
 	case EnvelopeShape::Gamma:
@@ -259,20 +260,20 @@ double Envelope::GetEnvelopeLevelImpl(double envelopeTime)
 
 			// Attack
 			if (envelopeTime < _attack)
-				return gammaValue;
+				result = gammaValue;
 
 			// Decay
 			else if (envelopeTime < _attack + _decay)
-				return gammaValue;
+				result = gammaValue;
 
 			else
-				return std::max(gammaValue, _sustainPeak);
+				result = std::max(gammaValue, _sustainPeak);
 		}
 
 		// Release (Linear)
 		else
 		{
-			return (-1 * (_disEngagedLevel / _release) * envelopeTime) + (_disEngagedLevel * ((_disEngagedTime / _release) + 1));
+			result = ((-1 * (_sustainPeak / _release)) * envelopeTime) + (_sustainPeak * (envelopeTimeDisEngage / _release)) + _disEngagedLevel;
 		}
 	}
 	break;
@@ -289,24 +290,26 @@ double Envelope::GetEnvelopeLevelImpl(double envelopeTime)
 
 			// Attack
 			if (envelopeTime < _attack)
-				return gaussianValue;
+				result = gaussianValue;
 
 			// Decay
 			else if (envelopeTime < _attack + _decay)
-				return gaussianValue;
+				result = gaussianValue;
 
 			else
-				return std::max(gaussianValue, _sustainPeak);
+				result = std::max(gaussianValue, _sustainPeak);
 		}
 
 		// Release (Linear)
 		else
 		{
-			return (-1 * (_disEngagedLevel / _release) * envelopeTime) + (_disEngagedLevel * ((_disEngagedTime / _release) + 1));
+			result = ((-1 * (_sustainPeak / _release)) * envelopeTime) + (_sustainPeak * (envelopeTimeDisEngage / _release)) + _disEngagedLevel;
 		}
 	}
 	break;
 	default:
 		throw new std::exception("Unhandled envelope shape:  Envelope.cpp");
 	}
+
+	return std::min<double>(std::max<double>(result, 0), 1);
 }

@@ -1,4 +1,3 @@
-#include "Envelope.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
 #include "SoundRegistry.h"
@@ -59,7 +58,29 @@ SynthVoicePool::~SynthVoicePool()
 }
 void SynthVoicePool::Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings, const PlaybackInfo* parameters)
 {
+	for (auto iter = _engagedNotes->begin(); iter != _engagedNotes->end(); ++iter)
+	{
+		iter->second->Update(effectRegistry, soundSettings, parameters);
+	}
+	for (auto iter = _disengagedNotes->begin(); iter != _disengagedNotes->end(); ++iter)
+	{
+		iter->second->Update(effectRegistry, soundSettings, parameters);
+	}
 
+	std::stack<SynthVoiceBase*> tempStack;
+
+	while (_inactiveNotes->size() > 0)
+	{
+		_inactiveNotes->top()->Update(effectRegistry, soundSettings, parameters);
+		tempStack.push(_inactiveNotes->top());
+		_inactiveNotes->pop();
+	}
+
+	while (tempStack.size() > 0)
+	{
+		_inactiveNotes->push(tempStack.top());
+		tempStack.pop();
+	}
 }
 bool SynthVoicePool::HasEngagedNotes() const
 {

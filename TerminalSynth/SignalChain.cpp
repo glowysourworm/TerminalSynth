@@ -11,10 +11,13 @@ SignalChain::SignalChain()
 {
 	_chain = new std::vector<SignalParameterizedBase*>();
 }
-
+SignalChain::SignalChain(const SignalChain& copy)
+{
+	_chain = new std::vector<SignalParameterizedBase*>(*copy.GetChain());
+}
 SignalChain::~SignalChain()
 {
-	// DO NOT DELETE: SignalBase* (these are handled by the SoundRegistry*)
+	// DO NOT DELETE: SignalParameterizedBase* (these are handled by the SoundRegistry*)
 	//
 
 	delete _chain;
