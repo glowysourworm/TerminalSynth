@@ -28,7 +28,22 @@ enum class BuiltInOscillators : int {
 	Triangle = 2,
 	Sawtooth = 3,
 	SynthesizedStringPluck = 4,
-	StkVoice = 5
+	StkRhodey,
+	StkBeeThree,
+	StkClarinet,
+	StkDrummer,
+	StkFlute,
+	StkGuitar,
+	StkHevyMetl,
+	StkMandolin,
+	StkMoog,
+	StkSaxofony,
+	StkShakers,
+	StkSitar,
+	StkTubeBell,
+	StkVoicForm,
+	StkWhistle,
+	StkWurley,
 };
 enum class ParameterAutomationType : int {
 	EnvelopeSweep = 0,

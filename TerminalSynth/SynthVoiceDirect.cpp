@@ -55,7 +55,53 @@ void SynthVoiceDirect::SetFrameImpl(PlaybackFrame* frame)
 			case BuiltInOscillators::SynthesizedStringPluck:
 				sample = _core->GenerateSawtoothSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
 				break;
-			case BuiltInOscillators::StkVoice:
+			case BuiltInOscillators::StkRhodey:
+				sample = _core->GenerateRhodeySample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
+			case BuiltInOscillators::StkBeeThree:
+				sample = _core->GenerateBeeThreeSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
+			case BuiltInOscillators::StkClarinet:
+				sample = _core->GenerateClarinetSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
+			case BuiltInOscillators::StkDrummer:
+				sample = _core->GenerateDrummerSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
+			case BuiltInOscillators::StkFlute:
+				sample = _core->GenerateFluteSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
+			case BuiltInOscillators::StkGuitar:
+				sample = _core->GenerateGuitarSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
+			case BuiltInOscillators::StkHevyMetl:
+				sample = _core->GenerateHevyMetlSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
+			case BuiltInOscillators::StkMandolin:
+				sample = _core->GenerateMandolinSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
+			case BuiltInOscillators::StkMoog:
+				sample = _core->GenerateMoogSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
+			case BuiltInOscillators::StkSaxofony:
+				sample = _core->GenerateSaxofonySample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
+			case BuiltInOscillators::StkShakers:
+				sample = _core->GenerateShakersSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
+			case BuiltInOscillators::StkSitar:
+				sample = _core->GenerateSitarSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
+			case BuiltInOscillators::StkTubeBell:
+				sample = _core->GenerateTubeBellSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
+			case BuiltInOscillators::StkVoicForm:
+				sample = _core->GenerateVoicFormSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
+			case BuiltInOscillators::StkWhistle:
+				sample = _core->GenerateWhistleSample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+				break;
+			case BuiltInOscillators::StkWurley:
+				sample = _core->GenerateWurleySample(this->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
 				break;
 			default:
 				throw new std::exception("Unhandled Oscillator Type:  SynthVoiceDirect.cpp");

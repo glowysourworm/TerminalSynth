@@ -46,10 +46,13 @@ public:
 	virtual void NoteOn(int midiNumber, double absoluteTime)
 	{
 		SignalBase::Engage(absoluteTime);
-
+		
 		_midiNumber = (_parameters->GetOctave() * 12) + midiNumber;
 		_frequency = TerminalSynth::GetMidiFrequency(_midiNumber);
 		_envelope->Engage(absoluteTime);
+
+		// Set local frequency (our copy)
+		_parameters->SetFrequency(_frequency);
 	}
 	virtual void NoteOff(int midiNumber, double absoluteTime)
 	{

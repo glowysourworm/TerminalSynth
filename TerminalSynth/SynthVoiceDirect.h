@@ -22,6 +22,13 @@ public:
 
 	void Initialize(const PlaybackInfo* playbackInfo) override;
 
+	void NoteOn(int midiNumber, double absoluteTime) override
+	{
+		SynthVoiceBase::NoteOn(midiNumber, absoluteTime);
+
+		_core->Reset(this->GetOscillatorParameters());
+	}
+
 protected:
 
 	void SetFrameImpl(PlaybackFrame* frame) override;

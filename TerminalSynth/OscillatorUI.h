@@ -95,7 +95,22 @@ OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const ftx
 		"Triangle",
 		"Sawtooth",
 		"SynthesizedStringPluck",
-		"STK Voice"
+		"STK Rhodey",
+		"STK Bee Three",
+		"STK Clarinet",
+		"STK Drummer",
+		"STK Flute",
+		"STK Guitar",
+		"STK Heavy Metal",
+		"STK Mandolin",
+		"STK Moog",
+		"STK Saxofony",
+		"STK Shakers",
+		"STK Sitar",
+		"STK Tube Bell",
+		"STK VoicForm",
+		"STK Whistle",
+		"STK Wurley"
 	});
 	_soundBankItems = new std::vector<std::string>(soundBanks);
 	_soundNameItems = new std::vector<std::string>(soundNames);
