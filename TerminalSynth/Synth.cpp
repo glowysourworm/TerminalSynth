@@ -1,5 +1,6 @@
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SignalChain.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
@@ -38,7 +39,7 @@ void Synth::Update(SoundRegistry* effectRegistry, const SoundSettings* soundSett
 	_octave = soundSettings->GetOscillatorParameters()->GetOctave();
 }
 
-void Synth::SetNote(int midiNumber, bool pressed, double absoluteTime)
+void Synth::SetNote(int midiNumber, bool pressed, const PlaybackTime* playbackTime)
 {
 	// THIS WHOLE LOOP NEEDS TO BE EVENT BASED (w/ the frontend)
 
@@ -49,30 +50,31 @@ void Synth::SetNote(int midiNumber, bool pressed, double absoluteTime)
 
 	// Note Off
 	else if (isEngaged && !pressed)
-		_notePool->NoteOff(midiNumber, absoluteTime);
+		_notePool->NoteOff(midiNumber, playbackTime);
 
 	// Note On
-	else if (!isEngaged && pressed)
-		_notePool->NoteOn(midiNumber, absoluteTime);
+	else if (!isEngaged && pressed && _notePool->CanEngageNextNote())
+		_notePool->NoteOn(midiNumber, playbackTime);
 
 	// Post-Processing (All Notes)
 	if (_notePool->HasEngagedNotes())
-		_postProcessing->Engage(absoluteTime);
+		_postProcessing->Engage(playbackTime);
 	else
-		_postProcessing->DisEngage(absoluteTime);
+		_postProcessing->DisEngage(playbackTime);
 }
-bool Synth::GetSample(PlaybackFrame* frame, float gain, float leftRightBalance)
+bool Synth::GetSample(PlaybackFrame* frame, const PlaybackTime* playbackTime, float gain, float leftRightBalance)
 {
 	bool hasOutput = false;
 
 	// Primary Synth Voice(s) (Also, prunes note pool)
-	_notePool->SetFrame(frame);
+	_notePool->SetFrame(frame, playbackTime);
 
 	// Post Processing
-	hasOutput |= _postProcessing->HasOutput(frame->GetStreamTime());
+	hasOutput |= _postProcessing->HasOutput(playbackTime);
 
 	//if (_postProcessing->HasOutput(absoluteTime))
-		_postProcessing->SetFrame(frame);
+		_postProcessing->SetFrame(frame, playbackTime);
 
-	return hasOutput;
+	// This is now being used for error modes. The has output has been put on hold.. several little things.
+	return true;
 }

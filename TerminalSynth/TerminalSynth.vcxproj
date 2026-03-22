@@ -276,6 +276,8 @@
     <ClInclude Include="ActiveEditorUI.h" />
     <ClInclude Include="AirwindowsEffect.h" />
     <ClInclude Include="AirwindowsEffectLoader.h" />
+    <ClInclude Include="PlaybackTime.h" />
+    <ClInclude Include="SynthNoteParameters.h" />
     <ClInclude Include="AtomicLock.h" />
     <ClInclude Include="InputModelUI.h" />
     <ClInclude Include="InputUI.h" />
@@ -344,6 +346,8 @@
     <ClInclude Include="OscillatorUI.h" />
     <ClInclude Include="StopWatch.h" />
     <ClInclude Include="Synth.h" />
+    <ClInclude Include="SynthNoteParametersUI.h" />
+    <ClInclude Include="SynthNoteProcessor.h" />
     <ClInclude Include="SynthSettings.h" />
     <ClInclude Include="SynthEffect.h" />
     <ClInclude Include="SynthInformationUI.h" />

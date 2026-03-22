@@ -3,14 +3,13 @@
 #ifndef MIDI_PLAYBACK_DEVICE_H
 #define MIDI_PLAYBACK_DEVICE_H
 
-#include "Constant.h"
-#include "EqualizerOutput.h"
 #include "MidiEvent.h"
 #include "MidiEventList.h"
 #include "MidiFile.h"
 #include "PlaybackDevice.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SoundRegistry.h"
 #include "Synth.h"
 #include "SynthSettings.h"
@@ -26,15 +25,8 @@ public:
 
 	bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) override;
 	bool Update(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) override;
-	bool GetLastOutput() const override;
-	bool SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration) override;
-	int WritePlaybackBuffer(
-		void* playbackBuffer,
-		AudioStreamFormat streamFormat,
-		unsigned int numberOfFrames,
-		double streamTime,
-		EqualizerOutput* equalizerOutput,
-		float gain, float leftRightBalance) override;
+	bool SetForFrame(const PlaybackTime& playbackTime, const SynthSettings* configuration) override;
+	bool WriteSample(PlaybackFrame& playbackFrame, const PlaybackTime& playbackTime, float gain, float leftRightBalance) override;
 
 	/// <summary>
 	/// Loads midi file and creates playback configuration
@@ -128,25 +120,25 @@ bool MidiPlaybackDevice::Update(SoundRegistry* effectRegistry, const SynthSettin
 	return true;
 }
 
-bool MidiPlaybackDevice::SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration)
+bool MidiPlaybackDevice::SetForFrame(const PlaybackTime& playbackTime, const SynthSettings* configuration)
 {
 	bool newPlayback = false;
 
-	for (int currentFrameIndex = 0; currentFrameIndex < numberOfFrames; currentFrameIndex++)
-	{
-		// Current Stream Time
-		double currentStreamTime = streamTime + (currentFrameIndex / (double)_samplingRate);
+	//for (int currentFrameIndex = 0; currentFrameIndex < numberOfFrames; currentFrameIndex++)
+	//{
+	//	// Current Stream Time
+	//	double currentStreamTime = streamTime + (currentFrameIndex / (double)_samplingRate);
 
-		this->IterateMidiStream(currentStreamTime, currentFrameIndex, [&newPlayback](double currentTime, const smf::MidiEvent& midiEvent) {
+	//	this->IterateMidiStream(currentStreamTime, currentFrameIndex, [&newPlayback](double currentTime, const smf::MidiEvent& midiEvent) {
 
-			// Note On
-			if (midiEvent.isNoteOn())
-			{
-				newPlayback = true;
-				return;
-			}
-		});
-	}
+	//		// Note On
+	//		if (midiEvent.isNoteOn())
+	//		{
+	//			newPlayback = true;
+	//			return;
+	//		}
+	//	});
+	//}
 
 	return newPlayback;
 }
@@ -160,24 +152,18 @@ void MidiPlaybackDevice::SetMidiSynth(double currentStreamTime, int currentFrame
 		// Note On
 		if (midiEvent.isNoteOn())
 		{
-			synth->SetNote(midiEvent.getKeyNumber(), true, currentTime);
+			//synth->SetNote(midiEvent.getKeyNumber(), true, currentTime);
 		}
 
 		// Note Off
 		else if (midiEvent.isNoteOff())
 		{
-			synth->SetNote(midiEvent.getKeyNumber(), false, currentTime);
+			//synth->SetNote(midiEvent.getKeyNumber(), false, currentTime);
 		}
 	});
 }
 
-int MidiPlaybackDevice::WritePlaybackBuffer(
-	void* playbackBuffer,
-	AudioStreamFormat streamFormat,
-	unsigned int numberOfFrames,
-	double streamTime,
-	EqualizerOutput* equalizerOutput,
-	float gain, float leftRightBalance)
+bool MidiPlaybackDevice::WriteSample(PlaybackFrame& playbackFrame, const PlaybackTime& playbackTime, float gain, float leftRightBalance)
 {
 	if (!_initialized)
 		return -1;
@@ -193,31 +179,31 @@ int MidiPlaybackDevice::WritePlaybackBuffer(
 	// frame index, looking for MIDI events that are in the file.
 	//
 
-	char* outputBuffer = (char*)playbackBuffer;
+	//char* outputBuffer = (char*)playbackBuffer;
 
-	// Calculate frame data (BUFFER SIZE = NUMBER OF CHANNELS x NUMBER OF FRAMES)
-	for (unsigned int frameIndex = 0; frameIndex < numberOfFrames; frameIndex++)
-	{
-		double absoluteTime = streamTime + (frameIndex / (double)_samplingRate);
+	//// Calculate frame data (BUFFER SIZE = NUMBER OF CHANNELS x NUMBER OF FRAMES)
+	//for (unsigned int frameIndex = 0; frameIndex < numberOfFrames; frameIndex++)
+	//{
+	//	double absoluteTime = streamTime + (frameIndex / (double)_samplingRate);
 
-		// Set Synth Midi Events
-		//this->SetMidiSynth(absoluteTime, frameIndex, configuration);
+	//	// Set Synth Midi Events
+	//	//this->SetMidiSynth(absoluteTime, frameIndex, configuration);
 
-		// Clear Frame
-		_frame->ClearSample();
+	//	// Clear Frame
+	//	_frame->ClearSample();
 
-		// Get Samples for N channels
-		_lastOutput = _synth->GetSample(_frame, gain, leftRightBalance);
+	//	// Get Samples for N channels
+	//	_lastOutput = _synth->GetSample(_frame, gain, leftRightBalance);
 
-		// Equalizer Output
-		equalizerOutput->AddSample(_frame->GetLeft(), _frame->GetRight());
+	//	// Equalizer Output
+	//	equalizerOutput->AddSample(_frame->GetLeft(), _frame->GetRight());
 
-		// Interleved frames
-		// 
-		// Set output sample
-		outputBuffer[(2 * frameIndex)] = _frame->GetLeft();
-		outputBuffer[(2 * frameIndex) + 1] = _frame->GetRight();
-	}
+	//	// Interleved frames
+	//	// 
+	//	// Set output sample
+	//	outputBuffer[(2 * frameIndex)] = _frame->GetLeft();
+	//	outputBuffer[(2 * frameIndex) + 1] = _frame->GetRight();
+	//}
 
 	return 0;
 }
@@ -269,11 +255,6 @@ bool MidiPlaybackDevice::Load(const std::string& fileName)
 float MidiPlaybackDevice::GetOutput(int channelIndex) const
 {
 	return 0;
-}
-
-bool MidiPlaybackDevice::GetLastOutput() const
-{
-	return _lastOutput;
 }
 
 #endif

@@ -10,6 +10,8 @@
 #include "LoopTimer.h"
 #include "MidiPlaybackDevice.h"
 #include "PlaybackClock.h"
+#include "PlaybackFrame.h"
+#include "PlaybackTime.h"
 #include "PlaybackUserData.h"
 #include "SynthPlaybackDevice.h"
 #include <string>
@@ -50,11 +52,16 @@ public:
 
 private:
 
+	void WriteBufferWithTransform(void* outputBuffer, AudioStreamFormat streamFormat, const PlaybackFrame& frame, int frameIndex);
+
+private:
+
 	bool _midiMode;	
 	bool _initialized;
 
 	SynthPlaybackDevice* _synthDevice;
 	MidiPlaybackDevice* _midiDevice;
+	PlaybackTime* _playbackTime;
 
 	PlaybackClock* _streamClock;
 	LoopTimer* _audioTimer;

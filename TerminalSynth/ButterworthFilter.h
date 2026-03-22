@@ -6,6 +6,7 @@
 
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SignalParameterizedBase.h"
 
 class ButterworthFilter : public SignalParameterizedBase
@@ -16,7 +17,7 @@ public:
 	~ButterworthFilter();
 
 	void Initialize(const PlaybackInfo* parameters) override;
-	bool HasOutput(double absoluteTime) const override;
+	bool HasOutput(const PlaybackTime* playbackTime) const override;
 
 	void SetFilter(float cutoff, float resonance);
 
@@ -24,7 +25,7 @@ public:
 
 protected:
 
-	void SetFrameImpl(PlaybackFrame* frame) override;
+	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) override;
 
 private:
 

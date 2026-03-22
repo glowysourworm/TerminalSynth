@@ -8,10 +8,12 @@
 #include "OscillatorParameters.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SignalBase.h"
 #include "SignalChain.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
+#include "SynthNoteProcessor.h"
 
 class SynthVoiceBase : public SignalBase
 {
@@ -28,37 +30,36 @@ public:
 		_parameters = new OscillatorParameters(*settings->GetOscillatorParameters());
 		_envelope = new Envelope(*settings->GetOscillatorEnvelope());
 		_filters = new SignalChain(filters);
-
-		_midiNumber = 60;
-		_frequency = TerminalSynth::GetMidiFrequency(_midiNumber);
+		_noteProcessor = new SynthNoteProcessor(settings, playbackInfo);
 	}
 	~SynthVoiceBase()
 	{
 		delete _parameters;
 		delete _envelope;
 		delete _filters;
+		delete _noteProcessor;
 	}
 
-	virtual bool HasOutput(double absoluteTime) const
+	virtual bool HasOutput(const PlaybackTime* playbackTime) const
 	{
-		return _envelope->HasOutput(absoluteTime);
+		return _envelope->HasOutput(playbackTime);
 	}
-	virtual void NoteOn(int midiNumber, double absoluteTime)
+	virtual void NoteOn(int midiNumber, const PlaybackTime* playbackTime)
 	{
-		SignalBase::Engage(absoluteTime);
+		SignalBase::Engage(playbackTime);
 		
-		_midiNumber = (_parameters->GetOctave() * 12) + midiNumber;
-		_frequency = TerminalSynth::GetMidiFrequency(_midiNumber);
-		_envelope->Engage(absoluteTime);
+		_noteProcessor->NoteOn(midiNumber, playbackTime);
+		_envelope->Engage(playbackTime);
 
 		// Set local frequency (our copy)
-		_parameters->SetFrequency(_frequency);
+		_parameters->SetFrequency(_noteProcessor->GetFundamentalFrequency());
 	}
-	virtual void NoteOff(int midiNumber, double absoluteTime)
+	virtual void NoteOff(int midiNumber, const PlaybackTime* playbackTime)
 	{
-		SignalBase::DisEngage(absoluteTime);
+		SignalBase::DisEngage(playbackTime);
 
-		_envelope->DisEngage(absoluteTime);
+		_envelope->DisEngage(playbackTime);
+		_noteProcessor->NoteOff(midiNumber, playbackTime);
 	}
 	virtual void Clear()
 	{
@@ -70,6 +71,7 @@ public:
 		_parameters->Update(settings->GetOscillatorParameters());
 		_envelope->Update(settings->GetOscillatorEnvelope());
 		_filters->Update(soundRegistry, settings->GetSignalChain());
+		_noteProcessor->Update(settings);
 	}
 
 public:
@@ -77,23 +79,18 @@ public:
 	OscillatorParameters* GetOscillatorParameters() { return _parameters; }
 	Envelope* GetEnvelope() { return _envelope; }
 	SignalChain* GetFilters() { return _filters; }
+	SynthNoteProcessor* GetNoteProcessor() { return _noteProcessor; }
 
 protected:
 
-	virtual void SetFrameImpl(PlaybackFrame* frame) = 0;
-
-	float GetFrequency() const { return _frequency; }
-	unsigned int GetMidiNumber() const { return _midiNumber; }
+	virtual void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) = 0;
 
 private:
 
 	OscillatorParameters* _parameters;
 	Envelope* _envelope;
 	SignalChain* _filters;
-
-	unsigned int _midiNumber;
-	float _frequency;
-
+	SynthNoteProcessor* _noteProcessor;
 };
 
 #endif

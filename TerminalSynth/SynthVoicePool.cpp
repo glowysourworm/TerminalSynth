@@ -1,10 +1,13 @@
+#include "Constant.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
 #include "SynthVoiceBase.h"
 #include "SynthVoiceDirect.h"
 #include "SynthVoicePool.h"
+#include <exception>
 #include <map>
 #include <stack>
 #include <utility>
@@ -12,12 +15,16 @@
 SynthVoicePool::SynthVoicePool(const SoundRegistry* soundRegistry, const SoundSettings* soundSettings, const PlaybackInfo* playbackInfo, int capacity)
 {
 	_capacity = capacity;
+	_noteMode = soundSettings->GetNoteParameters()->mode;
 	_playbackInfo = playbackInfo;
 	_engagedNotes = new std::map<int, SynthVoiceBase*>();
 	_disengagedNotes = new std::map<SynthVoiceBase*, SynthVoiceBase*>();
 	_inactiveNotes = new std::stack<SynthVoiceBase*>();
+	_singleNote = new SynthVoiceDirect(soundRegistry, soundSettings, playbackInfo);
+	_singleNoteEngaged = false;
+	_singleNoteNumber = 0;
 
-	// ALL SynthVoiceBase* INSTANCES!!!
+	// ALL SynthVoiceBase* INSTANCES!!! (for multiple note mode)
 	for (int index = 0; index < capacity; index++)
 	{
 		// These values get updated before playback
@@ -55,18 +62,29 @@ SynthVoicePool::~SynthVoicePool()
 	delete _engagedNotes;
 	delete _disengagedNotes;
 	delete _inactiveNotes;
+	delete _singleNote;
 }
 void SynthVoicePool::Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings, const PlaybackInfo* parameters)
 {
+	// Synth Note Mode
+	_noteMode = soundSettings->GetNoteParameters()->mode;
+
+	// Single Note
+	_singleNote->Update(effectRegistry, soundSettings, parameters);
+
+	// Engaged
 	for (auto iter = _engagedNotes->begin(); iter != _engagedNotes->end(); ++iter)
 	{
 		iter->second->Update(effectRegistry, soundSettings, parameters);
 	}
+
+	// Disengaged
 	for (auto iter = _disengagedNotes->begin(); iter != _disengagedNotes->end(); ++iter)
 	{
 		iter->second->Update(effectRegistry, soundSettings, parameters);
 	}
 
+	// Inactive
 	std::stack<SynthVoiceBase*> tempStack;
 
 	while (_inactiveNotes->size() > 0)
@@ -84,86 +102,144 @@ void SynthVoicePool::Update(SoundRegistry* effectRegistry, const SoundSettings* 
 }
 bool SynthVoicePool::HasEngagedNotes() const
 {
-	return _engagedNotes->size() > 0;
+	return _engagedNotes->size() > 0 || (_singleNoteEngaged && _noteMode != SynthNoteMode::MultipleNormal);
+}
+bool SynthVoicePool::CanEngageNextNote() const
+{
+	switch (_noteMode)
+	{
+	case SynthNoteMode::MultipleNormal:
+		return _engagedNotes->size() < _capacity;
+
+	case SynthNoteMode::SingleNormal:
+	case SynthNoteMode::SinglePornamento:
+	case SynthNoteMode::SingleArpeggiator:
+		return !_singleNoteEngaged;
+	
+	default:
+		throw new std::exception("Unhandled Synth Note Mode:  SynthVoicePool.cpp");
+	}
 }
 bool SynthVoicePool::IsEngaged(int midiNumber) const
 {
-	return _engagedNotes->contains(midiNumber);
+	return _engagedNotes->contains(midiNumber) || (_singleNoteEngaged && _noteMode != SynthNoteMode::MultipleNormal);
 }
-bool SynthVoicePool::NoteOn(int midiNumber, double absoluteTime)
+bool SynthVoicePool::NoteOn(int midiNumber, const PlaybackTime* playbackTime)
 {
-	// Already Engaged
-	if (_engagedNotes->contains(midiNumber))
-		return true;
-
-	// Engage
-	if (_inactiveNotes->size() > 0)
+	if (_noteMode == SynthNoteMode::MultipleNormal)
 	{
-		SynthVoiceBase* note = _inactiveNotes->top();
+		// Already Engaged
+		if (_engagedNotes->contains(midiNumber))
+			return true;
 
-		note->NoteOn(midiNumber, absoluteTime);
-
-		_engagedNotes->insert(std::make_pair(midiNumber, note));
-		_inactiveNotes->pop();
-
-		return true;
-	}
-
-	// At Capacity
-	else
-		return false;
-}
-
-void SynthVoicePool::NoteOff(int midiNumber, double absoluteTime)
-{
-	// Not Engaged
-	if (!_engagedNotes->contains(midiNumber))
-		return;
-
-	else
-	{
-		SynthVoiceBase* note = _engagedNotes->at(midiNumber);
-		
-		note->NoteOff(midiNumber, absoluteTime);
-
-		// Remove Engaged Note
-		_engagedNotes->erase(midiNumber);
-
-		// Disengaged
-		_disengagedNotes->insert(std::make_pair(note, note));
-	}
-}
-
-void SynthVoicePool::SetFrame(PlaybackFrame* frame)
-{
-	// Use local frame to mix the note output
-	//PlaybackFrame noteFrame(*frame);
-
-	// Engaged
-	for (auto iter = _engagedNotes->begin(); iter != _engagedNotes->end(); ++iter)
-	{
-		if (iter->second->HasOutput(frame->GetStreamTime()))
-			iter->second->AddFrame(frame);
-	}
-
-	// Disengaged (also prune collection)
-	for (auto iter = _disengagedNotes->begin(); iter != _disengagedNotes->end();)
-	{
-		// HasOutput (ringing out of the note)
-		if (iter->first->HasOutput(frame->GetStreamTime()))
+		// Engage
+		if (_inactiveNotes->size() > 0)
 		{
-			iter->first->AddFrame(frame);
-			iter++;
+			SynthVoiceBase* note = _inactiveNotes->top();
+
+			note->NoteOn(midiNumber, playbackTime);
+
+			_engagedNotes->insert(std::make_pair(midiNumber, note));
+			_inactiveNotes->pop();
+
+			return true;
 		}
 
-		// Inactive
+		// At Capacity
+		else
+			return false;
+	}
+
+	// Single Note Mode(s)
+	else
+	{
+		if (_singleNoteEngaged)
+			return true;
+
+		// Engage
 		else
 		{
-			// Put back on the stack
-			_inactiveNotes->push(iter->first);
-
-			// Prune Dis-Engaged Notes
-			iter = _disengagedNotes->erase(iter);
+			_singleNote->NoteOn(midiNumber, playbackTime);
+			_singleNoteEngaged = true;
+			_singleNoteNumber = midiNumber;
+			return true;
 		}
+	}
+}
+
+void SynthVoicePool::NoteOff(int midiNumber, const PlaybackTime* playbackTime)
+{
+	if (_noteMode == SynthNoteMode::MultipleNormal)
+	{
+		// Not Engaged
+		if (!_engagedNotes->contains(midiNumber))
+			return;
+
+		else
+		{
+			SynthVoiceBase* note = _engagedNotes->at(midiNumber);
+
+			note->NoteOff(midiNumber, playbackTime);
+
+			// Remove Engaged Note
+			_engagedNotes->erase(midiNumber);
+
+			// Disengaged
+			_disengagedNotes->insert(std::make_pair(note, note));
+		}
+	}
+	// Single Note Mode(s)
+	else
+	{
+		if (!_singleNoteEngaged || _singleNoteNumber != midiNumber)
+			return;
+
+		// Engage
+		else
+		{
+			_singleNote->NoteOff(midiNumber, playbackTime);
+			_singleNoteEngaged = false;
+		}
+	}
+}
+
+void SynthVoicePool::SetFrame(PlaybackFrame* frame, const PlaybackTime* playbackTime)
+{
+	if (_noteMode == SynthNoteMode::MultipleNormal)
+	{
+		// Engaged
+		for (auto iter = _engagedNotes->begin(); iter != _engagedNotes->end(); ++iter)
+		{
+			if (iter->second->HasOutput(playbackTime))
+				iter->second->AddFrame(frame, playbackTime);
+		}
+
+		// Disengaged (also prune collection)
+		for (auto iter = _disengagedNotes->begin(); iter != _disengagedNotes->end();)
+		{
+			// HasOutput (ringing out of the note)
+			if (iter->first->HasOutput(playbackTime))
+			{
+				iter->first->AddFrame(frame, playbackTime);
+				iter++;
+			}
+
+			// Inactive
+			else
+			{
+				// Put back on the stack
+				_inactiveNotes->push(iter->first);
+
+				// Prune Dis-Engaged Notes
+				iter = _disengagedNotes->erase(iter);
+			}
+		}
+	}
+
+	// Single Note Mode(s)
+	else
+	{
+		if (_singleNote->HasOutput(playbackTime))
+			_singleNote->AddFrame(frame, playbackTime);
 	}
 }

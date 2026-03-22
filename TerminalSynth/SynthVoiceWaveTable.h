@@ -4,13 +4,14 @@
 #define SYNTH_VOICE_WAVE_TABLE_H
 
 #include "PlaybackFrame.h"
+#include "PlaybackTime.h"
 #include "SynthVoiceBase.h"
 
 class SynthVoiceWaveTable : public SynthVoiceBase
 {
-	virtual bool HasOutput() const = 0;
-	virtual void Engage(double absoluteTime) = 0;
-	virtual void DisEngage(double absoluteTime) = 0;
+	virtual bool HasOutput(const PlaybackTime* playbackTime) const = 0;
+	virtual void Engage(const PlaybackTime* playbackTime) = 0;
+	virtual void DisEngage(const PlaybackTime* playbackTime) = 0;
 	virtual void Clear() = 0;
 
 protected:

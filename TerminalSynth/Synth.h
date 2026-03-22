@@ -5,6 +5,7 @@
 
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SignalChain.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
@@ -28,12 +29,12 @@ public:
 	void Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings, const PlaybackInfo* parameters);
 
 	// Sets midi notes on / off
-	void SetNote(int midiNumber, bool pressed, double absoluteTime);
+	void SetNote(int midiNumber, bool pressed, const PlaybackTime* playbackTime);
 
 	/// <summary>
 	/// Synthesizes a full output at the specified stream time. Returns true if there was output this call.
 	/// </summary>
-	bool GetSample(PlaybackFrame* frame, float gain, float leftRightBalance);
+	bool GetSample(PlaybackFrame* frame, const PlaybackTime* playbackTime, float gain, float leftRightBalance);
 
 private:
 
@@ -46,6 +47,7 @@ private:
 	unsigned int _numberOfChannels;
 	unsigned int _samplingRate;
 	unsigned int _octave;
+
 };
 
 #endif

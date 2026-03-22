@@ -1,8 +1,9 @@
 #pragma once
-#include <cmath>
 
 #ifndef CONSTANT_H
 #define CONSTANT_H
+
+#include <cmath>
 
 enum class AudioStreamFormat
 {
@@ -45,6 +46,23 @@ enum class BuiltInOscillators : int {
 	StkVoicForm,
 	StkWhistle,
 	StkWurley,
+};
+enum class SynthNoteMode : int {
+	MultipleNormal = 0,
+	SingleNormal,
+	SinglePornamento,
+	SingleArpeggiator
+};
+enum class ArpeggiatorChord : int {
+	TriadMajor = 0,
+	TriadMinor,
+	TriadDiminished,
+	TriadAugmented,
+	TetradMajor7,
+	TetradMinor7,
+	TetradDominant7,
+	TetradMinor7b5,
+	TetradDiminished7
 };
 enum class ParameterAutomationType : int {
 	EnvelopeSweep = 0,

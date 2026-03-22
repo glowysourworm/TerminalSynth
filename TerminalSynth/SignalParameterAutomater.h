@@ -8,6 +8,7 @@
 #include "OscillatorParameters.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SignalFactoryCore.h"
 #include "SignalParameter.h"
 
@@ -36,17 +37,17 @@ public:
 	/// PLAYBACK FRAME IS NOT ALTERED! There should be a const, here, but there's still a problem in 
 	/// the SignalFactory*
 	/// </summary>
-	float GetValue(const PlaybackFrame* frame) const;
+	float GetValue(const PlaybackFrame* frame, const PlaybackTime* playbackTime) const;
 
 	/// <summary>
 	/// Engages the parameter automater's envelope (if set)
 	/// </summary>
-	void Engage(float absoluteTime);
+	void Engage(const PlaybackTime* playbackTime);
 
 	/// <summary>
 	/// Dis-engages the parameter automater's envelope (if set)
 	/// </summary>
-	void DisEngage(float absoluteTime);
+	void DisEngage(const PlaybackTime* playbackTime);
 
 private:
 

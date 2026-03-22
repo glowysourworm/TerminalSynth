@@ -5,6 +5,7 @@
 
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SignalParameterizedBase.h"
 #include "SignalSettings.h"
 #include <airwin_consolidated_base.h>
@@ -21,13 +22,13 @@ public:
 	~AirwindowsEffect();
 
 	void Initialize(const PlaybackInfo* outputSettings) override;	
-	bool HasOutput(double absoluteTime) const override;
+	bool HasOutput(const PlaybackTime* playbackTime) const override;
 
 	void UpdateParameter(int index, float value) override;
 
 protected:
 
-	void SetFrameImpl(PlaybackFrame* frame) override;
+	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) override;
 
 private:
 

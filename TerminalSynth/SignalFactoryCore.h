@@ -4,6 +4,7 @@
 #define SIGNAL_FACTORY_CORE_H
 
 #include "OscillatorParameters.h"
+#include "PlaybackTime.h"
 #include <BeeThree.h>
 #include <Clarinet.h>
 #include <Drummer.h>
@@ -45,29 +46,29 @@ public:
 	/// </summary>
 	void Reset(const OscillatorParameters* parameters);
 
-	float GenerateTriangleSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateSquareSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateSawtoothSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateSineSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateRandomSample(float frequency, size_t timeCursor, double streamTime);
+	float GenerateTriangleSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateSquareSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateSawtoothSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateSineSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateRandomSample(float frequency, const PlaybackTime* playbackTime);
 
-	float GenerateRhodeySample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateBeeThreeSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateClarinetSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateDrummerSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateFluteSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateFMVoicesSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateGuitarSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateHevyMetlSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateMandolinSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateMoogSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateSaxofonySample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateShakersSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateSitarSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateTubeBellSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateVoicFormSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateWhistleSample(float frequency, size_t timeCursor, double streamTime);
-	float GenerateWurleySample(float frequency, size_t timeCursor, double streamTime);
+	float GenerateRhodeySample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateBeeThreeSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateClarinetSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateDrummerSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateFluteSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateFMVoicesSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateGuitarSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateHevyMetlSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateMandolinSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateMoogSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateSaxofonySample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateShakersSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateSitarSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateTubeBellSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateVoicFormSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateWhistleSample(float frequency, const PlaybackTime* playbackTime);
+	float GenerateWurleySample(float frequency, const PlaybackTime* playbackTime);
 
 private:
 

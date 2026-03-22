@@ -1,6 +1,7 @@
 #include "ButterworthFilter.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SignalParameterizedBase.h"
 #include <cmath>
 
@@ -37,7 +38,7 @@ void ButterworthFilter::Initialize(const PlaybackInfo* parameters)
 	//SignalParameterizedBase::Initialize(parameters);
 }
 
-void ButterworthFilter::SetFrameImpl(PlaybackFrame* frame)
+void ButterworthFilter::SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime)
 {
 	float outputLeft = this->Apply(frame->GetLeft());
 	float outputRight = this->Apply(frame->GetRight());
@@ -45,7 +46,7 @@ void ButterworthFilter::SetFrameImpl(PlaybackFrame* frame)
 	frame->SetFrame(outputLeft, outputRight);
 }
 
-bool ButterworthFilter::HasOutput(double absoluteTime) const
+bool ButterworthFilter::HasOutput(const PlaybackTime* playbackTime) const
 {
 	return true;
 }

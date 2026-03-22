@@ -1,6 +1,7 @@
 #include "AirwindowsEffect.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SignalBase.h"
 #include "SignalParameterizedBase.h"
 #include "SignalSettings.h"
@@ -46,7 +47,7 @@ void AirwindowsEffect::UpdateParameter(int index, float value)
 	_effect->setParameter(index, value);
 }
 
-void AirwindowsEffect::SetFrameImpl(PlaybackFrame* frame)
+void AirwindowsEffect::SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime)
 {
 	// airwindows format:  The effect treats the inputs as dry input, and the outputs as the result. I think 
 	//					   they may have been confused about other audio APIs, which have input as the microphone.
@@ -67,10 +68,11 @@ void AirwindowsEffect::SetFrameImpl(PlaybackFrame* frame)
 
 	_effect->processReplacing(_input, _output, 1);
 
+	// Need mixing parameter
 	frame->SetFrame(_output[0][0], _output[1][0]);
 }
 
-bool AirwindowsEffect::HasOutput(double absoluteTime) const
+bool AirwindowsEffect::HasOutput(const PlaybackTime* playbackTime) const
 {
 	return true;
 }

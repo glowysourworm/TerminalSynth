@@ -3,6 +3,7 @@
 #include "OscillatorParameters.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SignalFactoryCore.h"
 #include "SignalParameter.h"
 #include "SignalParameterAutomater.h"
@@ -61,38 +62,38 @@ void SignalParameterAutomater::Update(const SignalParameter* parameter)
 	_signalFactoryRandom->Reset(_oscillatorParametersRandom);
 }
 
-void SignalParameterAutomater::Engage(float absoluteTime)
+void SignalParameterAutomater::Engage(const PlaybackTime* playbackTime)
 {
-	_envelope->Engage(absoluteTime);
+	_envelope->Engage(playbackTime);
 }
 
-void SignalParameterAutomater::DisEngage(float absoluteTime)
+void SignalParameterAutomater::DisEngage(const PlaybackTime* playbackTime)
 {
-	_envelope->DisEngage(absoluteTime);
+	_envelope->DisEngage(playbackTime);
 }
 
-float SignalParameterAutomater::GetValue(const PlaybackFrame* frame) const
+float SignalParameterAutomater::GetValue(const PlaybackFrame* frame, const PlaybackTime* playbackTime) const
 {
 	
 
 	switch (_type)
 	{
 	case ParameterAutomationType::EnvelopeSweep:
-		return _envelope->GetEnvelopeLevel(frame->GetStreamTime());
+		return _envelope->GetEnvelopeLevel(playbackTime);
 		break;
 	case ParameterAutomationType::Oscillator:
 		switch (_oscillatorType)
 		{
 		case ParameterAutomationOscillator::Sine:
-			return _signalFactory->GenerateSineSample(_oscillatorParameters->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+			return _signalFactory->GenerateSineSample(_oscillatorParameters->GetFrequency(), playbackTime);
 		case ParameterAutomationOscillator::Square:
-			return _signalFactory->GenerateSquareSample(_oscillatorParameters->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+			return _signalFactory->GenerateSquareSample(_oscillatorParameters->GetFrequency(), playbackTime);
 		case ParameterAutomationOscillator::Triangle:
-			return _signalFactory->GenerateTriangleSample(_oscillatorParameters->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+			return _signalFactory->GenerateTriangleSample(_oscillatorParameters->GetFrequency(), playbackTime);
 		case ParameterAutomationOscillator::Sawtooth:
-			return _signalFactory->GenerateSawtoothSample(_oscillatorParameters->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+			return _signalFactory->GenerateSawtoothSample(_oscillatorParameters->GetFrequency(), playbackTime);
 		case ParameterAutomationOscillator::Random:
-			return _signalFactoryRandom->GenerateRandomSample(_oscillatorParametersRandom->GetFrequency(), frame->GetTimeCursor(), frame->GetStreamTime());
+			return _signalFactoryRandom->GenerateRandomSample(_oscillatorParametersRandom->GetFrequency(), playbackTime);
 		default:
 			throw new std::exception("Unhandled automation oscillator type:  SignalParameterAutomater.h");
 		}

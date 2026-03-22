@@ -5,13 +5,14 @@
 
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include <string>
 
 class SignalBase
 {
 public:
 
-	SignalBase() { _name = new std::string(""); }
+	SignalBase() : SignalBase("") {}
 	SignalBase(const std::string& name)
 	{
 		_outputSettings = nullptr;
@@ -30,36 +31,36 @@ public:
 	/// <summary>
 	/// Function to call to set the frame with the next sample output, overwriting the frame's data.
 	/// </summary>
-	virtual void SetFrame(PlaybackFrame* frame)
+	virtual void SetFrame(PlaybackFrame* frame, const PlaybackTime* playbackTime)
 	{
-		SetFrameImpl(frame);
+		SetFrameImpl(frame, playbackTime);
 	}
 
 	/// <summary>
 	/// Function to call to add, to the frame, the next sample output.
 	/// </summary>
-	virtual void AddFrame(PlaybackFrame* frame)
+	virtual void AddFrame(PlaybackFrame* frame, const PlaybackTime* playbackTime)
 	{
 		PlaybackFrame localFrame(*frame);
-		SetFrameImpl(&localFrame);
+		SetFrameImpl(&localFrame, playbackTime);
 		frame->AddFrame(localFrame.GetLeft(), localFrame.GetRight());
 	}
 
 	/// <summary>
 	/// Function used to alert the caller that the SignalBase* component still has output.
 	/// </summary>
-	virtual bool HasOutput(double absoluteTime) const = 0;
+	virtual bool HasOutput(const PlaybackTime* playbackTime) const = 0;
 
 	/// <summary>
 	/// Function called when the note is engaged, causing the SignalBase* to become engaged.
 	/// </summary>
-	virtual void Engage(double absoluteTime) {};
+	virtual void Engage(const PlaybackTime* playbackTime) {};
 
 	/// <summary>
 	/// Function called when the note is dis-engaged, causing the SignalBase* to become dis-engaged. Any
 	/// ringing will be handled with the HasOutput, and SetFrame functions.
 	/// </summary>
-	virtual void DisEngage(double absoluteTime) {};
+	virtual void DisEngage(const PlaybackTime* playbackTime) {};
 
 	/// <summary>
 	/// Function to clear the signal base of all of its internal buffers, and signal history. Any parameters
@@ -76,7 +77,7 @@ protected:
 	/// <summary>
 	/// Function to set the frame with the next sample
 	/// </summary>
-	virtual void SetFrameImpl(PlaybackFrame* frame) = 0;
+	virtual void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) = 0;
 
 	/// <summary>
 	/// Returns a const pointer to the output settings

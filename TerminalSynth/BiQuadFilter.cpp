@@ -1,6 +1,7 @@
 #include "BiQuadFilter.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SignalParameterizedBase.h"
 #include <cmath>
 #include <exception>
@@ -69,7 +70,7 @@ void BiQuadFilter::Initialize(const PlaybackInfo* parameters)
 	}
 }
 
-void BiQuadFilter::SetFrameImpl(PlaybackFrame* frame)
+void BiQuadFilter::SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime)
 {
 	float inputLeft = frame->GetLeft();
 	float inputRight = frame->GetRight();
@@ -97,7 +98,7 @@ void BiQuadFilter::SetFrameImpl(PlaybackFrame* frame)
 	_output1->SetFrame(frame);
 }
 
-bool BiQuadFilter::HasOutput(double absoluteTime) const
+bool BiQuadFilter::HasOutput(const PlaybackTime* playbackTime) const
 {
 	return true;
 }

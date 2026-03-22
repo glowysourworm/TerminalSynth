@@ -1,12 +1,16 @@
 #include "AtomicLock.h"
 #include "BaseController.h"
 #include "Constant.h"
+#include "EqualizerOutput.h"
 #include "IntervalTimer.h"
 #include "LoopTimer.h"
 #include "MidiPlaybackDevice.h"
 #include "PlaybackClock.h"
 #include "PlaybackController.h"
+#include "PlaybackFormatTransformer.h"
+#include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "PlaybackUserData.h"
 #include "SoundRegistry.h"
 #include "SynthPlaybackDevice.h"
@@ -25,6 +29,7 @@ PlaybackController::PlaybackController(AtomicLock* playbackLock) : BaseControlle
 	_audioTimer = new LoopTimer(0.001);
 	_audioSampleTimer = new IntervalTimer();
 	_audioLockAcquireTimer = new IntervalTimer();
+	_playbackTime = new PlaybackTime();
 }
 
 PlaybackController::~PlaybackController()
@@ -62,6 +67,7 @@ int PlaybackController::ProcessAudioCallback(void* outputBuffer, AudioStreamForm
 	SynthSettings* configuration = userData->GetSynthSettings();
 	SoundRegistry* effectRegistry = userData->GetEffectRegistry();
 	PlaybackInfo* outputSettings = userData->GetPlaybackInfo();
+	EqualizerOutput* equalizer = userData->GetEqualizer();
 
 	// Some RT Updates
 	float avgAudioMilli = _audioTimer->GetAvgMilli();
@@ -84,31 +90,57 @@ int PlaybackController::ProcessAudioCallback(void* outputBuffer, AudioStreamForm
 		configuration->ClearDirty();
 	}
 
-	int rtAudioReturnValue = 0;
-
-	// Last Output
-	//bool lastOutput = _midiMode ? _midiDevice->GetLastOutput() : _synthDevice->GetLastOutput();
-
-	// Windows API, SynthSettings*, SynthPlaybackDevice* (be aware of usage)
+	// Write Output Buffer:  The PlaybackDevice* is handled per frame. Since the SynthPlaybackDevice* sets all notes at
+	//						 once, the call should only be made on the first frame.
 	//
-	bool pressedKeys = _midiMode ? _midiDevice->SetForPlayback(numberOfFrames, streamTime, configuration) :
-								   _synthDevice->SetForPlayback(numberOfFrames, streamTime, configuration);
+	//						 The PlaybackTime* is updated each iteration. THE STREAM TIME WILL ONLY BE APPROXIMATE! There
+	//						 have been issues using the stream time to do sampling. So, the sample time is calculated using
+	//						 the frame cursor.
+	//
+	
+	// Synth Device:  Pressed notes, or check Midi Device each frame
+	bool hasOutput = !_midiMode ? _synthDevice->SetForFrame(*_playbackTime, configuration) : false;
+	bool sampleSuccess = true;
 
 	float gain = configuration->GetGain();
 	float leftRight = configuration->GetLeftRightBalance();
 
-	// Optimize CPU
-	//if (lastOutput || pressedKeys)
-	//{
-		// Audio Sample Timer
-		_audioSampleTimer->Reset();
+	PlaybackFrame playbackFrame(0, 0);
 
-		// Write playback buffer from synth device
-		rtAudioReturnValue = _midiMode ? _midiDevice->WritePlaybackBuffer(outputBuffer, streamFormat, numberOfFrames, streamTime, userData->GetEqualizer(), gain, leftRight) :
-										 _synthDevice->WritePlaybackBuffer(outputBuffer, streamFormat, numberOfFrames, streamTime, userData->GetEqualizer(), gain, leftRight);
+	// Output || Midi Mode
+	for (int frameIndex = 0; frameIndex < numberOfFrames && sampleSuccess; frameIndex++)
+	{
+		if (_midiMode)
+			hasOutput = _midiDevice->SetForFrame(*_playbackTime, configuration);
 
-		_audioSampleTimer->Mark();
-	//}
+		//if (hasOutput)
+		//{
+			// Audio Sample Timer
+			_audioSampleTimer->Reset();
+
+			sampleSuccess = _midiMode ? _midiDevice->WriteSample(playbackFrame, *_playbackTime, gain, leftRight) :
+										_synthDevice->WriteSample(playbackFrame, *_playbackTime, gain, leftRight);
+
+			_audioSampleTimer->Mark();
+
+			// Apply Sample Frame
+			WriteBufferWithTransform(outputBuffer, streamFormat, playbackFrame, frameIndex);
+
+			// Apply Sample to Equalizer
+			equalizer->AddSample(playbackFrame.GetLeft(), playbackFrame.GetRight());
+
+			// Clear Sample Frame (any reference to the frame has been copied by the backend; and will be stored separately)
+			playbackFrame.ClearSample();
+
+			// Stream Time:  PRIMARY STREAM TIME SOURCE (Incrementing, instead of querying the stream source). There could be
+			//				 real time audio forums about how to do this. It may be more accurate to query; but there could
+			//				 be a problem getting the latest stream time (perhaps a mutex, but not likely). It's better to 
+			//				 use the frame cursor to get the stream time; but this will set an equivalent, anyway.
+			//
+			_playbackTime->streamTime += 1 / outputSettings->GetStreamInfo()->streamSampleRate;
+			_playbackTime->frameCursor++;
+		//}
+	}
 
 	// RT Update (Audio)
 	outputSettings->UpdateRT_Audio(streamTime, avgAudioMilli, avgAudioSampleMicro, avgAudioLockAcquireNano, streamLatency);
@@ -116,7 +148,30 @@ int PlaybackController::ProcessAudioCallback(void* outputBuffer, AudioStreamForm
 	// std::atomic end loop
 	this->PlaybackLock->Release();
 
-	return rtAudioReturnValue;
+	// NEED ERROR CODE ENUMS
+	return sampleSuccess ? 0 : -1;
+}
+
+void PlaybackController::WriteBufferWithTransform(void* outputBuffer, AudioStreamFormat streamFormat, const PlaybackFrame& frame, int frameIndex)
+{
+	char* buffer = (char*)outputBuffer;
+
+	// Transform buffers (two floats)
+	int frameSize = 4;
+	char leftBuffer[4];
+	char rightBuffer[4];
+
+	// TRANSFORM STREAM:  The byte stream must match the output format
+	PlaybackFormatTransformer::Transform(streamFormat, frame.GetLeft(), leftBuffer, frameSize);
+	PlaybackFormatTransformer::Transform(streamFormat, frame.GetRight(), rightBuffer, frameSize);
+
+	// Write Transformed Buffer
+	for (int index = 0; index < frameSize; index++)
+	{
+		// Interleved frames
+		buffer[(2 * frameIndex * frameSize) + index] = leftBuffer[index];
+		buffer[(2 * frameIndex * frameSize) + frameSize + index] = rightBuffer[index];
+	}
 }
 
 void PlaybackController::Start()
@@ -139,6 +194,7 @@ bool PlaybackController::Dispose()
 	delete _audioTimer;
 	delete _audioSampleTimer;
 	delete _audioLockAcquireTimer;
+	delete _playbackTime;
 
 	_midiDevice = nullptr;
 	_synthDevice = nullptr;
@@ -146,6 +202,7 @@ bool PlaybackController::Dispose()
 	_audioTimer = nullptr;
 	_audioSampleTimer = nullptr;
 	_audioLockAcquireTimer = nullptr;
+	_playbackTime = nullptr;
 
 	_initialized = false;
 

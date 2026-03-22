@@ -3,9 +3,9 @@
 #ifndef PLAYBACK_DEVICE_H
 #define PLAYBACK_DEVICE_H
 
-#include "Constant.h"
-#include "EqualizerOutput.h"
+#include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SoundRegistry.h"
 #include "SynthSettings.h"
 
@@ -30,33 +30,18 @@ public:
 	virtual bool Update(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) = 0;
 
 	/// <summary>
-	/// Returns true if the synth had output last call to WritePlaybackBuffer. This output means there's more in the 
-	/// synth device to write until there's nothing left; and the output buffer can write silence, which saves CPU
-	/// cycles.
-	/// </summary>
-	virtual bool GetLastOutput() const = 0;
-
-	/// <summary>
 	/// Sets the playback device for this stream time prior to writing playback buffer. Returns
-	/// true if there are samples to process for this playback period.
+	/// true if the setup was successful; and that there is anything to play this frame.
 	/// </summary>
-	/// <param name="numberOfFrames">Number of frames to process during next callback</param>
-	/// <param name="streamTime">Current stream time to begin next playback period</param>
 	/// <param name="configuration">Configuration for the synth device</param>
 	/// <returns>True if there are samples to process. Otherwise, there should be silence for the next playback period</returns>
-	virtual bool SetForPlayback(unsigned int numberOfFrames, double streamTime, const SynthSettings* configuration) = 0;
+	virtual bool SetForFrame(const PlaybackTime& playbackTime, const SynthSettings* configuration) = 0;
 
 	/// <summary>
-	/// Tells the playback device to write its output to the playback buffer. The write should start at frame index 0, and
-	/// end at the frame index that coincides with the stream end time. The function should return non-zero for error indication.
+	/// Tells the playback device to write one sample to the playback frame. Returns true if the write was successful. Uses up to
+	/// date parameters supplied by the PlaybackController*
 	/// </summary>
-	virtual int WritePlaybackBuffer(
-		void* playbackBuffer, 
-		AudioStreamFormat streamFormat,
-		unsigned int numberOfFrames,
-		double streamTime,
-		EqualizerOutput* equalizerOutput,
-		float gain, float leftRightBalance) = 0;
+	virtual bool WriteSample(PlaybackFrame& playbackFrame, const PlaybackTime& playbackTime, float gain, float leftRightBalance) = 0;
 };
 
 

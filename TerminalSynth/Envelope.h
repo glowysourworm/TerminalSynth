@@ -1,10 +1,12 @@
 #pragma once
-#include "Constant.h"
-#include <istream>
-#include <ostream>
 
 #ifndef ENVELOPE_H
 #define ENVELOPE_H
+
+#include "Constant.h"
+#include "PlaybackTime.h"
+#include <istream>
+#include <ostream>
 
 class Envelope
 {
@@ -16,11 +18,11 @@ public:
 
 	bool Update(const Envelope* envelope);
 
-	void Engage(double absoluteTime);
-	void DisEngage(double absoluteTime);
-	bool HasOutput(double absoluteTime);
+	void Engage(const PlaybackTime* playbackTime);
+	void DisEngage(const PlaybackTime* playbackTime);
+	bool HasOutput(const PlaybackTime* playbackTime);
 	bool IsEngaged();
-	double GetEnvelopeLevel(double absoluteTime);
+	double GetEnvelopeLevel(const PlaybackTime* playbackTime);
 	double GetEngageTime();
 	double GetDisEngageTime();
 
@@ -84,7 +86,7 @@ public:
 
 private:
 
-	double GetEnvelopeLevelImpl(double envelopeTime);
+	double GetEnvelopeLevelImpl(const PlaybackTime* playbackTime);
 
 private:
 

@@ -5,6 +5,7 @@
 
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SignalChainSettings.h"
 #include "SignalParameterizedBase.h"
 #include "SoundRegistry.h"
@@ -25,11 +26,11 @@ public:
 
 	void Update(SoundRegistry* effectRegistry, const SignalChainSettings* signalChainSettings);
 
-	void SetFrame(PlaybackFrame* frame);
-	bool HasOutput(double absoluteTime) const;
+	void SetFrame(PlaybackFrame* frame, const PlaybackTime* playbackTime);
+	bool HasOutput(const PlaybackTime* playbackTime) const;
 
-	void Engage(double absoluteTime);
-	void DisEngage(double absoluteTime);
+	void Engage(const PlaybackTime* playbackTime);
+	void DisEngage(const PlaybackTime* playbackTime);
 
 protected:
 

@@ -1,6 +1,7 @@
 #include "Algorithm.h"
 #include "Constant.h"
 #include "Envelope.h"
+#include "PlaybackTime.h"
 #include <algorithm>
 #include <exception>
 
@@ -110,17 +111,17 @@ void Envelope::SetSustainPeak(double value)
 {
 	_sustainPeak = value;
 }
-void Envelope::Engage(double absoluteTime)
+void Envelope::Engage(const PlaybackTime* playbackTime)
 {
 	if (_engaged)
 		return;
 
 	_engaged = true;
 	_hasEngaged = true;
-	_engagedTime = absoluteTime;
+	_engagedTime = playbackTime->streamTime;
 }
 
-void Envelope::DisEngage(double absoluteTime)
+void Envelope::DisEngage(const PlaybackTime* playbackTime)
 {
 	if (!_engaged)
 		return;
@@ -129,13 +130,13 @@ void Envelope::DisEngage(double absoluteTime)
 	//
 	// CALL BEFORE DIS-ENGAGING
 	//
-	_disEngagedLevel = GetEnvelopeLevel(absoluteTime);
+	_disEngagedLevel = GetEnvelopeLevel(playbackTime);
 
 	_engaged = false;
-	_disEngagedTime = absoluteTime;
+	_disEngagedTime = playbackTime->streamTime;
 }
 
-bool Envelope::HasOutput(double absoluteTime)
+bool Envelope::HasOutput(const PlaybackTime* playbackTime)
 {
 	if (!_hasEngaged)
 		return false;
@@ -148,7 +149,7 @@ bool Envelope::HasOutput(double absoluteTime)
 	else
 	{
 		// Check release time
-		bool hasOutput = GetEnvelopeLevel(absoluteTime) > 0;
+		bool hasOutput = GetEnvelopeLevel(playbackTime) > 0;
 
 		// Reset
 		if (!hasOutput)
@@ -189,7 +190,7 @@ double Envelope::GetDisEngageTime()
 	return _disEngagedTime;
 }
 
-double Envelope::GetEnvelopeLevel(double absoluteTime)
+double Envelope::GetEnvelopeLevel(const PlaybackTime* playbackTime)
 {
 	if (!_hasEngaged)
 		return 0;
@@ -199,21 +200,21 @@ double Envelope::GetEnvelopeLevel(double absoluteTime)
 
 	if (_engaged)
 	{
-		return GetEnvelopeLevelImpl(absoluteTime);
+		return GetEnvelopeLevelImpl(playbackTime);
 	}
 	else
 	{
-		if (absoluteTime - _disEngagedTime < _release)
-			return GetEnvelopeLevelImpl(absoluteTime);
+		if (playbackTime->streamTime - _disEngagedTime < _release)
+			return GetEnvelopeLevelImpl(playbackTime);
 
 		else
 			return 0;
 	}
 }
 
-double Envelope::GetEnvelopeLevelImpl(double absoluteTime)
+double Envelope::GetEnvelopeLevelImpl(const PlaybackTime* playbackTime)
 {
-	double envelopeTime = absoluteTime - _engagedTime;
+	double envelopeTime = playbackTime->streamTime - _engagedTime;
 	double envelopeTimeDisEngage = _disEngagedTime - _engagedTime;
 	double result = 0;
 

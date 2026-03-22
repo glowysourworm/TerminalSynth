@@ -1,5 +1,6 @@
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SignalChain.h"
 #include "SignalChainSettings.h"
 #include "SignalParameterizedBase.h"
@@ -69,36 +70,36 @@ void SignalChain::Update(SoundRegistry* effectRegistry, const SignalChainSetting
 	}
 }
 
-void SignalChain::SetFrame(PlaybackFrame* frame)
+void SignalChain::SetFrame(PlaybackFrame* frame, const PlaybackTime* playbackTime)
 {
 	for (int index = 0; index < _chain->size(); index++)
 	{
-		_chain->at(index)->SetFrame(frame);
+		_chain->at(index)->SetFrame(frame, playbackTime);
 	}
 }
 
-void SignalChain::Engage(double absoluteTime)
+void SignalChain::Engage(const PlaybackTime* playbackTime)
 {
 	for (int index = 0; index < _chain->size(); index++)
 	{
-		_chain->at(index)->Engage(absoluteTime);
+		_chain->at(index)->Engage(playbackTime);
 	}
 }
-void SignalChain::DisEngage(double absoluteTime)
+void SignalChain::DisEngage(const PlaybackTime* playbackTime)
 {
 	for (int index = 0; index < _chain->size(); index++)
 	{
-		_chain->at(index)->DisEngage(absoluteTime);
+		_chain->at(index)->DisEngage(playbackTime);
 	}
 }
 
-bool SignalChain::HasOutput(double absoluteTime) const
+bool SignalChain::HasOutput(const PlaybackTime* playbackTime) const
 {
 	bool hasOutput = false;
 
 	for (int index = 0; index < _chain->size() && !hasOutput; index++)
 	{
-		hasOutput |= _chain->at(index)->HasOutput(absoluteTime);
+		hasOutput |= _chain->at(index)->HasOutput(playbackTime);
 	}
 
 	return hasOutput;

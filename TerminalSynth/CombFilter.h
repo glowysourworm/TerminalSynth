@@ -5,6 +5,7 @@
 
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
+#include "PlaybackTime.h"
 #include "SignalParameterizedBase.h"
 #include <queue>
 
@@ -22,13 +23,13 @@ public:
 	~CombFilter();
 
 	void Initialize(const PlaybackInfo* parameters) override;
-	bool HasOutput(double absoluteTime) const override;
+	bool HasOutput(const PlaybackTime* playbackTime) const override;
 
 	void UpdateParameter(int index, float parameterValue) override {};		// Doesn't support parameter automation
 
 protected:
 
-	void SetFrameImpl(PlaybackFrame* frame) override;
+	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) override;
 
 private:
 

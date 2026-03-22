@@ -113,7 +113,8 @@ void MainModelUI::FromUI(SynthSettings* destination)
 
 	// Overwrites Oscillator / Envelope
 	_inputModelUI->From(destination->GetCurrentSoundSettings()->GetOscillatorParameters(),
-						destination->GetCurrentSoundSettings()->GetOscillatorEnvelope());
+						destination->GetCurrentSoundSettings()->GetOscillatorEnvelope(),
+						destination->GetCurrentSoundSettings()->GetNoteParameters());
 }
 void MainModelUI::ToUI(const PlaybackUserData* playbackData)
 {

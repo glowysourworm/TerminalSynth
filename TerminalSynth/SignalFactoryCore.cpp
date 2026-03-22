@@ -1,5 +1,6 @@
 #include "Constant.h"
 #include "OscillatorParameters.h"
+#include "PlaybackTime.h"
 #include "SignalFactoryCore.h"
 #include <BeeThree.h>
 #include <Clarinet.h>
@@ -169,7 +170,7 @@ float SignalFactoryCore::GetFrequency(unsigned int midiNote)
 	return TerminalSynth::GetMidiFrequency(midiNote);		// We need a namespace!
 }
 
-float SignalFactoryCore::GenerateTriangleSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateTriangleSample(float frequency, const PlaybackTime* playbackTime)
 {
 	float period = 1 / frequency;
 	float periodQuarter = 0.25f * period;
@@ -178,7 +179,7 @@ float SignalFactoryCore::GenerateTriangleSample(float frequency, size_t timeCurs
 	float sample = 0;
 
 	// Using modulo arithmetic to get the relative period time
-	float periodTime = fmod(timeCursor / (float)_samplingRate, period);
+	float periodTime = fmod(playbackTime->FromCursor(_samplingRate), period);
 
 	// First Quadrant
 	if (periodTime < periodQuarter)
@@ -207,11 +208,11 @@ float SignalFactoryCore::GenerateTriangleSample(float frequency, size_t timeCurs
 	return sample;
 }
 
-float SignalFactoryCore::GenerateSquareSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateSquareSample(float frequency, const PlaybackTime* playbackTime)
 {
 	// Using modulo arithmetic to get the relative period time
 	float period = 1 / frequency;
-	float periodTime = fmod(timeCursor / (float)_samplingRate, period);
+	float periodTime = fmod(playbackTime->FromCursor(_samplingRate), period);
 	float sample = 0;
 
 	if (periodTime < period / 2.0)
@@ -223,26 +224,26 @@ float SignalFactoryCore::GenerateSquareSample(float frequency, size_t timeCursor
 	return sample;
 }
 
-float SignalFactoryCore::GenerateSawtoothSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateSawtoothSample(float frequency, const PlaybackTime* playbackTime)
 {
 	// Using modulo arithmetic to get the relative period time
 	float period = 1 / frequency;
-	float periodTime = fmod(timeCursor / (float)_samplingRate, period);
+	float periodTime = fmod(playbackTime->FromCursor(_samplingRate), period);
 
 	return (((_signalHigh - _signalLow) / period) * periodTime) + _signalLow;
 }
 
-float SignalFactoryCore::GenerateSineSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateSineSample(float frequency, const PlaybackTime* playbackTime)
 {
-	return (0.5f * (_signalHigh - _signalLow) * sinf(2.0 * std::numbers::pi * frequency * (timeCursor / (float)_samplingRate))) + (0.5f * (_signalHigh + _signalLow));
+	return (0.5f * (_signalHigh - _signalLow) * sinf(2.0 * std::numbers::pi * frequency * playbackTime->FromCursor(_samplingRate))) + (0.5f * (_signalHigh + _signalLow));
 }
 
-float SignalFactoryCore::GenerateRandomSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateRandomSample(float frequency, const PlaybackTime* playbackTime)
 {
 	float period = 1 / frequency;
 
 	// Using modulo arithmetic to get the relative period time
-	float periodTime = fmod(timeCursor / (float)_samplingRate, period);
+	float periodTime = fmod(playbackTime->FromCursor(_samplingRate), period);
 
 	float periodDiv = (period / _randomQuadrantValues->size());
 	float periodBucket = periodTime / periodDiv;
@@ -254,71 +255,71 @@ float SignalFactoryCore::GenerateRandomSample(float frequency, size_t timeCursor
 
 	return _randomQuadrantValues->at(periodIndex);
 }
-float SignalFactoryCore::GenerateRhodeySample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateRhodeySample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkRhodey->tick();
 }
-float SignalFactoryCore::GenerateBeeThreeSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateBeeThreeSample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkB3->tick();
 }
-float SignalFactoryCore::GenerateClarinetSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateClarinetSample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkClarinet->tick();
 }
-float SignalFactoryCore::GenerateDrummerSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateDrummerSample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkDrummer->tick();
 }
-float SignalFactoryCore::GenerateFMVoicesSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateFMVoicesSample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkFMVoices->tick();
 }
-float SignalFactoryCore::GenerateFluteSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateFluteSample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkFlute->tick();
 }
-float SignalFactoryCore::GenerateGuitarSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateGuitarSample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkGuitar->tick();
 }
-float SignalFactoryCore::GenerateHevyMetlSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateHevyMetlSample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkHevyMetl->tick();
 }
-float SignalFactoryCore::GenerateMandolinSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateMandolinSample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkMandolin->tick();
 }
-float SignalFactoryCore::GenerateMoogSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateMoogSample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkMoog->tick();
 }
-float SignalFactoryCore::GenerateSaxofonySample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateSaxofonySample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkSaxofony->tick();
 }
-float SignalFactoryCore::GenerateShakersSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateShakersSample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkShakers->tick();
 }
-float SignalFactoryCore::GenerateSitarSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateSitarSample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkSitar->tick();
 }
-float SignalFactoryCore::GenerateTubeBellSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateTubeBellSample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkTubeBell->tick();
 }
-float SignalFactoryCore::GenerateVoicFormSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateVoicFormSample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkVoicForm->tick();
 }
-float SignalFactoryCore::GenerateWhistleSample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateWhistleSample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkWhistle->tick();
 }
-float SignalFactoryCore::GenerateWurleySample(float frequency, size_t timeCursor, double streamTime)
+float SignalFactoryCore::GenerateWurleySample(float frequency, const PlaybackTime* playbackTime)
 {
 	return _stkWurley->tick();
 }

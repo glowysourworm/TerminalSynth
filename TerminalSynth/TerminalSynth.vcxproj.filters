@@ -473,6 +473,18 @@
     <ClInclude Include="InputModelUI.h">
       <Filter>Header Files\ModelUI</Filter>
     </ClInclude>
+    <ClInclude Include="SynthNoteProcessor.h">
+      <Filter>Header Files\Synth</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthNoteParameters.h">
+      <Filter>Header Files\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthNoteParametersUI.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="PlaybackTime.h">
+      <Filter>Header Files\Playback</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="PlaybackUserData.h">
