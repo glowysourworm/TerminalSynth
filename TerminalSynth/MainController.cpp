@@ -164,7 +164,11 @@ void MainController::Loop()
 
 		// Pending Action (from Tick())
 		if (_mainUI->HasPendingAction())
+		{
 			_mainUI->ServicePendingAction();
+			_mainUI->ClearPendingAction();
+		}
+			
 
 		// These were added to help create UI classes. The stack-oriented rendering
 		// architecture of FTXUI is tricky to get to provide an update each call. You

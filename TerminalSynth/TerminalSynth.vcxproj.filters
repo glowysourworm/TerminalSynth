@@ -485,6 +485,9 @@
     <ClInclude Include="PlaybackTime.h">
       <Filter>Header Files\Playback</Filter>
     </ClInclude>
+    <ClInclude Include="ControlPanelUI.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="PlaybackUserData.h">

@@ -3,6 +3,7 @@
 #ifndef INPUT_UI_H
 #define INPUT_UI_H
 
+#include "ControlPanelUI.h"
 #include "EnvelopeUI.h"
 #include "InputModelUI.h"
 #include "OscillatorUI.h"
@@ -38,9 +39,14 @@ public:
 	bool GetDirty() const override;
 	void ClearDirty() override;
 
+	void SetControlPanelStatus(bool soundSettingsChanged);
+
 private:
 
 	ftxui::Component _component;
+
+	// Control Panel
+	ControlPanelUI* _controlPanelUI;
 
 	// Editors
 	OscillatorUI* _oscillatorUI;
@@ -53,9 +59,13 @@ InputUI::InputUI(const InputModelUI& model)
 	_envelopeUI = new EnvelopeUI(*model.GetEnvelope());
 	_oscillatorUI = new OscillatorUI(model.GetSoundBankSettings(), *model.GetOscillatorParameters());
 	_synthNoteParametersUI = new SynthNoteParametersUI(*model.GetSynthNoteParamters());
+	_controlPanelUI = new ControlPanelUI();
 }
 InputUI::~InputUI()
 {
+	// Control Panel
+	delete _controlPanelUI;
+
 	// Editors
 	delete _oscillatorUI;
 	delete _envelopeUI;
@@ -67,8 +77,11 @@ void InputUI::Initialize(const InputModelUI& model)
 	_oscillatorUI->Initialize(*model.GetOscillatorParameters());
 	_envelopeUI->Initialize(*model.GetEnvelope());
 	_synthNoteParametersUI->Initialize(*model.GetSynthNoteParamters());
+	_controlPanelUI->Initialize(false);
 
 	_component = ftxui::Container::Vertical({
+
+		_controlPanelUI->GetComponent(),
 
 		ftxui::Container::Horizontal({
 
@@ -84,6 +97,11 @@ void InputUI::Initialize(const InputModelUI& model)
 	});
 }
 
+void InputUI::SetControlPanelStatus(bool soundSettingsChanged)
+{
+	_controlPanelUI->SetDirtyStatus(soundSettingsChanged);
+}
+
 ftxui::Component InputUI::GetComponent()
 {
 	return _component;
@@ -91,7 +109,10 @@ ftxui::Component InputUI::GetComponent()
 
 void InputUI::ServicePendingAction()
 {
-
+	if (_controlPanelUI->HasPendingAction())
+	{
+		_controlPanelUI->ServicePendingAction();
+	}
 }
 
 void InputUI::UpdateComponent()
@@ -115,6 +136,7 @@ void InputUI::ToUI(const InputModelUI& source)
 
 void InputUI::ToUI(const InputModelUI* source)
 {
+	
 }
 
 void InputUI::FromUI(InputModelUI& destination)
@@ -132,7 +154,7 @@ void InputUI::FromUI(InputModelUI* destination)
 
 bool InputUI::HasPendingAction() const
 {
-	return false;
+	return _controlPanelUI->HasPendingAction();
 }
 
 void InputUI::ClearPendingAction()
@@ -140,6 +162,7 @@ void InputUI::ClearPendingAction()
 	_oscillatorUI->ClearPendingAction();
 	_envelopeUI->ClearPendingAction();
 	_synthNoteParametersUI->ClearPendingAction();
+	_controlPanelUI->ClearPendingAction();
 }
 
 bool InputUI::GetDirty() const

@@ -112,7 +112,7 @@ bool SynthVoicePool::CanEngageNextNote() const
 		return _engagedNotes->size() < _capacity;
 
 	case SynthNoteMode::SingleNormal:
-	case SynthNoteMode::SinglePornamento:
+	case SynthNoteMode::SinglePortamento:
 	case SynthNoteMode::SingleArpeggiator:
 		return !_singleNoteEngaged;
 	

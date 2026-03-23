@@ -14,14 +14,14 @@ public:
 	SynthNoteMode mode;
 	ArpeggiatorChord chord;
 	unsigned int arpeggioBPM;
-	double pornamentoSeconds;
+	double portamentoSeconds;
 
 	bool IsEqual(const SynthNoteParameters* other)
 	{
 		return this->mode == other->mode &&
 			this->chord == other->chord &&
 			this->arpeggioBPM == other->arpeggioBPM &&
-			this->pornamentoSeconds == other->pornamentoSeconds;
+			this->portamentoSeconds == other->portamentoSeconds;
 	}
 
 	void Save(std::ostream& stream)
@@ -29,7 +29,7 @@ public:
 		stream << (int)this->mode;
 		stream << (int)this->chord;
 		stream << this->arpeggioBPM;
-		stream << this->pornamentoSeconds;
+		stream << this->portamentoSeconds;
 	}
 	void Read(std::istream& stream)
 	{
@@ -38,7 +38,7 @@ public:
 		stream >> mode_;
 		stream >> chord_;
 		stream >> this->arpeggioBPM;
-		stream >> this->pornamentoSeconds;
+		stream >> this->portamentoSeconds;
 
 		this->mode = (SynthNoteMode)mode_;
 		this->chord = (ArpeggiatorChord)chord_;

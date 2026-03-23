@@ -50,7 +50,7 @@ enum class BuiltInOscillators : int {
 enum class SynthNoteMode : int {
 	MultipleNormal = 0,
 	SingleNormal,
-	SinglePornamento,
+	SinglePortamento,
 	SingleArpeggiator
 };
 enum class ArpeggiatorChord : int {

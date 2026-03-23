@@ -48,7 +48,7 @@ private:
 
 	// Synth Note Parameters
 	SliderUI* _arpeggiatorBPMUI;
-	SliderUI* _pornamentoSecondsUI;
+	SliderUI* _portamentoSecondsUI;
 
 	// Oscillator Selected Index
 	ValueCapture<int>* _noteModeSelectedIndex;
@@ -64,7 +64,7 @@ SynthNoteParametersUI::SynthNoteParametersUI(const SynthNoteParameters& paramete
 	_noteModeItems = new std::vector<std::string>({
 		"Multiple (Normal)",
 		"Single (Normal)",
-		"Single Pornamento",
+		"Single Portamento",
 		"Single Arpeggiator"
 	});
 	_arpeggiatorChordItems = new std::vector<std::string>({
@@ -83,7 +83,7 @@ SynthNoteParametersUI::SynthNoteParametersUI(const SynthNoteParameters& paramete
 	_arpeggiatorChordSelectedIndex = new ValueCapture<int>((int)parameters.chord);
 
 	_arpeggiatorBPMUI = new SliderUI(parameters.arpeggioBPM, 60.0f, 240.0f, 1.0f, "ArpeggiatorBPM", "Arpeggiator BPM {:3.0f} ", ftxui::Color::Blue, ftxui::Color::BlueLight);
-	_pornamentoSecondsUI = new SliderUI(parameters.pornamentoSeconds, 0.0f, 1.0f, 0.01f, "Pornamento", "Pornamento      {:.2f}", ftxui::Color::Blue, ftxui::Color::BlueLight);
+	_portamentoSecondsUI = new SliderUI(parameters.portamentoSeconds, 0.0f, 1.0f, 0.01f, "Portamento", "Portamento      {:.2f}", ftxui::Color::Blue, ftxui::Color::BlueLight);
 }
 
 SynthNoteParametersUI::~SynthNoteParametersUI()
@@ -95,13 +95,13 @@ SynthNoteParametersUI::~SynthNoteParametersUI()
 	delete _noteModeSelectedIndex;
 	delete _arpeggiatorChordSelectedIndex;
 	delete _arpeggiatorBPMUI;
-	delete _pornamentoSecondsUI;
+	delete _portamentoSecondsUI;
 }
 
 void SynthNoteParametersUI::Initialize(const SynthNoteParameters& parameters)
 {
 	_arpeggiatorBPMUI->Initialize(parameters.arpeggioBPM);
-	_pornamentoSecondsUI->Initialize(parameters.pornamentoSeconds);
+	_portamentoSecondsUI->Initialize(parameters.portamentoSeconds);
 
 	_component = ftxui::Container::Vertical({
 
@@ -112,7 +112,7 @@ void SynthNoteParametersUI::Initialize(const SynthNoteParameters& parameters)
 		ftxui::Dropdown(_arpeggiatorChordItems, _arpeggiatorChordSelectedIndex->GetRef()),
 
 		_arpeggiatorBPMUI->GetComponent(),
-		_pornamentoSecondsUI->GetComponent()
+		_portamentoSecondsUI->GetComponent()
 
 	}) | ftxui::CatchEvent([&](ftxui::Event event) {
 
@@ -138,7 +138,7 @@ void SynthNoteParametersUI::ServicePendingAction()
 void SynthNoteParametersUI::UpdateComponent()
 {
 	_arpeggiatorBPMUI->UpdateComponent();
-	_pornamentoSecondsUI->UpdateComponent();
+	_portamentoSecondsUI->UpdateComponent();
 }
 
 void SynthNoteParametersUI::Tick()
@@ -158,7 +158,7 @@ void SynthNoteParametersUI::ToUI(const SynthNoteParameters* source)
 bool SynthNoteParametersUI::GetDirty() const
 {
 	return _arpeggiatorBPMUI->GetDirty() ||
-		_pornamentoSecondsUI->GetDirty() ||
+		_portamentoSecondsUI->GetDirty() ||
 		_noteModeSelectedIndex->HasChanged() ||
 		_arpeggiatorChordSelectedIndex->HasChanged();
 }
@@ -166,7 +166,7 @@ bool SynthNoteParametersUI::GetDirty() const
 void SynthNoteParametersUI::ClearDirty()
 {
 	_arpeggiatorBPMUI->ClearDirty();
-	_pornamentoSecondsUI->ClearDirty();
+	_portamentoSecondsUI->ClearDirty();
 	_noteModeSelectedIndex->Clear();
 	_arpeggiatorChordSelectedIndex->Clear();
 }
@@ -190,10 +190,10 @@ void SynthNoteParametersUI::FromUI(SynthNoteParameters* destination)
 	float arpeggioBPM, pornamentoSeconds;
 
 	_arpeggiatorBPMUI->FromUI(arpeggioBPM);
-	_pornamentoSecondsUI->FromUI(pornamentoSeconds);
+	_portamentoSecondsUI->FromUI(pornamentoSeconds);
 
 	destination->arpeggioBPM = arpeggioBPM;
-	destination->pornamentoSeconds = pornamentoSeconds;
+	destination->portamentoSeconds = pornamentoSeconds;
 	destination->mode = (SynthNoteMode)_noteModeSelectedIndex->GetValue();
 	destination->chord = (ArpeggiatorChord)_arpeggiatorChordSelectedIndex->GetValue();
 }

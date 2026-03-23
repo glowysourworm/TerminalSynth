@@ -120,7 +120,7 @@ void MainModelUI::ToUI(const PlaybackUserData* playbackData)
 {
 	_outputModelUI->ToUI(playbackData);
 
-	_haveSoundSettingsChanged = _effectsModelUI->GetSoundSettings()->IsEqual(playbackData->GetSynthSettings()->GetCurrentSoundSettings());
+	_haveSoundSettingsChanged = !_effectsModelUI->GetSoundSettings()->IsEqual(playbackData->GetSynthSettings()->GetCurrentSoundSettings());
 }
 
 #endif

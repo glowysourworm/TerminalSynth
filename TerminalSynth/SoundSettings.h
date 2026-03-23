@@ -30,7 +30,7 @@ public:
 		_noteParameters->arpeggioBPM = 120;
 		_noteParameters->chord = ArpeggiatorChord::TriadMajor;
 		_noteParameters->mode = SynthNoteMode::MultipleNormal;
-		_noteParameters->pornamentoSeconds = 0.5f;
+		_noteParameters->portamentoSeconds = 0.5f;
 	}
 	SoundSettings(const SoundSettings& copy)
 	{
@@ -76,7 +76,7 @@ public:
 		_noteParameters->arpeggioBPM = settings->GetNoteParameters()->arpeggioBPM;
 		_noteParameters->chord = settings->GetNoteParameters()->chord;
 		_noteParameters->mode = settings->GetNoteParameters()->mode;
-		_noteParameters->pornamentoSeconds = settings->GetNoteParameters()->pornamentoSeconds;
+		_noteParameters->portamentoSeconds = settings->GetNoteParameters()->portamentoSeconds;
 
 		return isDirty;
 	}

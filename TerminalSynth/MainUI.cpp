@@ -211,10 +211,16 @@ void MainUI::ToUI(const MainModelUI* source)
 	_synthInformationUI->ToUI(source->GetOutputModelUI());
 
 	if (source->HaveSoundSettingsChanged())
-		_buttonColor = ftxui::Color::Red;
+	{
+		_inputUI->SetControlPanelStatus(true);
+		_effectsUI->SetControlPanelStatus(true);
+	}
 
 	else
-		_buttonColor = ftxui::Color::RGBA(0, 0, 255, 50);
+	{
+		_inputUI->SetControlPanelStatus(false);
+		_effectsUI->SetControlPanelStatus(false);
+	}
 }
 
 bool MainUI::GetDirty() const

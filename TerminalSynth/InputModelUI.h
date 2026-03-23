@@ -88,7 +88,7 @@ void InputModelUI::From(OscillatorParameters* parameters, Envelope* envelope, Sy
 	noteParameters->arpeggioBPM = _synthNoteParameters->arpeggioBPM;
 	noteParameters->chord = _synthNoteParameters->chord;
 	noteParameters->mode = _synthNoteParameters->mode;
-	noteParameters->pornamentoSeconds = _synthNoteParameters->pornamentoSeconds;
+	noteParameters->portamentoSeconds = _synthNoteParameters->portamentoSeconds;
 }
 void InputModelUI::To(const OscillatorParameters* parameters, const Envelope* envelope, const SynthNoteParameters* noteParameters)
 {

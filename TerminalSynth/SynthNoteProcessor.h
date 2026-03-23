@@ -22,14 +22,14 @@ public:
 	{		
 		_frequency = 0;
 		_lastFrequency = 0;
-		_pornamentoFrequency = 0;
+		_portamentoFrequency = 0;
 		_lastSetTimeCursor = 0;
 		_samplingRate = playbackInfo->GetStreamInfo()->streamSampleRate;
 		_parameters = new SynthNoteParameters({
 			.mode = SynthNoteMode::MultipleNormal,
 			.chord = ArpeggiatorChord::TriadMajor,
 			.arpeggioBPM = 60,
-			.pornamentoSeconds = 0.5
+			.portamentoSeconds = 0.5
 		});
 
 		_arpeggioCursor = 0;
@@ -42,7 +42,7 @@ public:
 		_frequency = copy.GetFrequency();
 		_samplingRate = copy.GetSamplingRate();
 		_lastFrequency = 0;
-		_pornamentoFrequency = 0;
+		_portamentoFrequency = 0;
 		_lastSetTimeCursor = 0;
 		_arpeggioCursor = 0;
 		_lastBeatTimeCursor = 0;
@@ -67,8 +67,8 @@ public:
 	}
 	void NoteOff(int midiNumber, const PlaybackTime* playbackTime)
 	{
-		if (_parameters->mode == SynthNoteMode::SinglePornamento)
-			_lastFrequency = _pornamentoFrequency;
+		if (_parameters->mode == SynthNoteMode::SinglePortamento)
+			_lastFrequency = _frequency;
 	}
 	void Clear()
 	{
@@ -94,15 +94,17 @@ public:
 			return _frequency;
 		case SynthNoteMode::SingleArpeggiator:
 			return CalculateFrequency(CalculateArpeggioMidiNumber(playbackTime->frameCursor));
-		case SynthNoteMode::SinglePornamento:
+		case SynthNoteMode::SinglePortamento:
 		{
-			// Update Pornamento
+			// Update Portamento
 			float pornamentoSeconds = (playbackTime->frameCursor - _lastSetTimeCursor) / _samplingRate;
-			float lerpValue = std::clamp<float>(pornamentoSeconds / _parameters->pornamentoSeconds, 0, 1);
+			float lerpValue = std::clamp<float>(pornamentoSeconds / _parameters->portamentoSeconds, 0, 1);
 
-			_pornamentoFrequency = std::lerp(_lastFrequency, _frequency, lerpValue);
+			//_portamentoFrequency = std::lerp(_lastFrequency, _frequency, lerpValue);
 
-			return _pornamentoFrequency;
+			_portamentoFrequency = _lastFrequency + ((_frequency - _lastFrequency) * lerpValue);
+
+			return _portamentoFrequency;
 		}
 		default:
 			throw new std::exception("Unhandled Synth Note Mode: SynthNoteProcessor.h");
@@ -116,7 +118,7 @@ public:
 		_parameters->arpeggioBPM = settings->GetNoteParameters()->arpeggioBPM;
 		_parameters->chord = settings->GetNoteParameters()->chord;
 		_parameters->mode = settings->GetNoteParameters()->mode;
-		_parameters->pornamentoSeconds = settings->GetNoteParameters()->pornamentoSeconds;
+		_parameters->portamentoSeconds = settings->GetNoteParameters()->portamentoSeconds;
 	}
 
 protected:
@@ -194,7 +196,7 @@ private:
 
 	float _frequency;
 	float _lastFrequency;
-	float _pornamentoFrequency;
+	float _portamentoFrequency;
 	size_t _lastSetTimeCursor;
 	size_t _lastBeatTimeCursor;
 	unsigned int _arpeggioCursor;

@@ -6,6 +6,7 @@
 #include "ActiveEditorUI.h"
 #include "CheckboxModelUI.h"
 #include "CheckboxUI.h"
+#include "ControlPanelUI.h"
 #include "EffectUI.h"
 #include "EffectsModelUI.h"
 #include "ScrollViewerUI.h"
@@ -51,6 +52,8 @@ public:
 	bool GetDirty() const override;
 	void ClearDirty() override;
 
+	void SetControlPanelStatus(bool soundSettingsChanged);
+
 private:
 
 	void OnChangeCategory();
@@ -64,6 +67,9 @@ private:
 
 	// Editors
 	ActiveEditorUI* _activeEditorUI;
+
+	// Control Panel
+	ControlPanelUI* _controlPanelUI;
 
 	// Scroll Viewers
 	ScrollViewerUI<CheckboxModelUI, CheckboxUI>* _pluginListUI;
@@ -89,6 +95,7 @@ EffectsUI::EffectsUI(const EffectsModelUI& model)
 {
 	_isDirty = false;
 	_activeEditorUI = new ActiveEditorUI();
+	_controlPanelUI = new ControlPanelUI();
 
 	SignalNodeModelUI envelopeModel("Envelope", true, false, false, false, 0);
 	SignalNodeModelUI oscillatorModel("Oscillator", true, false, false, false, 0);
@@ -177,6 +184,9 @@ EffectsUI::~EffectsUI()
 
 	delete _effectCategorySelectedIndex;
 
+	// Control Panel
+	delete _controlPanelUI;
+
 	// Editors
 	delete _activeEditorUI;
 
@@ -188,6 +198,8 @@ EffectsUI::~EffectsUI()
 void EffectsUI::Initialize(const EffectsModelUI& model)
 {	
 	auto categoryDropdown = ftxui::Dropdown(_effectCategories, _effectCategorySelectedIndex->GetRef());
+
+	_controlPanelUI->Initialize(false);
 
 	_editorContainer = ftxui::Container::Vertical({});
 
@@ -208,27 +220,38 @@ void EffectsUI::Initialize(const EffectsModelUI& model)
 	});
 
 	// Plugin List | Signal Chain (Vertical) | Effect Editor
-	_component = ftxui::Container::Horizontal({
+	_component = ftxui::Container::Vertical({
 
-		// Airwin Plugin Effects
-		ftxui::Container::Vertical({
-			
-			ftxui::Renderer([] { return ftxui::text("Airwin Plugins (airwin@github.com)") | ftxui::color(ftxui::Color::BlueLight); }),
-			ftxui::Renderer([] {return ftxui::separator(); }),
+		// Control Panel
+		_controlPanelUI->GetComponent(),
 
-			categoryDropdown,
+		ftxui::Container::Horizontal({
 
-			ftxui::Renderer([] {return ftxui::separator(); }),
+			// Airwin Plugin Effects
+			ftxui::Container::Vertical({
 
-			_pluginListUI->GetComponent() | ftxui::yflex_shrink
+				ftxui::Renderer([] { return ftxui::text("Airwin Plugins (airwin@github.com)") | ftxui::color(ftxui::Color::BlueLight); }),
+				ftxui::Renderer([] {return ftxui::separator(); }),
 
-		}) | ftxui::border,
+				categoryDropdown,
 
-		_signalChainContainer | ftxui::yflex_grow,
+				ftxui::Renderer([] {return ftxui::separator(); }),
 
-		// Active Editor
-		_editorContainer | ftxui::xflex_grow
+				_pluginListUI->GetComponent() | ftxui::yflex_shrink
+
+			}) | ftxui::border,
+
+			_signalChainContainer | ftxui::yflex_grow,
+
+			// Active Editor
+			_editorContainer | ftxui::xflex_grow
+		})
 	});
+}
+
+void EffectsUI::SetControlPanelStatus(bool soundSettingsChanged)
+{
+	_controlPanelUI->SetDirtyStatus(soundSettingsChanged);
 }
 
 ftxui::Component EffectsUI::GetComponent()
@@ -238,13 +261,16 @@ ftxui::Component EffectsUI::GetComponent()
 
 void EffectsUI::ServicePendingAction()
 {
+	// Control Panel
+	if (_controlPanelUI->HasPendingAction())
+	{
+		_controlPanelUI->ServicePendingAction();
+	}
+
 	// Category Selector
 	if (_effectCategorySelectedIndex->HasChanged())
 	{
 		OnChangeCategory();
-
-		// Clear Pending
-		_effectCategorySelectedIndex->Clear();
 	}
 
 	// Plugin List (Changes)
@@ -281,9 +307,6 @@ void EffectsUI::ServicePendingAction()
 				}
 			}
 		}
-
-		// Notify Parent (this may not be cleared for several 100 iterations)
-		_pluginListUI->ClearPendingAction();
 
 		// Go ahead and notify parent to collect UI data
 		_isDirty = true;
@@ -359,9 +382,6 @@ void EffectsUI::ServicePendingAction()
 				}
 			}
 		}
-
-		// Notify Parent (this may not be cleared for several 100 iterations)
-		_postProcessingUI->ClearPendingAction();
 	}
 }
 
@@ -490,6 +510,9 @@ bool EffectsUI::HasPendingAction() const
 	//
 	bool hasPendingAction = false;
 
+	// Control Panel
+	hasPendingAction |= _controlPanelUI->HasPendingAction();
+
 	// Category Chooser
 	hasPendingAction |= _effectCategorySelectedIndex->HasChanged();
 
@@ -507,6 +530,9 @@ bool EffectsUI::HasPendingAction() const
 
 void EffectsUI::ClearPendingAction()
 {
+	// Control Panel
+	_controlPanelUI->ClearPendingAction();
+
 	// Category Chooser
 	_effectCategorySelectedIndex->Clear();
 

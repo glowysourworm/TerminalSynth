@@ -276,6 +276,7 @@
     <ClInclude Include="ActiveEditorUI.h" />
     <ClInclude Include="AirwindowsEffect.h" />
     <ClInclude Include="AirwindowsEffectLoader.h" />
+    <ClInclude Include="ControlPanelUI.h" />
     <ClInclude Include="PlaybackTime.h" />
     <ClInclude Include="SynthNoteParameters.h" />
     <ClInclude Include="AtomicLock.h" />
