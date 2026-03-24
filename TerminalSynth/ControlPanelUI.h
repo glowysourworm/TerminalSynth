@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 #ifndef CONTROL_PANEL_UI_H
 #define CONTROL_PANEL_UI_H
@@ -42,6 +43,7 @@ public:
 private:
 
 	ftxui::Component _component;
+	ftxui::Component _modalComponent;
 
 	bool _soundSettingsDirty;
 
@@ -66,6 +68,7 @@ void ControlPanelUI::Initialize(const bool& initialValue)
 
 	_soundSettingsDirty = false;
 
+	// Control Panel
 	_component = ftxui::Container::Vertical({
 
 		ftxui::Renderer([] { return ftxui::text("Control Panel"); }),
@@ -74,11 +77,11 @@ void ControlPanelUI::Initialize(const bool& initialValue)
 
 		ftxui::Container::Horizontal({
 
-			ftxui::Button("Save Voice", [&] { _saveClicked->SetValue(true); }) 
-				| ftxui::bgcolor(ftxui::Color::RGBA(0, 0, 255, 20)) 
+			ftxui::Button("Save Voice", [&] { _saveClicked->SetValue(true); })
+				| ftxui::bgcolor(ftxui::Color::RGBA(0, 0, 255, 20))
 				| ftxui::Maybe([&] {return _soundSettingsDirty; })
 
-		}) | ftxui::Maybe([&] {return _soundSettingsDirty; })
+		}) | ftxui::Maybe([&] {return _soundSettingsDirty; }),
 
 	}) | ftxui::border;
 }
@@ -90,11 +93,6 @@ ftxui::Component ControlPanelUI::GetComponent()
 
 void ControlPanelUI::ServicePendingAction()
 {
-	// Save
-	if (_saveClicked->HasChanged() && _saveClicked->GetValue())
-	{
-		// ...
-	}
 }
 
 void ControlPanelUI::UpdateComponent()
@@ -144,6 +142,7 @@ bool ControlPanelUI::HasPendingAction() const
 
 void ControlPanelUI::ClearPendingAction()
 {
+	_saveClicked->SetValue(false);
 	_saveClicked->Clear();
 }
 

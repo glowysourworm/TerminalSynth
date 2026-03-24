@@ -3,16 +3,16 @@
 #ifndef MAIN_UI_H
 #define MAIN_UI_H
 
+#include "ControlPanelUI.h"
 #include "EffectsUI.h"
 #include "InputUI.h"
 #include "MainModelUI.h"
 #include "SynthInformationUI.h"
 #include "UIBase.h"
 #include <ftxui/component/component_base.hpp>
-#include <ftxui/screen/color.hpp>
-#include <string>
 #include <vector>
 
+#include <string>
 class MainUI : public UIBase<MainModelUI>
 {
 public:
@@ -46,7 +46,6 @@ private:
 	ftxui::Component _mainControl;
 	ftxui::Component _tabControl;							// Shared Pointer (std::shared_pointer)
 	ftxui::Component _tabControlMenu;
-	ftxui::Color _buttonColor;
 
 	float* _scrollY;
 	int* _tabIndex;
@@ -54,9 +53,16 @@ private:
 	MainModelUI* _model;
 
 	// Tabs
+	ControlPanelUI* _controlPanelUI;
 	SynthInformationUI* _synthInformationUI;
 	InputUI* _inputUI;
 	EffectsUI* _effectsUI;
+
+	// Modal Dialog (multi-purpose save)
+	bool _showSaveDialog;
+	bool _processSaveSoundSettings;
+	std::string* _saveDialogTitle;
+	std::string* _saveDialogInput;
 
 };
 

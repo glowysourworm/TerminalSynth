@@ -52,8 +52,6 @@ public:
 	bool GetDirty() const override;
 	void ClearDirty() override;
 
-	void SetControlPanelStatus(bool soundSettingsChanged);
-
 private:
 
 	void OnChangeCategory();
@@ -67,9 +65,6 @@ private:
 
 	// Editors
 	ActiveEditorUI* _activeEditorUI;
-
-	// Control Panel
-	ControlPanelUI* _controlPanelUI;
 
 	// Scroll Viewers
 	ScrollViewerUI<CheckboxModelUI, CheckboxUI>* _pluginListUI;
@@ -95,7 +90,6 @@ EffectsUI::EffectsUI(const EffectsModelUI& model)
 {
 	_isDirty = false;
 	_activeEditorUI = new ActiveEditorUI();
-	_controlPanelUI = new ControlPanelUI();
 
 	SignalNodeModelUI envelopeModel("Envelope", true, false, false, false, 0);
 	SignalNodeModelUI oscillatorModel("Oscillator", true, false, false, false, 0);
@@ -184,9 +178,6 @@ EffectsUI::~EffectsUI()
 
 	delete _effectCategorySelectedIndex;
 
-	// Control Panel
-	delete _controlPanelUI;
-
 	// Editors
 	delete _activeEditorUI;
 
@@ -198,8 +189,6 @@ EffectsUI::~EffectsUI()
 void EffectsUI::Initialize(const EffectsModelUI& model)
 {	
 	auto categoryDropdown = ftxui::Dropdown(_effectCategories, _effectCategorySelectedIndex->GetRef());
-
-	_controlPanelUI->Initialize(false);
 
 	_editorContainer = ftxui::Container::Vertical({});
 
@@ -221,9 +210,6 @@ void EffectsUI::Initialize(const EffectsModelUI& model)
 
 	// Plugin List | Signal Chain (Vertical) | Effect Editor
 	_component = ftxui::Container::Vertical({
-
-		// Control Panel
-		_controlPanelUI->GetComponent(),
 
 		ftxui::Container::Horizontal({
 
@@ -249,11 +235,6 @@ void EffectsUI::Initialize(const EffectsModelUI& model)
 	});
 }
 
-void EffectsUI::SetControlPanelStatus(bool soundSettingsChanged)
-{
-	_controlPanelUI->SetDirtyStatus(soundSettingsChanged);
-}
-
 ftxui::Component EffectsUI::GetComponent()
 {
 	return _component;
@@ -261,12 +242,6 @@ ftxui::Component EffectsUI::GetComponent()
 
 void EffectsUI::ServicePendingAction()
 {
-	// Control Panel
-	if (_controlPanelUI->HasPendingAction())
-	{
-		_controlPanelUI->ServicePendingAction();
-	}
-
 	// Category Selector
 	if (_effectCategorySelectedIndex->HasChanged())
 	{
@@ -510,9 +485,6 @@ bool EffectsUI::HasPendingAction() const
 	//
 	bool hasPendingAction = false;
 
-	// Control Panel
-	hasPendingAction |= _controlPanelUI->HasPendingAction();
-
 	// Category Chooser
 	hasPendingAction |= _effectCategorySelectedIndex->HasChanged();
 
@@ -530,9 +502,6 @@ bool EffectsUI::HasPendingAction() const
 
 void EffectsUI::ClearPendingAction()
 {
-	// Control Panel
-	_controlPanelUI->ClearPendingAction();
-
 	// Category Chooser
 	_effectCategorySelectedIndex->Clear();
 

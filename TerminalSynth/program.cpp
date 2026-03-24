@@ -6,14 +6,31 @@
 #include "Windows.h"
 #include "WindowsKeyCodes.h"
 #include <Stk.h>
+#include <filesystem>
 #include <string>
+#include <string.h>
 
 /// <summary>
 /// This will eventually come from a file, so there'll be some new component
 /// </summary>
-SynthSettings* CreateConfiguration(const std::string& soundBankDirectory)
+SynthSettings* CreateConfiguration(
+	const std::string& soundBankDirectory, 
+	const std::string& soundSettingsDirectory, 
+	const std::string& stkRawWaveDirectory, 
+	bool soundBankEnabled,
+	bool stkEnabled)
 {
-	SynthSettings* configuration = new SynthSettings(soundBankDirectory);
+	SynthSettings* configuration = nullptr;
+
+	// STK (enable / disable)
+	if (stkEnabled)
+		configuration = new SynthSettings(soundSettingsDirectory, soundBankDirectory, stkRawWaveDirectory);
+
+	else if (soundBankEnabled)
+		configuration = new SynthSettings(soundSettingsDirectory, soundBankDirectory);
+
+	else
+		configuration = new SynthSettings(soundSettingsDirectory);
 
 	// Oversampling
 	configuration->SetOversamplingFactor(10);
@@ -74,20 +91,44 @@ SynthSettings* CreateConfiguration(const std::string& soundBankDirectory)
 	return configuration;
 }
 
+bool GetArg(int argc, char* argv[], const char* key, std::string& destination)
+{
+	for (int index = 0; index < argc - 1; index++)
+	{
+		if (std::strcmp(argv[index], key) == 0)
+		{
+			destination.clear();
+			destination.append(argv[index + 1]);
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
 int main(int argc, char* argv[], char* envp[])
 {
 	std::string soundBankDirectory = "";
+	std::string soundSettingsDirectory = "";
+	std::string stkRawWaveDirectory = "";
 
-	// Arguments:  {Sound Bank Dir}, ..
-	if (argc > 1)
-	{
-		// Sound Library Folder:  /{base folder}/{individual library folder(s)}
-		soundBankDirectory = std::string(argv[1]);
-	}
+	bool stkEnabled = false;
+	bool soundBankEnabled = false;
 
-	if (argc > 2)
+	if (GetArg(argc, argv, "-BANK", soundBankDirectory))
+		soundBankEnabled = std::filesystem::exists(soundBankDirectory);
+
+	if (GetArg(argc, argv, "-STK", stkRawWaveDirectory))
+		stkEnabled = std::filesystem::exists(stkRawWaveDirectory);
+
+	if (!GetArg(argc, argv, "-VOICES", soundSettingsDirectory))
+		soundSettingsDirectory = std::filesystem::current_path().string() + "\\synth-voices";
+
+	// STK
+	if (stkEnabled)
 	{
-		stk::Stk::setRawwavePath(std::string(argv[2]));
+		stk::Stk::setRawwavePath(stkRawWaveDirectory);
 	}
 
 	// This pointer is shared (see controllers)
@@ -101,7 +142,7 @@ int main(int argc, char* argv[], char* envp[])
 	// Primary Shared Pointers:  The OutputSettings* are initialized and maintained by the MainController, with 
 	//							 the RtAudioController* providing the host api, and device info.
 	//
-	SynthSettings* configuration = CreateConfiguration(soundBankDirectory);
+	SynthSettings* configuration = CreateConfiguration(soundBankDirectory, soundSettingsDirectory, stkRawWaveDirectory, soundBankEnabled, stkEnabled);
 	PlaybackUserData* userData = new PlaybackUserData(configuration);
 
 	SetConsoleTitleA("Terminal Synth");

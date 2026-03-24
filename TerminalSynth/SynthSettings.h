@@ -16,42 +16,74 @@ class SynthSettings
 {
 public:
 
-	SynthSettings(const std::string& soundBankDirectory);
+	/// <summary>
+	/// Constructor to enable:  Sound Settings (save / open)
+	/// </summary>
+	SynthSettings(const std::string& soundSettingsDir);
+
+	/// <summary>
+	/// Constructor to enable:  Sound Settings (save / open), Sound Bank (load / wave tables)
+	/// </summary>
+	SynthSettings(const std::string& soundSettingsDir, const std::string& soundBankDir);
+
+	/// <summary>
+	/// Constructor to enable:  Sound Settings (save / open), Sound Bank (load / wave tables), STK synth voices
+	/// </summary>
+	SynthSettings(const std::string& soundSettingsDir, const std::string& soundBankDir, const std::string& stkRawWaveDir);
+
+private:
+
+	SynthSettings(const std::string& soundSettingsDir, const std::string& soundBankDir, const std::string& stkRawWaveDir, bool soundBankEnabled, bool stkEnabled);
+
+public:
+
 	SynthSettings(const SynthSettings& copy);
 	~SynthSettings();
 
+	// Features:  Sound Bank, Sound Settings (voices), STK
+	SoundBankSettings* GetSoundBankSettings() const;
+	SoundSettings* GetSoundSettings(int index) const;
+	SoundSettings* GetDefaultSoundSettings() const;
+	SoundSettings* GetCurrentSoundSettings() const;
+
+	// Sound Settings
+	int GetSoundSettingsCount() const;
+	void GetSoundSettingsList(std::vector<std::string>& destination);
+
+	std::string GetSoundSettingsDirectory() const;
+	std::string GetSoundBankDirectory() const;
+	std::string GetStkRawWaveDirectory() const;
+
+	bool GetStkEnabled() const;
+	bool GetSoundBankEnabled() const;
+
+	// Dirty Status
 	bool IsDirty() const;
 	void ClearDirty();
 	void SetDirty();
 
+	// MIDI Key Code
+	WindowsKeyCodes GetKeyCode(int midiNote) const;
+	SynthNoteMap GetNoteMap() const;
+	bool HasMidiNote(WindowsKeyCodes keyCode) const;
+	int GetMidiNote(WindowsKeyCodes keyCode) const;
+	void SetMidiNote(WindowsKeyCodes keyCode, int midiNote);
+
+	// Misc Settings
 	void SetGain(float value);
 	void SetLeftRightBalance(float value);
 	void SetMidiLow(int value);
 	void SetMidiHigh(int value);
-	void SetMidiNote(WindowsKeyCodes keyCode, int midiNote);
-
-	void SaveCurrentSoundSettings(const std::string& name);
-
 	void SetOversamplingFactor(float value);
 
-	int GetSoundSettingsCount() const;
-	void GetSoundSettingsList(std::vector<std::string>& destination);
-	SoundSettings* GetSoundSettings(int index) const;
-
+	float GetGain() const;
+	float GetLeftRightBalance() const;
 	int GetMidiLow() const;
 	int GetMidiHigh() const;
 	float GetOversamplingFactor() const;
-	float GetGain() const;
-	float GetLeftRightBalance() const;
 
-	SynthNoteMap GetNoteMap() const;
-	bool HasMidiNote(WindowsKeyCodes keyCode) const;
-	int GetMidiNote(WindowsKeyCodes keyCode) const;
-	WindowsKeyCodes GetKeyCode(int midiNote) const;
-
-	SoundBankSettings* GetSoundBankSettings() const;
-	SoundSettings* GetDefaultSoundSettings() const;
-	SoundSettings* GetCurrentSoundSettings() const;
+	// Actions
+	void SaveCurrentSoundSettings(const std::string& name);
 
 public:
 
@@ -68,7 +100,13 @@ private:
 	SoundBankSettings* _soundBankSettings;
 	SoundSettings* _defaultSoundSettings;										// Signal Chain, Post Processing, Oscillator, Envelope
 	SoundSettings* _currentSoundSettings;										// Signal Chain, Post Processing, Oscillator, Envelope
-	
+
+	std::string* _soundSettingsDirectory;
+	std::string* _stkRawWaveDirectory;
+
+	bool _stkEnabled;
+	bool _soundBankEnabled;
+
 	// Saved list of sound settings
 	std::vector<SoundSettings*>* _soundSettingsList;
 
