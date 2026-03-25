@@ -488,6 +488,9 @@
     <ClInclude Include="ControlPanelUI.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
+    <ClInclude Include="ControlPanelModelUI.h">
+      <Filter>Header Files\ModelUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="PlaybackUserData.h">

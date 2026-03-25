@@ -3,6 +3,7 @@
 #ifndef MAIN_MODEL_UI_H
 #define MAIN_MODEL_UI_H
 
+#include "ControlPanelModelUI.h"
 #include "EffectsModelUI.h"
 #include "InputModelUI.h"
 #include "ModelUI.h"
@@ -25,6 +26,7 @@ public:
 	void FromUI(SynthSettings* destination);
 	void ToUI(const PlaybackUserData* playbackData);
 
+	ControlPanelModelUI* GetControlPanelModelUI() const;
 	EffectsModelUI* GetEffectsModelUI() const;
 	OutputModelUI* GetOutputModelUI() const;
 	InputModelUI* GetInputModelUI() const;
@@ -35,6 +37,7 @@ private:
 
 	std::string* _name;
 	
+	ControlPanelModelUI* _controlPanelModelUI;
 	EffectsModelUI* _effectsModelUI;
 	InputModelUI* _inputModelUI;
 	OutputModelUI* _outputModelUI;
@@ -50,6 +53,7 @@ MainModelUI::MainModelUI(const PlaybackUserData* playbackData)
 	_effectsModelUI = new EffectsModelUI(playbackData);
 	_outputModelUI = new OutputModelUI(playbackData);
 	_inputModelUI = new InputModelUI(playbackData);
+	_controlPanelModelUI = new ControlPanelModelUI(playbackData);
 
 	// Running Initialization Cycle (this may need redesign if the UI grows any bigger)
 	_outputModelUI->ToUI(playbackData);
@@ -64,6 +68,7 @@ MainModelUI::MainModelUI(const MainModelUI& copy)
 	_effectsModelUI = new EffectsModelUI(*copy.GetEffectsModelUI());
 	_outputModelUI = new OutputModelUI(*copy.GetOutputModelUI());
 	_inputModelUI = new InputModelUI(*copy.GetInputModelUI());
+	_controlPanelModelUI = new ControlPanelModelUI(*copy.GetControlPanelModelUI());
 
 	// Running Initialization Cycle (this may need redesign if the UI grows any bigger)
 	//_outputModelUI->ToUI(copy.GetOutputModelUI()->GetPlaybackInfo(), copy.GetOutputModelUI()->GetEqualizerOutput());
@@ -74,10 +79,16 @@ MainModelUI::MainModelUI(const MainModelUI& copy)
 MainModelUI::~MainModelUI()
 {
 	delete _name;
+	delete _controlPanelModelUI;
 	delete _effectsModelUI;
 	delete _outputModelUI;
 	delete _inputModelUI;
 	delete _soundSettingsDirectory;
+}
+
+ControlPanelModelUI* MainModelUI::GetControlPanelModelUI() const
+{
+	return _controlPanelModelUI;
 }
 
 EffectsModelUI* MainModelUI::GetEffectsModelUI() const
@@ -123,8 +134,10 @@ void MainModelUI::FromUI(SynthSettings* destination)
 void MainModelUI::ToUI(const PlaybackUserData* playbackData)
 {
 	_outputModelUI->ToUI(playbackData);
+	_controlPanelModelUI->To(playbackData->GetSynthSettings());
 
-	_haveSoundSettingsChanged = !_effectsModelUI->GetSoundSettings()->IsEqual(playbackData->GetSynthSettings()->GetCurrentSoundSettings());
+	// Synth Voice (current)
+	_haveSoundSettingsChanged = _controlPanelModelUI->AreSoundSettingsDirty();
 }
 
 #endif

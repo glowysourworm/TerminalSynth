@@ -59,7 +59,7 @@ MainUI::~MainUI()
 
 void MainUI::Initialize(const MainModelUI& model)
 {
-	_controlPanelUI->Initialize(false);
+	_controlPanelUI->Initialize(*_model->GetControlPanelModelUI());
 	_synthInformationUI->Initialize(*_model->GetOutputModelUI());
 	_inputUI->Initialize(*_model->GetInputModelUI());
 	_effectsUI->Initialize(*_model->GetEffectsModelUI());
@@ -273,8 +273,7 @@ void MainUI::FromUI(MainModelUI* destination)
 	// Control Panel
 	else if (*_tabIndex == 1)
 	{
-		bool dummy;
-		_controlPanelUI->FromUI(dummy);
+		_controlPanelUI->FromUI(destination->GetControlPanelModelUI());
 	}
 
 	// Input Tab
