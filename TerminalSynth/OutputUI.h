@@ -20,7 +20,7 @@
 class OutputUI : public UIBase<OutputModelUI>
 {
 public:
-	OutputUI(const std::string& title, const ftxui::Color& titleColor);
+	OutputUI(const OutputModelUI& model);
 	~OutputUI();
 
 	void Initialize(const OutputModelUI& initialValue) override;
@@ -43,6 +43,8 @@ public:
 
 private:
 
+    ftxui::Component _component;
+
 	SliderUI* _gainUI;
 	SliderUI* _leftRightUI;
 
@@ -53,13 +55,10 @@ private:
 
     std::vector<float*>* _leftEQ;
     std::vector<float*>* _rightEQ;
-
-    std::string* _title;
-    ftxui::Color* _titleColor;
 };
 
 
-OutputUI::OutputUI(const std::string& title, const ftxui::Color& titleColor) 
+OutputUI::OutputUI(const OutputModelUI& model)
 {
     _gainUI = new SliderUI(0.85f, 0.00f, 1.0f, 0.01f, "Gain", "Gain:       {:.2f}", ftxui::Color::Green, ftxui::Color::GreenYellow);
     _leftRightUI = new SliderUI(0.5f, 0.0f, 1.0f, 0.01f, "L/R", "L/R:        {:.2f}", ftxui::Color::Green, ftxui::Color::GreenYellow);
@@ -69,9 +68,6 @@ OutputUI::OutputUI(const std::string& title, const ftxui::Color& titleColor)
 
     _leftEQ = new std::vector<float*>();
     _rightEQ = new std::vector<float*>();
-
-    _title = new std::string(title);
-    _titleColor = new ftxui::Color(titleColor);
 }
 
 OutputUI::~OutputUI()
@@ -86,8 +82,6 @@ OutputUI::~OutputUI()
     delete _leftRightUI;
     delete _deviceList;
     delete _deviceSelectedIndex;
-    delete _title;
-    delete _titleColor;
     delete _leftEQ;
     delete _rightEQ;
 }
@@ -118,14 +112,11 @@ void OutputUI::Initialize(const OutputModelUI& settings)
 
     _deviceDropdown = ftxui::Dropdown(_deviceList, _deviceSelectedIndex->GetRef());
     _deviceSelectedIndex->Clear();
-}
 
-ftxui::Component OutputUI::GetComponent()
-{
     // Output
-    auto componentUI = ftxui::Container::Vertical(
+    _component = ftxui::Container::Vertical(
     {
-        ftxui::Renderer([&] { return ftxui::text(*_title) | ftxui::color(*_titleColor); }),
+        ftxui::Renderer([&] { return ftxui::text("Synth Output") | ftxui::color(ftxui::Color::GreenYellow); }),
         ftxui::Renderer([&] {return ftxui::separator(); }),
         _deviceDropdown,
         ftxui::Renderer([&] {return ftxui::separator(); }),
@@ -135,7 +126,7 @@ ftxui::Component OutputUI::GetComponent()
 
         ftxui::Renderer([&] { return ftxui::separator(); }),
 
-        ftxui::Renderer([&] { return ftxui::text("EQ Output") | ftxui::color(*_titleColor); }),
+        ftxui::Renderer([&] { return ftxui::text("EQ Output") | ftxui::color(ftxui::Color::GreenYellow); }),
         ftxui::Renderer([&] {
 
             return ftxui::canvas([&](ftxui::Canvas& canvas) {
@@ -174,9 +165,14 @@ ftxui::Component OutputUI::GetComponent()
 
         }) | ftxui::flex_grow | ftxui::border
 
-    }) | ftxui::bgcolor(ftxui::Color::RGB(0,0,0));
+    }) | ftxui::bgcolor(ftxui::Color::RGB(0, 0, 0)) 
+       | ftxui::size(ftxui::WidthOrHeight::HEIGHT, ftxui::Constraint::GREATER_THAN, 50)
+       | ftxui::flex_grow;
+}
 
-    return componentUI;
+ftxui::Component OutputUI::GetComponent()
+{
+    return _component;
 }
 
 void OutputUI::ServicePendingAction()

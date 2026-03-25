@@ -44,6 +44,7 @@ private:
 	ftxui::Component _component;
 
 	int* _synthInfoWidth;
+	int* _synthMetricWidth;
 
 	// Host API / Device Info
 	std::string* _hostApi;
@@ -75,14 +76,12 @@ private:
 
 	std::string* _title;
 	ftxui::Color* _titleColor;
-
-	// Output Tab
-	OutputUI* _outputUI;
 };
 
 SynthInformationUI::SynthInformationUI(const std::string& title, const ftxui::Color& titleColor)
 {
 	_synthInfoWidth = new int(30);
+	_synthMetricWidth = new int(30);
 
 	_hostApi = new std::string("");
 	_deviceName = new std::string("");
@@ -110,12 +109,11 @@ SynthInformationUI::SynthInformationUI(const std::string& title, const ftxui::Co
 
 	_title = new std::string(title);
 	_titleColor = new ftxui::Color(titleColor);
-
-	_outputUI = new OutputUI("Output", ftxui::Color::GreenYellow);
 }
 SynthInformationUI::~SynthInformationUI()
 {
 	delete _synthInfoWidth;
+	delete _synthMetricWidth;
 
 	delete _hostApi;
 	delete _deviceName;
@@ -143,12 +141,50 @@ SynthInformationUI::~SynthInformationUI()
 
 	delete _title;
 	delete _titleColor;
-
-	delete _outputUI;
 }
 void SynthInformationUI::Initialize(const OutputModelUI& settings)
 {
-	_outputUI->Initialize(settings);
+	auto synthMetrics = ftxui::ResizableSplitLeft(
+		ftxui::Renderer([&] {
+
+			return ftxui::vbox({
+				ftxui::text("Metrics (Audio)") | ftxui::color(*_titleColor),
+				ftxui::separator(),
+				ftxui::text("Avg. Loop Time (ms):"),
+				ftxui::text("Avg. Sample Time (us):"),
+				ftxui::text("Avg. Lock Acquire (ns):"),
+				ftxui::separator(),
+
+				ftxui::text("Metrics (UI)") | ftxui::color(*_titleColor),
+				ftxui::separator(),
+				ftxui::text("Avg. Loop Time (ms):"),
+				ftxui::text("Avg. Data Fetch (us):"),
+				ftxui::text("Avg. Lock Acquire (ns):"),
+				ftxui::text("Avg. Rendering Time (ms):"),
+				ftxui::text("Avg. Sleep Time (ms):")
+			});
+
+		}), ftxui::Renderer([&] {
+
+			return ftxui::vbox({
+
+				ftxui::text(""),
+				ftxui::separator(),
+				ftxui::text(*_averageAudioMilli) | ftxui::align_right,
+				ftxui::text(*_averageAudioSampleMicro) | ftxui::align_right,
+				ftxui::text(*_averageAudioLockAcquireNano) | ftxui::align_right,
+				ftxui::separator(),
+
+				ftxui::text(""),
+				ftxui::separator(),
+				ftxui::text(*_averageUIMilli) | ftxui::align_right,
+				ftxui::text(*_averageUIDataFetchMicro) | ftxui::align_right,
+				ftxui::text(*_averageUILockAcqcuireNano) | ftxui::align_right,
+				ftxui::text(*_averageUIRenderingMilli) | ftxui::align_right,
+				ftxui::text(*_averageUISleepMilli) | ftxui::align_right,
+			});
+
+		}), _synthMetricWidth);
 
 	auto synthInformation = ftxui::ResizableSplitLeft(
 		ftxui::Renderer([&]{
@@ -179,22 +215,6 @@ void SynthInformationUI::Initialize(const OutputModelUI& settings)
 				ftxui::text("Buffer Size:"),
 				ftxui::text("Sample Rate:"),
 				ftxui::text("Suggested Latency:"),
-				ftxui::separator(),
-
-				ftxui::text("Metrics (Audio)") | ftxui::color(*_titleColor),
-				ftxui::separator(),
-				ftxui::text("Avg. Loop Time (ms):"),
-				ftxui::text("Avg. Sample Time (us):"),
-				ftxui::text("Avg. Lock Acquire (ns):"),
-				ftxui::separator(),
-
-				ftxui::text("Metrics (UI)") | ftxui::color(*_titleColor),
-				ftxui::separator(),
-				ftxui::text("Avg. Loop Time (ms):"),
-				ftxui::text("Avg. Data Fetch (us):"),
-				ftxui::text("Avg. Lock Acquire (ns):"),
-				ftxui::text("Avg. Rendering Time (ms):"),
-				ftxui::text("Avg. Sleep Time (ms):")
 			});
 
 		}), ftxui::Renderer([&]{
@@ -224,23 +244,7 @@ void SynthInformationUI::Initialize(const OutputModelUI& settings)
 				ftxui::text(*_deviceBitFormat),
 				ftxui::text(*_streamBufferSize),
 				ftxui::text(*_deviceSampleRate),
-				ftxui::text(*_deviceSuggestedLatency),
-				ftxui::separator(),
-
-				ftxui::text(""),
-				ftxui::separator(),
-				ftxui::text(*_averageAudioMilli) | ftxui::align_right,
-				ftxui::text(*_averageAudioSampleMicro) | ftxui::align_right,
-				ftxui::text(*_averageAudioLockAcquireNano) | ftxui::align_right,
-				ftxui::separator(),
-
-				ftxui::text(""),
-				ftxui::separator(),
-				ftxui::text(*_averageUIMilli) | ftxui::align_right,
-				ftxui::text(*_averageUIDataFetchMicro) | ftxui::align_right,
-				ftxui::text(*_averageUILockAcqcuireNano) | ftxui::align_right,
-				ftxui::text(*_averageUIRenderingMilli) | ftxui::align_right,
-				ftxui::text(*_averageUISleepMilli) | ftxui::align_right,
+				ftxui::text(*_deviceSuggestedLatency)
 			});
 
 		}), _synthInfoWidth);
@@ -248,25 +252,22 @@ void SynthInformationUI::Initialize(const OutputModelUI& settings)
 	_component = ftxui::Container::Horizontal({
 
 		// Synth Information
-		synthInformation | ftxui::border,
+		synthInformation | ftxui::border | ftxui::flex_grow,
 
-		// Output 
-		_outputUI->GetComponent() | ftxui::border | ftxui::flex_grow
+		// Metric Information
+		synthMetrics | ftxui::border | ftxui::flex_grow
 	});
 }
 ftxui::Component SynthInformationUI::GetComponent()
 {
-	return ftxui::Renderer(_component, [&] {
-		return _component->Render();
-	});
+	return _component;
 }
 void SynthInformationUI::ServicePendingAction()
 {
-	_outputUI->ServicePendingAction();
+	
 }
 void SynthInformationUI::UpdateComponent()
 {
-	_outputUI->UpdateComponent();
 }
 void SynthInformationUI::Tick()
 {
@@ -338,17 +339,13 @@ void SynthInformationUI::ToUI(const OutputModelUI* source)
 
 	_averageUISleepMilli->clear();
 	_averageUISleepMilli->append(std::format("{:.3f}", outputSettings->GetUIMetrics()->avgUISleepMilli));
-
-	_outputUI->ToUI(source);
 }
 void SynthInformationUI::FromUI(OutputModelUI& destination)
 {
-	_outputUI->FromUI(destination);
 }
 
 void SynthInformationUI::FromUI(OutputModelUI* destination)
 {
-	_outputUI->FromUI(destination);
 }
 
 bool SynthInformationUI::HasPendingAction() const
@@ -362,12 +359,11 @@ void SynthInformationUI::ClearPendingAction()
 
 bool SynthInformationUI::GetDirty() const
 {
-	return _outputUI->GetDirty();
+	return false;
 }
 
 void SynthInformationUI::ClearDirty()
 {
-	_outputUI->ClearDirty();
 }
 
 #endif

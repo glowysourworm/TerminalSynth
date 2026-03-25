@@ -7,12 +7,13 @@
 #include "EffectsUI.h"
 #include "InputUI.h"
 #include "MainModelUI.h"
+#include "OutputUI.h"
 #include "SynthInformationUI.h"
 #include "UIBase.h"
 #include <ftxui/component/component_base.hpp>
+#include <string>
 #include <vector>
 
-#include <string>
 class MainUI : public UIBase<MainModelUI>
 {
 public:
@@ -55,6 +56,7 @@ private:
 	// Tabs
 	ControlPanelUI* _controlPanelUI;
 	SynthInformationUI* _synthInformationUI;
+	OutputUI* _outputUI;
 	InputUI* _inputUI;
 	EffectsUI* _effectsUI;
 

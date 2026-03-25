@@ -5,6 +5,7 @@
 #include "InputUI.h"
 #include "MainModelUI.h"
 #include "MainUI.h"
+#include "OutputUI.h"
 #include "SynthInformationUI.h"
 #include <exception>
 #include <ftxui/component/component.hpp>
@@ -26,14 +27,15 @@ MainUI::MainUI(const MainModelUI& model)
 		"Control Panel",
 		"Input",
 		"Effects",
-		"Midi"
+		"Midi",
+		"Output"
 	});
 
 	_controlPanelUI = new ControlPanelUI();
 	_synthInformationUI = new SynthInformationUI("Terminal Synth", ftxui::Color::GreenYellow);
 	_inputUI = new InputUI(*model.GetInputModelUI());
 	_effectsUI = new EffectsUI(*model.GetEffectsModelUI());
-
+	_outputUI = new OutputUI(*model.GetOutputModelUI());
 
 	_scrollY = new float(0);
 	_tabIndex = new int(0);
@@ -49,6 +51,7 @@ MainUI::~MainUI()
 	delete _controlPanelUI;
 	delete _inputUI;
 	delete _effectsUI;
+	delete _outputUI;
 	delete _tabHeaders;
 	delete _scrollY;
 	delete _tabIndex;
@@ -63,6 +66,7 @@ void MainUI::Initialize(const MainModelUI& model)
 	_synthInformationUI->Initialize(*_model->GetOutputModelUI());
 	_inputUI->Initialize(*_model->GetInputModelUI());
 	_effectsUI->Initialize(*_model->GetEffectsModelUI());
+	_outputUI->Initialize(*_model->GetOutputModelUI());
 
 	auto midiSettings = ftxui::Container::Horizontal({
 
@@ -78,6 +82,7 @@ void MainUI::Initialize(const MainModelUI& model)
 		_inputUI->GetComponent(),
 		_effectsUI->GetComponent(),
 		midiSettings,
+		_outputUI->GetComponent()
 
 	}, _tabIndex);
 
@@ -87,7 +92,7 @@ void MainUI::Initialize(const MainModelUI& model)
 		_tabControlMenu,
 
 		// Tab Content
-		_tabControl,
+		_tabControl | ftxui::flex_grow,
 
 	}) | ftxui::CatchEvent([&](ftxui::Event event) {
 
@@ -189,6 +194,12 @@ void MainUI::ServicePendingAction()
 	{
 		
 	}
+
+	// Output Tab
+	else if (*_tabIndex == 5)
+	{
+		_outputUI->ServicePendingAction();
+	}
 }
 
 void MainUI::UpdateComponent()
@@ -222,6 +233,12 @@ void MainUI::UpdateComponent()
 	{
 
 	}
+
+	// Output Tab
+	else if (*_tabIndex == 5)
+	{
+		_outputUI->UpdateComponent();
+	}
 }
 
 void MainUI::Tick()
@@ -254,6 +271,12 @@ void MainUI::Tick()
 	else if (*_tabIndex == 4)
 	{
 
+	}
+
+	// Output Tab
+	else if (*_tabIndex == 5)
+	{
+		_outputUI->Tick();
 	}
 }
 
@@ -293,6 +316,12 @@ void MainUI::FromUI(MainModelUI* destination)
 	{
 
 	}
+
+	// Output Tab
+	else if (*_tabIndex == 5)
+	{
+		_outputUI->FromUI(destination->GetOutputModelUI());
+	}
 }
 
 void MainUI::ToUI(const MainModelUI& source)
@@ -312,6 +341,8 @@ void MainUI::ToUI(const MainModelUI* source)
 
 	// Synth Information
 	_synthInformationUI->ToUI(source->GetOutputModelUI());
+
+	_outputUI->ToUI(source->GetOutputModelUI());
 }
 
 bool MainUI::GetDirty() const
@@ -346,6 +377,12 @@ bool MainUI::GetDirty() const
 	else if (*_tabIndex == 4)
 	{
 
+	}
+
+	// Output Tab
+	else if (*_tabIndex == 5)
+	{
+		return _outputUI->GetDirty();
 	}
 
 	return false;
@@ -384,6 +421,12 @@ void MainUI::ClearDirty()
 	{
 
 	}
+
+	// Output Tab
+	else if (*_tabIndex == 5)
+	{
+		_outputUI->ClearDirty();
+	}
 }
 
 bool MainUI::HasPendingAction() const
@@ -420,6 +463,12 @@ bool MainUI::HasPendingAction() const
 
 	}
 
+	// Output Tab
+	else if (*_tabIndex == 5)
+	{
+		return _outputUI->HasPendingAction();
+	}
+
 	return false;
 }
 
@@ -453,5 +502,11 @@ void MainUI::ClearPendingAction()
 	else if (*_tabIndex == 4)
 	{
 
+	}
+
+	// Output Tab
+	else if (*_tabIndex == 5)
+	{
+		_outputUI->ClearPendingAction();
 	}
 }

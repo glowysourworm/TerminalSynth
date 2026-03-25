@@ -8,6 +8,7 @@
 #include "ValueCapture.h"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
+#include <ftxui/component/component_options.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
 #include <string>
@@ -79,13 +80,11 @@ void ControlPanelUI::Initialize(const ControlPanelModelUI& initialValue)
 
 			ftxui::Renderer([] { return ftxui::text("Synth Voice(s)"); }) | ftxui::vcenter,
 
-			ftxui::Button("Save Voice", [&] { _saveClicked->SetValue(true); })
+			ftxui::Button("Save Voice", [&] { _saveClicked->SetValue(true); }) 
 				| ftxui::bgcolor(ftxui::Color::RGBA(0, 0, 255, 20))
 				| ftxui::Maybe([&] {return _soundSettingsDirty; })
 
 		}) | ftxui::Maybe([&] {return _soundSettingsDirty; }),
-
-
 
 	}) | ftxui::border;
 }
