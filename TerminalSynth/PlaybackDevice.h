@@ -21,7 +21,7 @@ public:
 	/// Initialization of playback device is required before starting RT Audio playback.
 	/// </summary>
 	/// <returns>Returns true if device is ready, otherwise false for some sort of error</returns>
-	virtual bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) = 0;
+	virtual bool Initialize(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) = 0;
 
 	/// <summary>
 	/// Update of playback device with current settings

@@ -6,14 +6,14 @@
 #include "SoundSettings.h"
 #include "Synth.h"
 #include "SynthSettings.h"
-#include "SynthVoiceNotePool.h"
+#include "SynthVoiceFactory.h"
 
 Synth::Synth(const SynthSettings* configuration, unsigned int numberOfChannels, unsigned int samplingRate)
 {
 	_numberOfChannels = numberOfChannels;
 	_samplingRate = samplingRate;
 	_postProcessing = new SignalChain();
-	_notePool = nullptr; 
+	_synthVoice = nullptr;
 	_octave = configuration->GetCurrentSoundSettings()->GetOscillatorParameters()->GetOctave();
 }
 
@@ -21,13 +21,15 @@ Synth::~Synth()
 {
 	delete _postProcessing;
 
-	if (_notePool != nullptr)
-		delete _notePool;
+	if (_synthVoice != nullptr)
+		delete _synthVoice;
 }
 
-void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters)
+void Synth::Initialize(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters)
 {
-	_notePool = new SynthVoiceNotePool(effectRegistry, configuration->GetCurrentSoundSettings(), parameters, 10);
+	// MEMORY! ~Synth
+	_synthVoice = SynthVoiceFactory::CreateSynthVoiceDirect(effectRegistry, configuration->GetCurrentSoundSettings(), parameters);
+
 	_postProcessing->Initialize(effectRegistry, configuration->GetCurrentSoundSettings()->GetPostProcessing(), parameters);
 	_octave = configuration->GetCurrentSoundSettings()->GetOscillatorParameters()->GetOctave();
 }
@@ -35,7 +37,7 @@ void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings*
 void Synth::Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings, const PlaybackInfo* parameters)
 {
 	_postProcessing->Update(effectRegistry, soundSettings->GetPostProcessing());
-	_notePool->Update(effectRegistry, soundSettings, parameters);
+	_synthVoice->Update(effectRegistry, soundSettings, parameters);
 	_octave = soundSettings->GetOscillatorParameters()->GetOctave();
 }
 
@@ -43,21 +45,21 @@ void Synth::SetNote(int midiNumber, bool pressed, const PlaybackTime* playbackTi
 {
 	// THIS WHOLE LOOP NEEDS TO BE EVENT BASED (w/ the frontend)
 
-	bool isEngaged = _notePool->IsEngaged(midiNumber);
+	bool isEngaged = _synthVoice->IsEngaged(midiNumber);
 
 	if (isEngaged && pressed)
 		return;
 
 	// Note Off
 	else if (isEngaged && !pressed)
-		_notePool->NoteOff(midiNumber, playbackTime);
+		_synthVoice->NoteOff(midiNumber, playbackTime);
 
 	// Note On
-	else if (!isEngaged && pressed && _notePool->CanEngageNextNote())
-		_notePool->NoteOn(midiNumber, playbackTime);
+	else if (!isEngaged && pressed && _synthVoice->CanEngageNextNote())
+		_synthVoice->NoteOn(midiNumber, playbackTime);
 
 	// Post-Processing (All Notes)
-	if (_notePool->HasEngagedNotes())
+	if (_synthVoice->HasEngagedNotes())
 		_postProcessing->Engage(playbackTime);
 	else
 		_postProcessing->DisEngage(playbackTime);
@@ -67,7 +69,7 @@ bool Synth::GetSample(PlaybackFrame* frame, const PlaybackTime* playbackTime, fl
 	bool hasOutput = false;
 
 	// Primary Synth Voice(s) (Also, prunes note pool)
-	_notePool->SetFrame(frame, playbackTime);
+	_synthVoice->SetFrame(frame, playbackTime);
 
 	// Post Processing
 	hasOutput |= _postProcessing->HasOutput(playbackTime);

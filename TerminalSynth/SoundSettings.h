@@ -31,7 +31,7 @@ public:
 
 		_noteParameters->arpeggioBPM = 120;
 		_noteParameters->chord = ArpeggiatorChord::TriadMajor;
-		_noteParameters->mode = SynthNoteMode::MultipleNormal;
+		_noteParameters->mode = SynthNoteMode::Normal;
 		_noteParameters->portamentoSeconds = 0.5f;
 	}
 	SoundSettings(const SoundSettings& copy)

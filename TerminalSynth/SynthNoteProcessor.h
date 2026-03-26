@@ -17,6 +17,25 @@ class SynthNoteProcessor
 {
 public:
 
+	SynthNoteProcessor()
+	{
+		_frequency = 0;
+		_lastFrequency = 0;
+		_portamentoFrequency = 0;
+		_lastSetTimeCursor = 0;
+		_samplingRate = 0;
+		_parameters = new SynthNoteParameters({
+			.mode = SynthNoteMode::Normal,
+			.chord = ArpeggiatorChord::TriadMajor,
+			.arpeggioBPM = 60,
+			.portamentoSeconds = 0.5
+			});
+
+		_arpeggioCursor = 0;
+		_lastBeatTimeCursor = 0;
+		_midiNumber = 0;
+		_oscillatorParameters = new OscillatorParameters();
+	}
 	SynthNoteProcessor(const SoundSettings* settings, const PlaybackInfo* playbackInfo)
 	{		
 		_frequency = 0;
@@ -25,7 +44,7 @@ public:
 		_lastSetTimeCursor = 0;
 		_samplingRate = playbackInfo->GetStreamInfo()->streamSampleRate;
 		_parameters = new SynthNoteParameters({
-			.mode = SynthNoteMode::MultipleNormal,
+			.mode = SynthNoteMode::Normal,
 			.chord = ArpeggiatorChord::TriadMajor,
 			.arpeggioBPM = 60,
 			.portamentoSeconds = 0.5
@@ -56,6 +75,11 @@ public:
 		delete _oscillatorParameters;
 	}
 
+	void Initialize(const PlaybackInfo* playbackInfo)
+	{
+		_samplingRate = playbackInfo->GetStreamInfo()->streamSampleRate;
+	}
+
 	void NoteOn(int midiNumber, const PlaybackTime* playbackTime)
 	{
 		_frequency = TerminalSynth::GetMidiFrequency(midiNumber);
@@ -66,7 +90,7 @@ public:
 	}
 	void NoteOff(int midiNumber, const PlaybackTime* playbackTime)
 	{
-		if (_parameters->mode == SynthNoteMode::SinglePortamento)
+		if (_parameters->mode == SynthNoteMode::Portamento)
 			_lastFrequency = _frequency;
 	}
 	void Clear()
@@ -88,12 +112,11 @@ public:
 	{
 		switch (_parameters->mode)
 		{
-		case SynthNoteMode::MultipleNormal:
-		case SynthNoteMode::SingleNormal:
+		case SynthNoteMode::Normal:
 			return _frequency;
-		case SynthNoteMode::SingleArpeggiator:
+		case SynthNoteMode::Arpeggiator:
 			return CalculateFrequency(CalculateArpeggioMidiNumber(playbackTime->frameCursor));
-		case SynthNoteMode::SinglePortamento:
+		case SynthNoteMode::Portamento:
 		{
 			// Update Portamento
 			float pornamentoSeconds = (playbackTime->frameCursor - _lastSetTimeCursor) / _samplingRate;

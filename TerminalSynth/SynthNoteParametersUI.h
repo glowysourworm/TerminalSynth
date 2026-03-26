@@ -62,10 +62,9 @@ private:
 SynthNoteParametersUI::SynthNoteParametersUI(const SynthNoteParameters& parameters)
 {
 	_noteModeItems = new std::vector<std::string>({
-		"Multiple (Normal)",
-		"Single (Normal)",
-		"Single Portamento",
-		"Single Arpeggiator"
+		"Normal",
+		"Portamento",
+		"Arpeggiator"
 	});
 	_arpeggiatorChordItems = new std::vector<std::string>({
 		"Major Triad",

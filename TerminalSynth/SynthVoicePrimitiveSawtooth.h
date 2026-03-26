@@ -9,6 +9,7 @@
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
 #include "SynthVoiceDirect.h"
+#include "SynthVoiceNote.h"
 #include <cmath>
 
 class SynthVoicePrimitiveSawtooth : public SynthVoiceDirect
@@ -18,24 +19,28 @@ public:
 	/// <summary>
 	/// Creates a synth voice (for direct waveform output); and stores private variables for the parameters.
 	/// </summary>
-	SynthVoicePrimitiveSawtooth(const SoundRegistry* soundRegistry, const SoundSettings* settings, const PlaybackInfo* playbackInfo)
+	SynthVoicePrimitiveSawtooth(SoundRegistry* soundRegistry, const SoundSettings* settings, const PlaybackInfo* playbackInfo)
 		: SynthVoiceDirect(soundRegistry, settings, playbackInfo)
 	{ }
 	~SynthVoicePrimitiveSawtooth() {};
 
 protected:
 
+	// Bad Pattern:  This override should not be needed
 	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) override
 	{
+		SynthVoiceDirect::SetFrameImpl(frame, playbackTime);
+	}
+
+	float GetSample(const SynthVoiceNote* note, const PlaybackTime* playbackTime) override
+	{
 		// Using modulo arithmetic to get the relative period time
-		float period = 1 / this->GetFrequency();
-		float periodTime = std::fmod(playbackTime->FromCursor(this->GetSamplingRate()), period);
-		float signalLow = this->GetSignalLow();
-		float signalHigh = this->GetSignalHigh();
+		float period = 1 / note->GetFrequency();
+		float periodTime = std::fmod(playbackTime->FromCursor(note->GetSamplingRate()), period);
+		float signalLow = note->GetSignalLow();
+		float signalHigh = note->GetSignalHigh();
 
-		float sample = (((signalHigh - signalLow) / period) * periodTime) + signalLow;
-
-		frame->SetFrame(sample, sample);
+		return (((signalHigh - signalLow) / period) * periodTime) + signalLow;
 	}
 };
 

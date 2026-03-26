@@ -9,6 +9,7 @@
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
 #include "SynthVoiceDirect.h"
+#include "SynthVoiceNote.h"
 #include <cmath>
 #include <numbers>
 
@@ -19,22 +20,26 @@ public:
 	/// <summary>
 	/// Creates a synth voice (for direct waveform output); and stores private variables for the parameters.
 	/// </summary>
-	SynthVoicePrimitiveSine(const SoundRegistry* soundRegistry, const SoundSettings* settings, const PlaybackInfo* playbackInfo)
+	SynthVoicePrimitiveSine(SoundRegistry* soundRegistry, const SoundSettings* settings, const PlaybackInfo* playbackInfo)
 		: SynthVoiceDirect(soundRegistry, settings, playbackInfo)
 	{ }
 	~SynthVoicePrimitiveSine() {};
 
 protected:
 
+	// Bad Pattern:  This override should not be needed
 	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) override
 	{
-		float frequency = this->GetFrequency();
-		float signalLow = this->GetSignalLow();
-		float signalHigh = this->GetSignalHigh();
+		SynthVoiceDirect::SetFrameImpl(frame, playbackTime);
+	}
 
-		float sample = (0.5f * (signalHigh - signalLow) * std::sinf(2.0 * std::numbers::pi * frequency * playbackTime->FromCursor(this->GetSamplingRate()))) + (0.5f * (signalHigh + signalLow));
+	float GetSample(const SynthVoiceNote* note, const PlaybackTime* playbackTime) override
+	{
+		float frequency = note->GetFrequency();
+		float signalLow = note->GetSignalLow();
+		float signalHigh = note->GetSignalHigh();
 
-		frame->SetFrame(sample, sample);
+		return (0.5f * (signalHigh - signalLow) * std::sinf(2.0 * std::numbers::pi * frequency * playbackTime->FromCursor(note->GetSamplingRate()))) + (0.5f * (signalHigh + signalLow));
 	}
 };
 

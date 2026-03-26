@@ -19,7 +19,7 @@ class SynthVoiceFactory
 {
 public:
 
-	static SynthVoiceDirect* CreateSynthVoiceDirect(const SoundRegistry* soundRegistry, const SoundSettings* soundSettings, const PlaybackInfo* playbackInfo)
+	static SynthVoiceDirect* CreateSynthVoiceDirect(SoundRegistry* soundRegistry, const SoundSettings* soundSettings, const PlaybackInfo* playbackInfo)
 	{
 		SynthVoiceDirect* result = nullptr;
 

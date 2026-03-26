@@ -23,7 +23,7 @@ public:
 	MidiPlaybackDevice();
 	~MidiPlaybackDevice();
 
-	bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) override;
+	bool Initialize(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) override;
 	bool Update(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) override;
 	bool SetForFrame(const PlaybackTime& playbackTime, const SynthSettings* configuration) override;
 	bool WriteSample(PlaybackFrame& playbackFrame, const PlaybackTime& playbackTime, float gain, float leftRightBalance) override;
@@ -98,7 +98,7 @@ MidiPlaybackDevice::~MidiPlaybackDevice()
 	delete _frame;
 }
 
-bool MidiPlaybackDevice::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters)
+bool MidiPlaybackDevice::Initialize(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters)
 {
 	_numberOfChannels = parameters->GetStreamInfo()->streamChannels;
 	_samplingRate = parameters->GetStreamInfo()->streamSampleRate;

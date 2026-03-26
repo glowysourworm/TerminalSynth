@@ -59,10 +59,9 @@ enum class StkSynthVoices : int
 };
 
 enum class SynthNoteMode : int {
-	MultipleNormal = 0,
-	SingleNormal,
-	SinglePortamento,
-	SingleArpeggiator
+	Normal = 0,
+	Portamento,
+	Arpeggiator
 };
 
 enum class ArpeggiatorChord : int {

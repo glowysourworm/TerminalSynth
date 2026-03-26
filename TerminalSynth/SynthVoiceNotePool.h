@@ -1,15 +1,16 @@
 #pragma once
+#include <vector>
 
 #ifndef SYNTH_NOTE_QUEUE_H
 #define SYNTH_NOTE_QUEUE_H
 
 #include "Constant.h"
-#include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
 #include "PlaybackTime.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
-#include "SynthVoiceBase.h"
+#include "SynthVoiceNote.h"
+#include <functional>
 #include <map>
 #include <stack>
 
@@ -17,7 +18,7 @@ class SynthVoiceNotePool
 {
 public:
 
-	SynthVoiceNotePool(const SoundRegistry* soundRegistry, const SoundSettings* soundSettings, const PlaybackInfo* playbackInfo, int capacity);
+	SynthVoiceNotePool(SoundRegistry* soundRegistry, const SoundSettings* soundSettings, const PlaybackInfo* playbackInfo, int capacity);
 	~SynthVoiceNotePool();
 
 	/// <summary>
@@ -57,10 +58,19 @@ public:
 	bool HasEngagedNotes() const;
 
 	/// <summary>
-	/// Provides a callback for iterating engaged notes. Also, prunes the collection! This should be
-	/// called once per sample frame.
+	/// Returns true if there are any note envelopes still left ringing out, or engaged
 	/// </summary>
-	void SetFrame(PlaybackFrame* frame, const PlaybackTime* playbackTime);
+	bool HasOutput(const PlaybackTime* playbackTime);
+
+public:
+
+	using SynthVoiceNotePoolIterator = std::function<void(const SynthVoiceNote* note, bool isEngaged)>;
+
+	/// <summary>
+	/// Iterates notes and provides a callback to process note synthesis. Also, prunes the note pool
+	/// to move disengaged notes to the proper collection.
+	/// </summary>
+	void IterateNotes(const PlaybackTime* playbackTime, const SynthVoiceNotePoolIterator& callback);
 
 private:
 
@@ -68,22 +78,14 @@ private:
 	SynthNoteMode _noteMode;
 	const PlaybackInfo* _playbackInfo;
 
-	// Used to know whether synth voice type has changed
-	size_t _lastParameterHash;
-
 	// Capacity-sized map, will hold notes up to the user capacity (should be 10, for 10 active voices)
-	std::map<int, SynthVoiceBase*>* _engagedNotes;
+	std::map<int, SynthVoiceNote*>* _engagedNotes;
 
 	// N-sized map, will hold notes until they've dissipated
-	std::map<SynthVoiceBase*, SynthVoiceBase*>* _disengagedNotes;
+	std::vector<SynthVoiceNote*>* _disengagedNotes;
 
 	// M-sized map, will hold notes after they've dissipated
-	std::stack<SynthVoiceBase*>* _inactiveNotes;
-
-	// Single Note Mode
-	SynthVoiceBase* _singleNote;
-	bool _singleNoteEngaged;
-	int _singleNoteNumber;
+	std::stack<SynthVoiceNote*>* _inactiveNotes;
 };
 
 #endif

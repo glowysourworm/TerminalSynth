@@ -17,7 +17,7 @@ public:
 	/// <summary>
 	/// Creates a synth voice (for direct waveform output); and stores private variables for the parameters.
 	/// </summary>
-	SynthVoiceDirect(const SoundRegistry* soundRegistry, const SoundSettings* settings, const PlaybackInfo* playbackInfo)
+	SynthVoiceDirect(SoundRegistry* soundRegistry, const SoundSettings* settings, const PlaybackInfo* playbackInfo)
 		: SynthVoiceBase(soundRegistry, settings, playbackInfo)
 	{}
 	~SynthVoiceDirect() {};
@@ -34,7 +34,10 @@ public:
 
 protected:
 
-	virtual void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) = 0;
+	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) override
+	{
+		SynthVoiceBase::SetFrameImpl(frame, playbackTime);
+	}
 
 	// Override to create a class with parameter automation
 	virtual void UpdateParameter(int index, float value)
@@ -47,11 +50,6 @@ protected:
 	{
 		return true;
 	};
-
-	float GetFrequency() const { return this->GetCurrentFrequency(); }
-	float GetSamplingRate() const { return this->GetPlaybackInfo()->GetStreamInfo()->streamSampleRate; }
-	float GetSignalLow() const { return this->GetOscillatorParameters()->GetSignalLow(); }
-	float GetSignalHigh() const { return this->GetOscillatorParameters()->GetSignalHigh(); }
 };
 
 #endif

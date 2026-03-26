@@ -10,7 +10,7 @@
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
 #include "SynthSettings.h"
-#include "SynthVoiceNotePool.h"
+#include "SynthVoiceBase.h"
 
 // Class to define static piano notes and store their names / frequencies w.r.t. the SDL keyboard
 // defined inputs.
@@ -23,7 +23,7 @@ public:
 	~Synth();
 
 	// Update Configuration
-	void Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters);
+	void Initialize(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters);
 
 	// Update Configuration
 	void Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings, const PlaybackInfo* parameters);
@@ -39,7 +39,7 @@ public:
 private:
 
 	// Synth Notes by Midi Number
-	SynthVoiceNotePool* _notePool;
+	SynthVoiceBase* _synthVoice;
 
 	// Post-processing effects	
 	SignalChain* _postProcessing;

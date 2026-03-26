@@ -3,10 +3,7 @@
 #ifndef SYNTH_PLAYBACK_DEVICE_H
 #define SYNTH_PLAYBACK_DEVICE_H
 
-#include "Constant.h"
-#include "EqualizerOutput.h"
 #include "PlaybackDevice.h"
-#include "PlaybackFormatTransformer.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
 #include "PlaybackTime.h"
@@ -28,7 +25,7 @@ public:
 	SynthPlaybackDevice();
 	~SynthPlaybackDevice();
 
-	bool Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) override;
+	bool Initialize(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) override;
 	bool Update(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters) override;
 	bool SetForFrame(const PlaybackTime& playbackTime, const SynthSettings* configuration) override;
 	bool WriteSample(PlaybackFrame& playbackFrame, const PlaybackTime& playbackTime, float gain, float leftRightBalance) override;
@@ -80,7 +77,7 @@ SynthPlaybackDevice::~SynthPlaybackDevice()
 	delete _keyCaptures;
 }
 
-bool SynthPlaybackDevice::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters)
+bool SynthPlaybackDevice::Initialize(SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters)
 {
 	_numberOfChannels = parameters->GetStreamInfo()->streamChannels;
 	_samplingRate = parameters->GetStreamInfo()->streamSampleRate;

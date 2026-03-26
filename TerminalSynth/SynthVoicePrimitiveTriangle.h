@@ -9,6 +9,7 @@
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
 #include "SynthVoiceDirect.h"
+#include "SynthVoiceNote.h"
 #include <cmath>
 
 class SynthVoicePrimitiveTriangle : public SynthVoiceDirect
@@ -18,23 +19,29 @@ public:
 	/// <summary>
 	/// Creates a synth voice (for direct waveform output); and stores private variables for the parameters.
 	/// </summary>
-	SynthVoicePrimitiveTriangle(const SoundRegistry* soundRegistry, const SoundSettings* settings, const PlaybackInfo* playbackInfo) 
+	SynthVoicePrimitiveTriangle(SoundRegistry* soundRegistry, const SoundSettings* settings, const PlaybackInfo* playbackInfo) 
 		: SynthVoiceDirect(soundRegistry, settings, playbackInfo)
 	{};
 	~SynthVoicePrimitiveTriangle() {};
 
 protected:
 
+	// Bad Pattern:  This override should not be needed
 	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) override
 	{
-		float period = 1 / this->GetFrequency();
+		SynthVoiceDirect::SetFrameImpl(frame, playbackTime);
+	}
+
+	float GetSample(const SynthVoiceNote* note, const PlaybackTime* playbackTime) override
+	{
+		float period = 1 / note->GetFrequency();
 		float periodQuarter = 0.25f * period;
-		float high = this->GetSignalHigh();
-		float low = this->GetSignalLow();
+		float high = note->GetSignalHigh();
+		float low = note->GetSignalLow();
 		float sample = 0;
 
 		// Using modulo arithmetic to get the relative period time
-		float periodTime = std::fmod(playbackTime->FromCursor(this->GetSamplingRate()), period);
+		float periodTime = std::fmod(playbackTime->FromCursor(note->GetSamplingRate()), period);
 
 		// First Quadrant
 		if (periodTime < periodQuarter)
@@ -60,7 +67,7 @@ protected:
 			sample = ((2.0 * (high - low) / period) * (periodTime - (3.0 * periodQuarter))) + low;
 		}
 
-		frame->SetFrame(sample, sample);
+		return sample;
 	}
 };
 
