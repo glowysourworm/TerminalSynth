@@ -6,7 +6,7 @@
 #include "SoundSettings.h"
 #include "Synth.h"
 #include "SynthSettings.h"
-#include "SynthVoicePool.h"
+#include "SynthVoiceNotePool.h"
 
 Synth::Synth(const SynthSettings* configuration, unsigned int numberOfChannels, unsigned int samplingRate)
 {
@@ -27,7 +27,7 @@ Synth::~Synth()
 
 void Synth::Initialize(const SoundRegistry* effectRegistry, const SynthSettings* configuration, const PlaybackInfo* parameters)
 {
-	_notePool = new SynthVoicePool(effectRegistry, configuration->GetCurrentSoundSettings(), parameters, 10);
+	_notePool = new SynthVoiceNotePool(effectRegistry, configuration->GetCurrentSoundSettings(), parameters, 10);
 	_postProcessing->Initialize(effectRegistry, configuration->GetCurrentSoundSettings()->GetPostProcessing(), parameters);
 	_octave = configuration->GetCurrentSoundSettings()->GetOscillatorParameters()->GetOctave();
 }

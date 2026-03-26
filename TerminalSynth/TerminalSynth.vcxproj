@@ -266,7 +266,7 @@
     <ClCompile Include="SynthSettings.cpp" />
     <ClCompile Include="SynthEffect.cpp" />
     <ClCompile Include="SynthNoteMap.cpp" />
-    <ClCompile Include="SynthVoicePool.cpp" />
+    <ClCompile Include="SynthVoiceNotePool.cpp" />
     <ClCompile Include="WaveTable.cpp" />
     <ClCompile Include="WaveTableCache.cpp" />
   </ItemGroup>
@@ -354,8 +354,9 @@
     <ClInclude Include="SynthInformationUI.h" />
     <ClInclude Include="SynthNoteMap.h" />
     <ClInclude Include="SynthVoiceFactory.h" />
+    <ClInclude Include="SynthVoiceNote.h" />
     <ClInclude Include="SynthVoicePluckedString.h" />
-    <ClInclude Include="SynthVoicePool.h" />
+    <ClInclude Include="SynthVoiceNotePool.h" />
     <ClInclude Include="SynthPlaybackDevice.h" />
     <ClInclude Include="SynthVoiceBase.h" />
     <ClInclude Include="SynthVoiceDirect.h" />

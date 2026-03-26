@@ -6,13 +6,13 @@
 #include "SoundSettings.h"
 #include "SynthVoiceBase.h"
 #include "SynthVoiceFactory.h"
-#include "SynthVoicePool.h"
+#include "SynthVoiceNotePool.h"
 #include <exception>
 #include <map>
 #include <stack>
 #include <utility>
 
-SynthVoicePool::SynthVoicePool(const SoundRegistry* soundRegistry, const SoundSettings* soundSettings, const PlaybackInfo* playbackInfo, int capacity)
+SynthVoiceNotePool::SynthVoiceNotePool(const SoundRegistry* soundRegistry, const SoundSettings* soundSettings, const PlaybackInfo* playbackInfo, int capacity)
 {
 	_capacity = capacity;
 	_noteMode = soundSettings->GetNoteParameters()->mode;
@@ -35,7 +35,7 @@ SynthVoicePool::SynthVoicePool(const SoundRegistry* soundRegistry, const SoundSe
 	}
 }
 
-SynthVoicePool::~SynthVoicePool()
+SynthVoiceNotePool::~SynthVoiceNotePool()
 {
 	// Engaged
 	for (auto iter = _engagedNotes->begin(); iter != _engagedNotes->end(); ++iter)
@@ -65,7 +65,7 @@ SynthVoicePool::~SynthVoicePool()
 	delete _inactiveNotes;
 	delete _singleNote;
 }
-void SynthVoicePool::Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings, const PlaybackInfo* parameters)
+void SynthVoiceNotePool::Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings, const PlaybackInfo* parameters)
 {
 	// Synth Note Mode
 	_noteMode = soundSettings->GetNoteParameters()->mode;
@@ -101,11 +101,11 @@ void SynthVoicePool::Update(SoundRegistry* effectRegistry, const SoundSettings* 
 		tempStack.pop();
 	}
 }
-bool SynthVoicePool::HasEngagedNotes() const
+bool SynthVoiceNotePool::HasEngagedNotes() const
 {
 	return _engagedNotes->size() > 0 || (_singleNoteEngaged && _noteMode != SynthNoteMode::MultipleNormal);
 }
-bool SynthVoicePool::CanEngageNextNote() const
+bool SynthVoiceNotePool::CanEngageNextNote() const
 {
 	switch (_noteMode)
 	{
@@ -118,14 +118,14 @@ bool SynthVoicePool::CanEngageNextNote() const
 		return !_singleNoteEngaged;
 	
 	default:
-		throw new std::exception("Unhandled Synth Note Mode:  SynthVoicePool.cpp");
+		throw new std::exception("Unhandled Synth Note Mode:  SynthVoiceNotePool.cpp");
 	}
 }
-bool SynthVoicePool::IsEngaged(int midiNumber) const
+bool SynthVoiceNotePool::IsEngaged(int midiNumber) const
 {
 	return _engagedNotes->contains(midiNumber) || (_singleNoteEngaged && _noteMode != SynthNoteMode::MultipleNormal);
 }
-bool SynthVoicePool::NoteOn(int midiNumber, const PlaybackTime* playbackTime)
+bool SynthVoiceNotePool::NoteOn(int midiNumber, const PlaybackTime* playbackTime)
 {
 	if (_noteMode == SynthNoteMode::MultipleNormal)
 	{
@@ -168,7 +168,7 @@ bool SynthVoicePool::NoteOn(int midiNumber, const PlaybackTime* playbackTime)
 	}
 }
 
-void SynthVoicePool::NoteOff(int midiNumber, const PlaybackTime* playbackTime)
+void SynthVoiceNotePool::NoteOff(int midiNumber, const PlaybackTime* playbackTime)
 {
 	if (_noteMode == SynthNoteMode::MultipleNormal)
 	{
@@ -204,7 +204,7 @@ void SynthVoicePool::NoteOff(int midiNumber, const PlaybackTime* playbackTime)
 	}
 }
 
-void SynthVoicePool::SetFrame(PlaybackFrame* frame, const PlaybackTime* playbackTime)
+void SynthVoiceNotePool::SetFrame(PlaybackFrame* frame, const PlaybackTime* playbackTime)
 {
 	if (_noteMode == SynthNoteMode::MultipleNormal)
 	{

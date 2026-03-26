@@ -13,12 +13,12 @@
 #include <map>
 #include <stack>
 
-class SynthVoicePool
+class SynthVoiceNotePool
 {
 public:
 
-	SynthVoicePool(const SoundRegistry* soundRegistry, const SoundSettings* soundSettings, const PlaybackInfo* playbackInfo, int capacity);
-	~SynthVoicePool();
+	SynthVoiceNotePool(const SoundRegistry* soundRegistry, const SoundSettings* soundSettings, const PlaybackInfo* playbackInfo, int capacity);
+	~SynthVoiceNotePool();
 
 	/// <summary>
 	/// Updates synth voices with new settings

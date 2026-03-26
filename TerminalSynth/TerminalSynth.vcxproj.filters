@@ -165,7 +165,7 @@
     <ClCompile Include="SignalFactory.cpp">
       <Filter>Source Files\Signal</Filter>
     </ClCompile>
-    <ClCompile Include="SynthVoicePool.cpp">
+    <ClCompile Include="SynthVoiceNotePool.cpp">
       <Filter>Source Files\Synth</Filter>
     </ClCompile>
     <ClCompile Include="WaveTable.cpp">
@@ -494,9 +494,6 @@
     <ClInclude Include="SynthVoiceDirect.h">
       <Filter>Header Files\SynthVoice</Filter>
     </ClInclude>
-    <ClInclude Include="SynthVoicePool.h">
-      <Filter>Header Files\Synth</Filter>
-    </ClInclude>
     <ClInclude Include="SynthVoicePluckedString.h">
       <Filter>Header Files\SynthVoiceTerminalSynth</Filter>
     </ClInclude>
@@ -513,6 +510,12 @@
       <Filter>Header Files\SynthVoiceTerminalSynth</Filter>
     </ClInclude>
     <ClInclude Include="SynthVoiceFactory.h">
+      <Filter>Header Files\SynthVoice</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthVoiceNotePool.h">
+      <Filter>Header Files\SynthVoice</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthVoiceNote.h">
       <Filter>Header Files\SynthVoice</Filter>
     </ClInclude>
   </ItemGroup>
