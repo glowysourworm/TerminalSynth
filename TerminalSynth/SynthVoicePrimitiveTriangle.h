@@ -6,11 +6,11 @@
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
 #include "PlaybackTime.h"
+#include "SignalFactoryCore.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
 #include "SynthVoiceDirect.h"
 #include "SynthVoiceNote.h"
-#include <cmath>
 
 class SynthVoicePrimitiveTriangle : public SynthVoiceDirect
 {
@@ -34,40 +34,14 @@ protected:
 
 	float GetSample(const SynthVoiceNote* note, const PlaybackTime* playbackTime) override
 	{
-		float period = 1 / note->GetFrequency();
-		float periodQuarter = 0.25f * period;
-		float high = note->GetSignalHigh();
-		float low = note->GetSignalLow();
-		float sample = 0;
+		float sample = SignalFactoryCore::GenerateTriangleSample(
+			note->GetFrequency(),
+			note->GetSamplingRate(),
+			note->GetSignalHigh(),
+			note->GetSignalLow(),
+			playbackTime);
 
-		// Using modulo arithmetic to get the relative period time
-		float periodTime = std::fmod(playbackTime->FromCursor(note->GetSamplingRate()), period);
-
-		// First Quadrant
-		if (periodTime < periodQuarter)
-		{
-			sample = (2.0 * (high - low) / period) * periodTime;
-		}
-
-		// Second Quadrant
-		else if (periodTime < (2.0 * periodQuarter))
-		{
-			sample = ((-2.0 * (high - low) / period) * (periodTime - (float)periodQuarter)) - low;
-		}
-
-		// Third Quadrant
-		else if (periodTime < 3.0 * periodQuarter)
-		{
-			sample = (-2.0 * (high - low) / period) * (periodTime - (2.0 * periodQuarter));
-		}
-
-		// Fourth Quadrant
-		else
-		{
-			sample = ((2.0 * (high - low) / period) * (periodTime - (3.0 * periodQuarter))) + low;
-		}
-
-		return sample;
+		return note->GetEnvelopeLevel(playbackTime) * sample;
 	}
 };
 

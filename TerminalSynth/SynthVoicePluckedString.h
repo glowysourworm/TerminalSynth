@@ -61,6 +61,7 @@ protected:
 		// Pluck Time
 		float attackTime = 0.001;
 		float sample = 0;
+		float envelopeLevel = note->GetEnvelopeLevel(playbackTime);
 		
 		// Noise Attack:  The delay + filter will make the line dissipate
 		if (playbackTime->FromCursor(note->GetSamplingRate()) < attackTime)
@@ -73,7 +74,7 @@ protected:
 		}
 		
 		// Process Sample
-		PlaybackFrame frame(sample, sample);
+		PlaybackFrame frame(sample * envelopeLevel, sample * envelopeLevel);
 		_combFilter->SetFrame(&frame, playbackTime);
 		_lowPassFilter->SetFrame(&frame, playbackTime);
 

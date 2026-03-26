@@ -6,12 +6,11 @@
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
 #include "PlaybackTime.h"
+#include "SignalFactoryCore.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
 #include "SynthVoiceDirect.h"
 #include "SynthVoiceNote.h"
-#include <cmath>
-#include <numbers>
 
 class SynthVoicePrimitiveSine : public SynthVoiceDirect
 {
@@ -35,11 +34,14 @@ protected:
 
 	float GetSample(const SynthVoiceNote* note, const PlaybackTime* playbackTime) override
 	{
-		float frequency = note->GetFrequency();
-		float signalLow = note->GetSignalLow();
-		float signalHigh = note->GetSignalHigh();
+		float sample = SignalFactoryCore::GenerateSineSample(
+			note->GetFrequency(),
+			note->GetSamplingRate(),
+			note->GetSignalHigh(),
+			note->GetSignalLow(),
+			playbackTime);
 
-		return (0.5f * (signalHigh - signalLow) * std::sinf(2.0 * std::numbers::pi * frequency * playbackTime->FromCursor(note->GetSamplingRate()))) + (0.5f * (signalHigh + signalLow));
+		return note->GetEnvelopeLevel(playbackTime) * sample;
 	}
 };
 

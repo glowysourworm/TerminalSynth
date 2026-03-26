@@ -84,8 +84,7 @@ enum class ParameterAutomationOscillator : int {
 	Sine = 0,
 	Square = 1,
 	Triangle = 2,
-	Sawtooth = 3,
-	Random = 4
+	Sawtooth = 3
 };
 
 namespace TerminalSynth

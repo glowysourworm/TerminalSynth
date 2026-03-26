@@ -6,11 +6,11 @@
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
 #include "PlaybackTime.h"
+#include "SignalFactoryCore.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
 #include "SynthVoiceDirect.h"
 #include "SynthVoiceNote.h"
-#include <cmath>
 
 class SynthVoicePrimitiveSawtooth : public SynthVoiceDirect
 {
@@ -34,13 +34,14 @@ protected:
 
 	float GetSample(const SynthVoiceNote* note, const PlaybackTime* playbackTime) override
 	{
-		// Using modulo arithmetic to get the relative period time
-		float period = 1 / note->GetFrequency();
-		float periodTime = std::fmod(playbackTime->FromCursor(note->GetSamplingRate()), period);
-		float signalLow = note->GetSignalLow();
-		float signalHigh = note->GetSignalHigh();
+		float sample = SignalFactoryCore::GenerateSawtoothSample(
+			note->GetFrequency(), 
+			note->GetSamplingRate(), 
+			note->GetSignalHigh(), 
+			note->GetSignalLow(), 
+			playbackTime);
 
-		return (((signalHigh - signalLow) / period) * periodTime) + signalLow;
+		return note->GetEnvelopeLevel(playbackTime) * sample;
 	}
 };
 

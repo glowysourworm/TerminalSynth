@@ -91,8 +91,7 @@ SignalParameterUI::SignalParameterUI(const SignalParameter& model, const std::st
 		"Sine",
 		"Square",
 		"Triangle",
-		"Sawtooth",
-		"Random"
+		"Sawtooth"
 	});
 }
 

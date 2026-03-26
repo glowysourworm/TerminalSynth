@@ -11,9 +11,9 @@
 
 SignalParameterAutomater::SignalParameterAutomater()
 {
+	_samplingRate = 0;											// Initialize
+
 	_frame = new PlaybackFrame(0, 0);
-	_signalFactory = nullptr;
-	_signalFactoryRandom = nullptr;
 
 	_oscillatorParameters = new OscillatorParameters(
 		SynthVoiceType::Primitive, 
@@ -22,15 +22,7 @@ SignalParameterAutomater::SignalParameterAutomater()
 		StkSynthVoices::StkBeeThree, 
 		"", "", ENVELOPE_LOW, ENVELOPE_HIGH);
 
-	_oscillatorParametersRandom = new OscillatorParameters(
-		SynthVoiceType::Primitive,
-		PrimitiveSynthVoices::Sine,
-		TerminalSynthVoices::SynthesizedStringPluck,
-		StkSynthVoices::StkBeeThree,
-		"", "", ENVELOPE_LOW, ENVELOPE_HIGH);
-
 	_oscillatorFrequency = 0.5;
-	_oscillatorRandomFrequency = 0.5;
 
 	_type = ParameterAutomationType::EnvelopeSweep;
 	_oscillatorType = ParameterAutomationOscillator::Sine;
@@ -39,22 +31,14 @@ SignalParameterAutomater::SignalParameterAutomater()
 
 SignalParameterAutomater::~SignalParameterAutomater()
 {
-	if (_signalFactory != nullptr)
-		delete _signalFactory;
-
-	if (_signalFactoryRandom != nullptr)
-		delete _signalFactoryRandom;
-
 	delete _frame;
 	delete _oscillatorParameters;
-	delete _oscillatorParametersRandom;
 	delete _envelope;
 }
 
 void SignalParameterAutomater::Initialize(const PlaybackInfo* parameters)
 {
-	_signalFactory = new SignalFactoryCore(parameters->GetStreamInfo()->streamSampleRate);
-	_signalFactoryRandom = new SignalFactoryCore(parameters->GetStreamInfo()->streamSampleRate);
+	_samplingRate = parameters->GetStreamInfo()->streamSampleRate;
 }
 
 void SignalParameterAutomater::Update(const SignalParameter* parameter)
@@ -68,7 +52,6 @@ void SignalParameterAutomater::Update(const SignalParameter* parameter)
 	_oscillatorParameters->SetSignalHigh(parameter->GetAutomationHigh());
 
 	_oscillatorFrequency = parameter->GetAutomationFrequency();
-	_oscillatorRandomFrequency = parameter->GetAutomationFrequency();
 
 	_envelope->Update(parameter->GetAutomationEnvelope());
 }
@@ -85,8 +68,6 @@ void SignalParameterAutomater::DisEngage(const PlaybackTime* playbackTime)
 
 float SignalParameterAutomater::GetValue(const PlaybackFrame* frame, const PlaybackTime* playbackTime) const
 {
-	
-
 	switch (_type)
 	{
 	case ParameterAutomationType::EnvelopeSweep:
@@ -96,15 +77,13 @@ float SignalParameterAutomater::GetValue(const PlaybackFrame* frame, const Playb
 		switch (_oscillatorType)
 		{
 		case ParameterAutomationOscillator::Sine:
-			return _signalFactory->GenerateSineSample(_oscillatorFrequency, playbackTime);
+			return SignalFactoryCore::GenerateSineSample(_oscillatorFrequency, _samplingRate, _oscillatorParameters->GetSignalHigh(), _oscillatorParameters->GetSignalLow(), playbackTime);
 		case ParameterAutomationOscillator::Square:
-			return _signalFactory->GenerateSquareSample(_oscillatorFrequency, playbackTime);
+			return SignalFactoryCore::GenerateSquareSample(_oscillatorFrequency, _samplingRate, _oscillatorParameters->GetSignalHigh(), _oscillatorParameters->GetSignalLow(), playbackTime);
 		case ParameterAutomationOscillator::Triangle:
-			return _signalFactory->GenerateTriangleSample(_oscillatorFrequency, playbackTime);
+			return SignalFactoryCore::GenerateTriangleSample(_oscillatorFrequency, _samplingRate, _oscillatorParameters->GetSignalHigh(), _oscillatorParameters->GetSignalLow(), playbackTime);
 		case ParameterAutomationOscillator::Sawtooth:
-			return _signalFactory->GenerateSawtoothSample(_oscillatorFrequency, playbackTime);
-		case ParameterAutomationOscillator::Random:
-			return _signalFactoryRandom->GenerateRandomSample(_oscillatorRandomFrequency, playbackTime);
+			return SignalFactoryCore::GenerateSawtoothSample(_oscillatorFrequency, _samplingRate, _oscillatorParameters->GetSignalHigh(), _oscillatorParameters->GetSignalLow(), playbackTime);
 		default:
 			throw new std::exception("Unhandled automation oscillator type:  SignalParameterAutomater.h");
 		}

@@ -6,11 +6,11 @@
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
 #include "PlaybackTime.h"
+#include "SignalFactoryCore.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
 #include "SynthVoiceDirect.h"
 #include "SynthVoiceNote.h"
-#include <cmath>
 
 class SynthVoicePrimitiveSquare : public SynthVoiceDirect
 {
@@ -34,16 +34,14 @@ protected:
 
 	float GetSample(const SynthVoiceNote* note, const PlaybackTime* playbackTime) override
 	{
-		// Using modulo arithmetic to get the relative period time
-		float period = 1 / note->GetFrequency();
-		float periodTime = std::fmod(playbackTime->FromCursor(note->GetSamplingRate()), period);
-		float signalHigh = note->GetSignalHigh();
-		float signalLow = note->GetSignalLow();
+		float sample = SignalFactoryCore::GenerateSquareSample(
+			note->GetFrequency(),
+			note->GetSamplingRate(),
+			note->GetSignalHigh(),
+			note->GetSignalLow(),
+			playbackTime);
 
-		if (periodTime < period / 2.0)
-			return signalHigh;
-		else
-			return signalLow;
+		return note->GetEnvelopeLevel(playbackTime) * sample;
 	}
 };
 

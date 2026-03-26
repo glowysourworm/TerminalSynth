@@ -3,14 +3,10 @@
 #ifndef EFFECT_UI_H
 #define EFFECT_UI_H
 
-#include "CheckboxModelUI.h"
-#include "CheckboxUI.h"
 #include "SignalParameter.h"
 #include "SignalParameterUI.h"
 #include "SignalSettings.h"
-#include "SliderUI.h"
 #include "UIBase.h"
-#include "ValueCapture.h"
 #include <exception>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>

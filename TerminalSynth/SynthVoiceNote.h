@@ -73,6 +73,7 @@ public:
 	float GetSignalHigh() const { return _parameters->GetSignalHigh(); }
 	float GetSignalLow() const { return _parameters->GetSignalLow(); }
 	float GetSamplingRate() const { return _samplingRate; }
+	float GetEnvelopeLevel(const PlaybackTime* playbackTime) const { return _envelope->GetEnvelopeLevel(playbackTime); }
 
 private:
 

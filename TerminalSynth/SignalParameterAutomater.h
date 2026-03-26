@@ -9,7 +9,6 @@
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
 #include "PlaybackTime.h"
-#include "SignalFactoryCore.h"
 #include "SignalParameter.h"
 
 /// <summary>
@@ -51,19 +50,15 @@ public:
 
 private:
 
+	float _samplingRate;
+
 	ParameterAutomationType _type;
 	ParameterAutomationOscillator _oscillatorType;
 
-	// NOTE:  SignalFactoryCore* does not depend on SignalBase*
-
 	PlaybackFrame* _frame;									// Our local frame for using the SignalFactory*
-	SignalFactoryCore* _signalFactory;						// Our local (non-system) version
-	SignalFactoryCore* _signalFactoryRandom;				// Our local (non-system) version, set up for random value generation
 	OscillatorParameters* _oscillatorParameters;			// These will not be the system values
-	OscillatorParameters* _oscillatorParametersRandom;		// These will not be the system values, set up for random value generation
 
 	float _oscillatorFrequency;
-	float _oscillatorRandomFrequency;
 
 	Envelope* _envelope;
 };
