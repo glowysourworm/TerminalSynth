@@ -73,7 +73,7 @@ public:
 	}
 	virtual void Clear()
 	{
-
+		_noteProcessor->Clear();
 	}
 
 	virtual void Update(SoundRegistry* soundRegistry, const SoundSettings* settings, const PlaybackInfo* playbackInfo)

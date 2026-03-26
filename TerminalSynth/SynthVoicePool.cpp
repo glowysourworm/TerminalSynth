@@ -140,10 +140,8 @@ bool SynthVoicePool::CanEngageNextNote() const
 	{
 	case SynthNoteMode::Normal:
 	case SynthNoteMode::Arpeggiator:
+	case SynthNoteMode::Portamento:
 		return _engagedNotes->size() < _capacity;
-
-	case SynthNoteMode::Portamento:	
-		return _engagedNotes->size() == 0;
 	
 	default:
 		throw new std::exception("Unhandled Synth Note Mode:  SynthVoiceNotePool.cpp");
@@ -212,9 +210,12 @@ void SynthVoicePool::IterateNotes(const PlaybackTime* playbackTime, const SynthV
 			iter++;
 		}
 
-		// Inactive
+		// Inactive (Clear)
 		else
 		{
+			// Complete Note Cycle
+			(*iter)->Clear();
+
 			_inactiveNotes->push(*iter);
 
 			// Prune Dis-Engaged Notes

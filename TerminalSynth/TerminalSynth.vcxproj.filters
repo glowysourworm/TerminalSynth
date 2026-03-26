@@ -207,6 +207,9 @@
     <ClCompile Include="PlaybackUserData.cpp">
       <Filter>Source Files\ModelPlayback</Filter>
     </ClCompile>
+    <ClCompile Include="SynthSettingsLoader.cpp">
+      <Filter>Source Files\Model</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WindowsKeyCodes.h">
@@ -517,6 +520,9 @@
     </ClInclude>
     <ClInclude Include="SynthVoiceStkBeeThree.h">
       <Filter>Header Files\SynthVoiceStk</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthSettingsLoader.h">
+      <Filter>Header Files\Model</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

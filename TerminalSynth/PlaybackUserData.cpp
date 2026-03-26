@@ -4,16 +4,16 @@
 #include "PlaybackUserData.h"
 #include "SignalSettings.h"
 #include "SoundRegistry.h"
-#include "SynthSettings.h"
+#include "SynthSettingsLoader.h"
 #include <exception>
 #include <string>
 #include <vector>
 
-PlaybackUserData::PlaybackUserData(SynthSettings* synthSettings)
+PlaybackUserData::PlaybackUserData(SynthSettingsLoader* synthSettingsLoader)
 {
-	_synthSettings = synthSettings;
+	_synthSettingsLoader = synthSettingsLoader;
 	_effectRegistry = new SoundRegistry();
-	_playbackInfo = new PlaybackInfo(synthSettings->GetStkEnabled(), synthSettings->GetSoundBankEnabled());	
+	_playbackInfo = new PlaybackInfo(synthSettingsLoader->GetCurrent()->GetStkEnabled(), synthSettingsLoader->GetCurrent()->GetSoundBankEnabled());
 	_deviceRegister = new PlaybackDeviceRegister();
 	_equalizer = new EqualizerOutput(FFT_INPUT_SIZE, FFT_OUTPUT_SIZE);
 	_effectList = new std::vector<SignalSettings*>();
@@ -67,4 +67,9 @@ void PlaybackUserData::UpdateDevice(const std::string& selectedDeviceName, unsig
 void PlaybackUserData::SelectDevice(const std::string& deviceName)
 {
 	_deviceRegister->SelectDevice(deviceName);
+}
+
+void PlaybackUserData::SaveSynthSettings()
+{
+	_synthSettingsLoader->SaveConfiguration();
 }

@@ -10,6 +10,7 @@
 #include "PlaybackInfo.h"
 #include "PlaybackUserData.h"
 #include "SynthSettings.h"
+#include "SynthSettingsLoader.h"
 #include <Stk.h>
 #include <chrono>
 #include <cmath>

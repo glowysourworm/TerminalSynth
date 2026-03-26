@@ -7,6 +7,7 @@
 #include "SignalSettings.h"
 #include "SoundRegistry.h"
 #include "SynthSettings.h"
+#include "SynthSettingsLoader.h"
 #include <string>
 #include <vector>
 
@@ -17,12 +18,12 @@ public:
 	const int FFT_OUTPUT_SIZE = 32;
 
 public:
-	PlaybackUserData(SynthSettings* synthSettings);
+	PlaybackUserData(SynthSettingsLoader* synthSettingsLoader);
 	~PlaybackUserData();
 
 	bool Initialize();
 
-	SynthSettings* GetSynthSettings() const { return _synthSettings; }
+	SynthSettings* GetSynthSettings() const { return _synthSettingsLoader->GetCurrent(); }
 	SoundRegistry* GetEffectRegistry() const { return _effectRegistry; }
 	PlaybackInfo* GetPlaybackInfo() const { return _playbackInfo; }
 	EqualizerOutput* GetEqualizer() const { return _equalizer; }
@@ -42,6 +43,11 @@ public:
 	/// </summary>
 	void SelectDevice(const std::string& deviceName);
 
+	/// <summary>
+	/// Saves synth settings in the current configuration
+	/// </summary>
+	void SaveSynthSettings();
+
 private:
 
 	// This is not any of the "registries". This is the initialized list of effect settings. The SoundRegistry* was meant to 
@@ -49,7 +55,7 @@ private:
 	//
 	std::vector<SignalSettings*>* _effectList;
 
-	SynthSettings* _synthSettings;
+	SynthSettingsLoader* _synthSettingsLoader;
 	SoundRegistry* _effectRegistry;
 	PlaybackInfo* _playbackInfo;
 	PlaybackDeviceRegister* _deviceRegister;

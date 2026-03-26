@@ -11,6 +11,7 @@
 #include "SoundSettings.h"
 #include "SynthNoteParameters.h"
 #include <algorithm>
+#include <cmath>
 #include <exception>
 
 class SynthNoteProcessor
@@ -21,7 +22,6 @@ public:
 	{
 		_frequency = 0;
 		_lastFrequency = 0;
-		_portamentoFrequency = 0;
 		_lastSetTimeCursor = 0;
 		_samplingRate = 0;
 		_parameters = new SynthNoteParameters({
@@ -40,7 +40,6 @@ public:
 	{		
 		_frequency = 0;
 		_lastFrequency = 0;
-		_portamentoFrequency = 0;
 		_lastSetTimeCursor = 0;
 		_samplingRate = playbackInfo->GetStreamInfo()->streamSampleRate;
 		_parameters = new SynthNoteParameters({
@@ -60,7 +59,6 @@ public:
 		_frequency = copy.GetFrequency();
 		_samplingRate = copy.GetSamplingRate();
 		_lastFrequency = 0;
-		_portamentoFrequency = 0;
 		_lastSetTimeCursor = 0;
 		_arpeggioCursor = 0;
 		_lastBeatTimeCursor = 0;
@@ -82,6 +80,7 @@ public:
 
 	void NoteOn(int midiNumber, const PlaybackTime* playbackTime)
 	{
+		_lastFrequency = TerminalSynth::GetMidiFrequency(midiNumber + 12);;
 		_frequency = TerminalSynth::GetMidiFrequency(midiNumber);
 		_lastSetTimeCursor = playbackTime->frameCursor;
 		_lastBeatTimeCursor = playbackTime->frameCursor;
@@ -90,12 +89,12 @@ public:
 	}
 	void NoteOff(int midiNumber, const PlaybackTime* playbackTime)
 	{
-		if (_parameters->mode == SynthNoteMode::Portamento)
-			_lastFrequency = _frequency;
+
 	}
 	void Clear()
 	{
-
+		//if (_parameters->mode == SynthNoteMode::Portamento)
+		//	_lastFrequency = _frequency;
 	}
 
 	float GetFundamentalFrequency() const
@@ -118,15 +117,12 @@ public:
 			return CalculateFrequency(CalculateArpeggioMidiNumber(playbackTime->frameCursor));
 		case SynthNoteMode::Portamento:
 		{
+			return _frequency;
 			// Update Portamento
-			float pornamentoSeconds = (playbackTime->frameCursor - _lastSetTimeCursor) / _samplingRate;
-			float lerpValue = std::clamp<float>(pornamentoSeconds / _parameters->portamentoSeconds, 0, 1);
+			//float pornamentoSeconds = (playbackTime->frameCursor - _lastSetTimeCursor) / _samplingRate;
+			//float lerpValue = std::clamp<float>(pornamentoSeconds / _parameters->portamentoSeconds, 0, 1);
 
-			//_portamentoFrequency = std::lerp(_lastFrequency, _frequency, lerpValue);
-
-			_portamentoFrequency = _lastFrequency + ((_frequency - _lastFrequency) * lerpValue);
-
-			return _portamentoFrequency;
+			//return std::lerp(_lastFrequency, _frequency, lerpValue);
 		}
 		default:
 			throw new std::exception("Unhandled Synth Note Mode: SynthNoteProcessor.h");
@@ -218,7 +214,6 @@ private:
 
 	float _frequency;
 	float _lastFrequency;
-	float _portamentoFrequency;
 	size_t _lastSetTimeCursor;
 	size_t _lastBeatTimeCursor;
 	unsigned int _arpeggioCursor;
