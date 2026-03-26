@@ -6,16 +6,19 @@
 #include "Windows.h"
 #include "WindowsKeyCodes.h"
 #include <Stk.h>
-#include <filesystem>
 #include <string>
 #include <string.h>
+
+#include <exception>
+#include <filesystem>
+#include <fstream>
+#define DEFAULT_CONFIG_FILE_NAME ".terminal-synth-config"
 
 /// <summary>
 /// This will eventually come from a file, so there'll be some new component
 /// </summary>
-SynthSettings* CreateConfiguration(
+SynthSettings* CreateDefeaultConfiguration(
 	const std::string& soundBankDirectory, 
-	const std::string& soundSettingsDirectory, 
 	const std::string& stkRawWaveDirectory, 
 	bool soundBankEnabled,
 	bool stkEnabled)
@@ -24,13 +27,13 @@ SynthSettings* CreateConfiguration(
 
 	// STK (enable / disable)
 	if (stkEnabled)
-		configuration = new SynthSettings(soundSettingsDirectory, soundBankDirectory, stkRawWaveDirectory);
+		configuration = new SynthSettings(soundBankDirectory, stkRawWaveDirectory);
 
 	else if (soundBankEnabled)
-		configuration = new SynthSettings(soundSettingsDirectory, soundBankDirectory);
+		configuration = new SynthSettings(soundBankDirectory);
 
 	else
-		configuration = new SynthSettings(soundSettingsDirectory);
+		configuration = new SynthSettings();
 
 	// Oversampling
 	configuration->SetOversamplingFactor(10);
@@ -91,6 +94,25 @@ SynthSettings* CreateConfiguration(
 	return configuration;
 }
 
+SynthSettings* LoadConfiguration(const std::string& fileName)
+{
+	try
+	{
+		if (!std::filesystem::exists(fileName))
+			return CreateDefeaultConfiguration("", "", false, false);
+
+		SynthSettings loadSettings;
+		std::ifstream stream(fileName);
+		loadSettings.Read(stream);
+
+		return new SynthSettings(loadSettings);
+	}
+	catch (std::exception ex)
+	{
+		return CreateDefeaultConfiguration("", "", false, false);
+	}
+}
+
 bool GetArg(int argc, char* argv[], const char* key, std::string& destination)
 {
 	for (int index = 0; index < argc - 1; index++)
@@ -107,28 +129,35 @@ bool GetArg(int argc, char* argv[], const char* key, std::string& destination)
 	return false;
 }
 
+int atexit(int asdf)
+{
+	return 0;
+}
+
 int main(int argc, char* argv[], char* envp[])
 {
-	std::string soundBankDirectory = "";
-	std::string soundSettingsDirectory = "";
-	std::string stkRawWaveDirectory = "";
+	std::string configFile = DEFAULT_CONFIG_FILE_NAME;
 
-	bool stkEnabled = false;
-	bool soundBankEnabled = false;
-
-	if (GetArg(argc, argv, "-BANK", soundBankDirectory))
-		soundBankEnabled = std::filesystem::exists(soundBankDirectory);
-
-	if (GetArg(argc, argv, "-STK", stkRawWaveDirectory))
-		stkEnabled = std::filesystem::exists(stkRawWaveDirectory);
-
-	if (!GetArg(argc, argv, "-VOICES", soundSettingsDirectory))
-		soundSettingsDirectory = std::filesystem::current_path().string() + "\\synth-voices";
-
-	// STK
-	if (stkEnabled)
+	// Read config file
+	if (argc > 1)
 	{
-		stk::Stk::setRawwavePath(stkRawWaveDirectory);
+		configFile = argv[1];
+	}
+
+	// Configuration
+	SynthSettings* configuration = LoadConfiguration(configFile);
+
+	// STK (try set stk settings)
+	if (configuration->GetStkEnabled())
+	{
+		try
+		{
+			stk::Stk::setRawwavePath(configuration->GetStkRawWaveDirectory());
+		}
+		catch (std::exception& ex)
+		{
+			configuration->DisableStk();
+		}
 	}
 
 	// This pointer is shared (see controllers)
@@ -142,7 +171,6 @@ int main(int argc, char* argv[], char* envp[])
 	// Primary Shared Pointers:  The OutputSettings* are initialized and maintained by the MainController, with 
 	//							 the RtAudioController* providing the host api, and device info.
 	//
-	SynthSettings* configuration = CreateConfiguration(soundBankDirectory, soundSettingsDirectory, stkRawWaveDirectory, soundBankEnabled, stkEnabled);
 	PlaybackUserData* userData = new PlaybackUserData(configuration);
 
 	SetConsoleTitleA("Terminal Synth");
@@ -158,6 +186,7 @@ int main(int argc, char* argv[], char* envp[])
 	// All threads have stopped, we can now delete the rest of our heap memory
 	delete configuration;
 	delete playbackLock;
+	delete userData;
 
 	return 0;
 }

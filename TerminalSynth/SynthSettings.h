@@ -19,21 +19,21 @@ public:
 	/// <summary>
 	/// Constructor to enable:  Sound Settings (save / open)
 	/// </summary>
-	SynthSettings(const std::string& soundSettingsDir);
+	SynthSettings();
 
 	/// <summary>
 	/// Constructor to enable:  Sound Settings (save / open), Sound Bank (load / wave tables)
 	/// </summary>
-	SynthSettings(const std::string& soundSettingsDir, const std::string& soundBankDir);
+	SynthSettings(const std::string& soundBankDir);
 
 	/// <summary>
 	/// Constructor to enable:  Sound Settings (save / open), Sound Bank (load / wave tables), STK synth voices
 	/// </summary>
-	SynthSettings(const std::string& soundSettingsDir, const std::string& soundBankDir, const std::string& stkRawWaveDir);
+	SynthSettings(const std::string& soundBankDir, const std::string& stkRawWaveDir);
 
 private:
 
-	SynthSettings(const std::string& soundSettingsDir, const std::string& soundBankDir, const std::string& stkRawWaveDir, bool soundBankEnabled, bool stkEnabled);
+	SynthSettings(const std::string& soundBankDir, const std::string& stkRawWaveDir, bool soundBankEnabled, bool stkEnabled);
 
 public:
 
@@ -50,12 +50,18 @@ public:
 	int GetSoundSettingsCount() const;
 	void GetSoundSettingsList(std::vector<std::string>& destination);
 
-	std::string GetSoundSettingsDirectory() const;
+	/// <summary>
+	/// Saves sound settings, with selected name, with option to save as a new copy (with a new name).
+	/// </summary>
+	void SaveSoundSettings(const SoundSettings* soundSettings, const std::string& saveAsName, bool saveAs);
+
 	std::string GetSoundBankDirectory() const;
 	std::string GetStkRawWaveDirectory() const;
 
 	bool GetStkEnabled() const;
 	bool GetSoundBankEnabled() const;
+
+	void DisableStk();
 
 	// Dirty Status
 	bool IsDirty() const;
@@ -82,9 +88,6 @@ public:
 	int GetMidiHigh() const;
 	float GetOversamplingFactor() const;
 
-	// Actions
-	void SaveCurrentSoundSettings(const std::string& name);
-
 public:
 
 	void Save(std::ostream& stream);
@@ -101,7 +104,6 @@ private:
 	SoundSettings* _defaultSoundSettings;										// Signal Chain, Post Processing, Oscillator, Envelope
 	SoundSettings* _currentSoundSettings;										// Signal Chain, Post Processing, Oscillator, Envelope
 
-	std::string* _soundSettingsDirectory;
 	std::string* _stkRawWaveDirectory;
 
 	bool _stkEnabled;

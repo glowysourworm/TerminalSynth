@@ -22,11 +22,12 @@ public:
 
 	OscillatorParameters()
 	{
-		_type = OscillatorType::BuiltIn;
-		_builtInType = BuiltInOscillators::Sine;
+		_voiceType = SynthVoiceType::Primitive;
+		_primitiveVoiceType = PrimitiveSynthVoices::Sine;
+		_terminalVoiceType = TerminalSynthVoices::SynthesizedStringPluck;
+		_stkVoiceType = StkSynthVoices::StkBeeThree;
 		_soundBank = new std::string("");
 		_soundName = new std::string("");
-		_frequency = TerminalSynth::GetMidiFrequency(60);
 		_signalLow = SIGNAL_LOW;
 		_signalHigh = SIGNAL_HIGH;
 		_octave = 0;
@@ -44,19 +45,21 @@ public:
 	/// <summary>
 	/// Constructs an oscillator with built in source
 	/// </summary>
-	OscillatorParameters(OscillatorType type,
-						 BuiltInOscillators builtInType, 
+	OscillatorParameters(SynthVoiceType voiceType,
+					 	 PrimitiveSynthVoices builtInType,
+						 TerminalSynthVoices terminalVoiceType,
+						 StkSynthVoices stkVoiceType,
 						 const std::string& soundBank,
 						 const std::string& soundName,
-						 float frequency, 
 						 float signalLow, 
 						 float signalHigh)
 	{
-		_type = type;
-		_builtInType = builtInType;
+		_voiceType = voiceType;
+		_primitiveVoiceType = builtInType;
+		_terminalVoiceType = terminalVoiceType;
+		_stkVoiceType = stkVoiceType;
 		_soundBank = new std::string(soundBank);
 		_soundName = new std::string(soundName);
-		_frequency = frequency;
 		_signalLow = signalLow;
 		_signalHigh = signalHigh;
 		_octave = 0;
@@ -72,11 +75,12 @@ public:
 	}
 	OscillatorParameters(const OscillatorParameters& copy)
 	{
-		_type = copy.GetType();
-		_builtInType = copy.GetBuiltInType();
+		_voiceType = copy.GetVoiceType();
+		_primitiveVoiceType = copy.GetPrimitiveVoiceType();
+		_terminalVoiceType = copy.GetTerminalVoiceType();
+		_stkVoiceType = copy.GetStkVoiceType();
 		_soundBank = new std::string(copy.GetSoundBank());
 		_soundName = new std::string(copy.GetSoundName());
-		_frequency = copy.GetFrequency();
 		_signalLow = copy.GetSignalLow();
 		_signalHigh = copy.GetSignalHigh();
 		_octave = copy.GetOctave();
@@ -92,19 +96,19 @@ public:
 		delete _waveshaperHarmonics;
 	}
 
-	float GetFrequency() const { return _frequency; }
 	float GetSignalLow() const { return _signalLow; }
 	float GetSignalHigh() const { return _signalHigh; }
 	unsigned int GetOctave() const { return _octave; }
 	std::string GetSoundBank() const { return *_soundBank; }
 	std::string GetSoundName() const { return *_soundName; }
-	OscillatorType GetType() const { return _type; }
-	BuiltInOscillators GetBuiltInType() const { return _builtInType; }
+	SynthVoiceType GetVoiceType() const { return _voiceType; }
+	PrimitiveSynthVoices GetPrimitiveVoiceType() const { return _primitiveVoiceType; }
+	TerminalSynthVoices GetTerminalVoiceType() const { return _terminalVoiceType; }
+	StkSynthVoices GetStkVoiceType() const { return _stkVoiceType; }
 	float GetWaveshaperSidebandCents() const { return _waveshaperSidebandCents; }
 	float GetWaveshaperRandomPhaseAmplitude() const { return _waveshaperRandomPhaseAmplitude; }
 	std::vector<float>* GetWaveshaperHarmonics() const { return _waveshaperHarmonics; }
 
-	void SetFrequency(float value) { _frequency = value; }
 	void SetSignalLow(float value) { _signalLow = value; }
 	void SetSignalHigh(float value) { _signalHigh = value; }
 	void SetOctave(unsigned int value) { _octave = value; }
@@ -118,11 +122,14 @@ public:
 		_soundName->clear();
 		_soundName->append(value);
 	}
-	void SetType(OscillatorType value) { _type = value; }
-	void SetBuiltInType(BuiltInOscillators value) { _builtInType = value; }
+	void SetVoiceType(SynthVoiceType value) { _voiceType = value; }
+	void SetPrimitiveVoiceType(PrimitiveSynthVoices value) { _primitiveVoiceType = value; }
+	void SetTerminalVoiceType(TerminalSynthVoices value) { _terminalVoiceType = value; }
+	void SetStkVoiceType(StkSynthVoices value) { _stkVoiceType = value; }
 	void SetWaveshaperSidebandCents(float value) { _waveshaperSidebandCents = value; }
 	void SetWaveshaperRandomPhaseAmplitude(float value) { _waveshaperRandomPhaseAmplitude = value; }
 
+	// Creates a hash code for identifying the TYPE of oscillator (based only just enums and the sound bank names)
 	size_t GetHashCode() const
 	{
 		std::hash<int> intHasher;
@@ -130,17 +137,19 @@ public:
 		std::hash<std::string> stringHasher;
 
 		// Just these data are involved in uniqueness
-		size_t hash1 = intHasher((int)_type);
-		size_t hash2 = intHasher((int)_builtInType);
-		size_t hash3 = stringHasher(*_soundBank);
-		size_t hash4 = stringHasher(*_soundName);
-		size_t hash5 = floatHasher(_frequency);
+		size_t hash1 = intHasher((int)_voiceType);
+		size_t hash2 = intHasher((int)_primitiveVoiceType);
+		size_t hash3 = intHasher((int)_terminalVoiceType);
+		size_t hash4 = intHasher((int)_stkVoiceType);
+		size_t hash5 = stringHasher(*_soundBank);
+		size_t hash6 = stringHasher(*_soundName);
 
 		// Result -> seed (first parameter)
 		TerminalSynth::HashCombine(hash1, hash2);
 		TerminalSynth::HashCombine(hash1, hash3);
 		TerminalSynth::HashCombine(hash1, hash4);
 		TerminalSynth::HashCombine(hash1, hash5);
+		TerminalSynth::HashCombine(hash1, hash6);
 
 		return hash1;
 	}
@@ -154,11 +163,12 @@ public:
 
 		isDirty |= *_soundBank != source->GetSoundBank();
 		isDirty |= *_soundName != source->GetSoundName();
-		isDirty |= _frequency != source->GetFrequency();
 		isDirty |= _signalLow != source->GetSignalLow();
 		isDirty |= _signalHigh != source->GetSignalHigh();
-		isDirty |= _type != source->GetType();
-		isDirty |= _builtInType != source->GetBuiltInType();
+		isDirty |= _voiceType != source->GetVoiceType();
+		isDirty |= _primitiveVoiceType != source->GetPrimitiveVoiceType();
+		isDirty |= _terminalVoiceType != source->GetTerminalVoiceType();
+		isDirty |= _stkVoiceType != source->GetStkVoiceType();
 		isDirty |= _octave != source->GetOctave();
 		isDirty |= _waveshaperSidebandCents != source->GetWaveshaperSidebandCents();
 		isDirty |= _waveshaperRandomPhaseAmplitude != source->GetWaveshaperRandomPhaseAmplitude();
@@ -173,25 +183,17 @@ public:
 		_soundBank->clear();
 		_soundName->clear();
 
-		_frequency = source->GetFrequency();
 		_signalLow = source->GetSignalLow();
 		_signalHigh = source->GetSignalHigh();
 		_octave = source->GetOctave();
-		_type = source->GetType();
-		_builtInType = source->GetBuiltInType();
+		_voiceType = source->GetVoiceType();
+		_primitiveVoiceType = source->GetPrimitiveVoiceType();
+		_terminalVoiceType = source->GetTerminalVoiceType();
+		_stkVoiceType = source->GetStkVoiceType();
 		_soundBank->append(source->GetSoundBank());
 		_soundName->append(source->GetSoundName());
 
 		return isDirty;
-	}
-
-	bool operator==(const OscillatorParameters& parameters)
-	{
-		return IsEqual(parameters);
-	}
-	bool operator!=(const OscillatorParameters& parameters)
-	{
-		return !IsEqual(parameters);
 	}
 
 public:
@@ -200,12 +202,13 @@ public:
 	{
 		stream << *_soundBank;
 		stream << *_soundName;
-		stream << _frequency;
 		stream << _octave;
 		stream << _signalLow;
 		stream << _signalHigh;
-		stream << (int)_type;
-		stream << (int)_builtInType;
+		stream << (int)_voiceType;
+		stream << (int)_primitiveVoiceType;
+		stream << (int)_terminalVoiceType;
+		stream << (int)_stkVoiceType;
 		stream << _waveshaperSidebandCents;
 		stream << _waveshaperRandomPhaseAmplitude;
 
@@ -217,16 +220,17 @@ public:
 	}
 	void Read(std::istream& stream)
 	{
-		int type, builtInType;
+		int voiceType, primitiveVoiceType, terminalVoiceType, stkVoiceType;
 
 		stream >> *_soundBank;
 		stream >> *_soundName;
-		stream >> _frequency;
 		stream >> _octave;
 		stream >> _signalLow;
 		stream >> _signalHigh;
-		stream >> type;
-		stream >> builtInType;
+		stream >> voiceType;
+		stream >> primitiveVoiceType;
+		stream >> terminalVoiceType;
+		stream >> stkVoiceType;
 		stream >> _waveshaperSidebandCents;
 		stream >> _waveshaperRandomPhaseAmplitude;
 
@@ -235,8 +239,10 @@ public:
 			stream >> _waveshaperHarmonics->at(index);
 		}
 
-		_type = (OscillatorType)type;
-		_builtInType = (BuiltInOscillators)builtInType;
+		_voiceType = (SynthVoiceType)voiceType;
+		_primitiveVoiceType = (PrimitiveSynthVoices)primitiveVoiceType;
+		_terminalVoiceType = (TerminalSynthVoices)terminalVoiceType;
+		_stkVoiceType = (StkSynthVoices)stkVoiceType;
 	}
 
 public:
@@ -251,48 +257,28 @@ public:
 
 		return *_soundBank == other->GetSoundBank() &&
 			*_soundName == other->GetSoundName() &&
-			_frequency == other->GetFrequency() &&
 			_octave == other->GetOctave() &&
 			_signalLow == other->GetSignalLow() &&
 			_signalHigh == other->GetSignalHigh() &&
-			_type == other->GetType() &&
-			_builtInType == other->GetBuiltInType() &&
+			_voiceType == other->GetVoiceType() &&
+			_primitiveVoiceType == other->GetPrimitiveVoiceType() &&
+			_terminalVoiceType == other->GetTerminalVoiceType() &&
+			_stkVoiceType == other->GetStkVoiceType() &&
 			_waveshaperRandomPhaseAmplitude == other->GetWaveshaperRandomPhaseAmplitude() &&
 			_waveshaperSidebandCents == other->GetWaveshaperSidebandCents();
 	}
 
 private:
 
-	bool IsEqual(const OscillatorParameters& other)
-	{
-		for (int index = 0; index < _waveshaperHarmonics->size(); index++)
-		{
-			if (_waveshaperHarmonics->at(index) != other.GetWaveshaperHarmonics()->at(index))
-				return false;
-		}
-
-		return other.GetSoundName() == this->GetSoundName() &&
-			other.GetSoundBank() == this->GetSoundBank() &&
-			other.GetFrequency() == this->GetFrequency() &&
-			other.GetSignalLow() == this->GetSignalLow() &&
-			other.GetSignalHigh() == this->GetSignalHigh() &&
-			other.GetType() == this->GetType() &&
-			other.GetBuiltInType() == this->GetBuiltInType() &&
-			other.GetOctave() == this->GetOctave() &&
-			other.GetWaveshaperRandomPhaseAmplitude() == this->GetWaveshaperRandomPhaseAmplitude() &&
-			other.GetWaveshaperSidebandCents() == this->GetWaveshaperSidebandCents();
-	}
-
-private:
-
 	std::string* _soundBank;
 	std::string* _soundName;
-	float _frequency;						// This gets set with the octave:  see SynthNotePool*
 	unsigned int _octave;
 	float _signalLow;
 	float _signalHigh;
-	OscillatorType _type;
-	BuiltInOscillators _builtInType;
+	SynthVoiceType _voiceType;
+	PrimitiveSynthVoices _primitiveVoiceType;
+	TerminalSynthVoices _terminalVoiceType;
+	StkSynthVoices _stkVoiceType;
 
 	float _waveshaperSidebandCents;
 	float _waveshaperRandomPhaseAmplitude;

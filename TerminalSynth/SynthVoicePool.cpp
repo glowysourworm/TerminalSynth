@@ -5,7 +5,7 @@
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
 #include "SynthVoiceBase.h"
-#include "SynthVoiceDirect.h"
+#include "SynthVoiceFactory.h"
 #include "SynthVoicePool.h"
 #include <exception>
 #include <map>
@@ -17,10 +17,11 @@ SynthVoicePool::SynthVoicePool(const SoundRegistry* soundRegistry, const SoundSe
 	_capacity = capacity;
 	_noteMode = soundSettings->GetNoteParameters()->mode;
 	_playbackInfo = playbackInfo;
+	_lastParameterHash = soundSettings->GetOscillatorParameters()->GetHashCode();
 	_engagedNotes = new std::map<int, SynthVoiceBase*>();
 	_disengagedNotes = new std::map<SynthVoiceBase*, SynthVoiceBase*>();
 	_inactiveNotes = new std::stack<SynthVoiceBase*>();
-	_singleNote = new SynthVoiceDirect(soundRegistry, soundSettings, playbackInfo);
+	_singleNote = SynthVoiceFactory::CreateSynthVoiceDirect(soundRegistry, soundSettings, playbackInfo);
 	_singleNoteEngaged = false;
 	_singleNoteNumber = 0;
 
@@ -28,7 +29,7 @@ SynthVoicePool::SynthVoicePool(const SoundRegistry* soundRegistry, const SoundSe
 	for (int index = 0; index < capacity; index++)
 	{
 		// These values get updated before playback
-		SynthVoiceBase* note = new SynthVoiceDirect(soundRegistry, soundSettings, playbackInfo);
+		SynthVoiceBase* note = SynthVoiceFactory::CreateSynthVoiceDirect(soundRegistry, soundSettings, playbackInfo);
 
 		_inactiveNotes->push(note);
 	}

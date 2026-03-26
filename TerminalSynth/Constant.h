@@ -13,23 +13,33 @@ enum class AudioStreamFormat
 	Int8
 };
 
-enum class OscillatorType : int {
-	BuiltIn,
-	SampleBased,
-	HarmonicShaper
+enum class SynthVoiceType : int 
+{
+	Primitive = 0,
+	TerminalSynth,
+	Stk,
+	SoundBank,
+	HarmonicShaper	// TBD
 };
-enum class EnvelopeShape : int {
+enum class EnvelopeShape : int 
+{
 	Linear = 0,
 	Gaussian = 1,
 	Gamma = 2
 };
-enum class BuiltInOscillators : int {
+enum class PrimitiveSynthVoices : int 
+{
 	Sine = 0,
 	Square = 1,
 	Triangle = 2,
-	Sawtooth = 3,
-	SynthesizedStringPluck = 4,
-	StkRhodey,
+	Sawtooth = 3
+};
+enum class TerminalSynthVoices : int {
+	SynthesizedStringPluck = 0,
+};
+enum class StkSynthVoices : int 
+{
+	StkRhodey = 0,
 	StkBeeThree,
 	StkClarinet,
 	StkDrummer,
@@ -47,12 +57,14 @@ enum class BuiltInOscillators : int {
 	StkWhistle,
 	StkWurley,
 };
+
 enum class SynthNoteMode : int {
 	MultipleNormal = 0,
 	SingleNormal,
 	SinglePortamento,
 	SingleArpeggiator
 };
+
 enum class ArpeggiatorChord : int {
 	TriadMajor = 0,
 	TriadMinor,
@@ -68,6 +80,7 @@ enum class ParameterAutomationType : int {
 	EnvelopeSweep = 0,
 	Oscillator
 };
+
 enum class ParameterAutomationOscillator : int {
 	Sine = 0,
 	Square = 1,

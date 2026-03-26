@@ -42,8 +42,6 @@ private:
 	InputModelUI* _inputModelUI;
 	OutputModelUI* _outputModelUI;
 
-	std::string* _soundSettingsDirectory;
-
 	bool _haveSoundSettingsChanged;
 };
 
@@ -59,7 +57,6 @@ MainModelUI::MainModelUI(const PlaybackUserData* playbackData)
 	_outputModelUI->ToUI(playbackData);
 
 	_haveSoundSettingsChanged = false;
-	_soundSettingsDirectory = new std::string(playbackData->GetSynthSettings()->GetSoundSettingsDirectory());
 }
 
 MainModelUI::MainModelUI(const MainModelUI& copy)
@@ -83,7 +80,6 @@ MainModelUI::~MainModelUI()
 	delete _effectsModelUI;
 	delete _outputModelUI;
 	delete _inputModelUI;
-	delete _soundSettingsDirectory;
 }
 
 ControlPanelModelUI* MainModelUI::GetControlPanelModelUI() const

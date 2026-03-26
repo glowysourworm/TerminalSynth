@@ -50,17 +50,20 @@ private:
 	bool _soundSettingsDirty;
 
 	ValueCapture<bool>* _saveClicked;
+	ValueCapture<int>* _selectedSoundSettingsIndex;
 };
 
 ControlPanelUI::ControlPanelUI()
 {
 	_saveClicked = new ValueCapture<bool>(false);
+	_selectedSoundSettingsIndex = new ValueCapture<int>(0);
 	_soundSettingsDirty = false;
 }
 
 ControlPanelUI::~ControlPanelUI()
 {
 	delete _saveClicked;
+	delete _selectedSoundSettingsIndex;
 }
 
 void ControlPanelUI::Initialize(const ControlPanelModelUI& initialValue)
@@ -73,18 +76,20 @@ void ControlPanelUI::Initialize(const ControlPanelModelUI& initialValue)
 	// Control Panel
 	_component = ftxui::Container::Vertical({
 
-		ftxui::Renderer([] { return ftxui::text("Control Panel"); }),
-		ftxui::Renderer([] { return ftxui::separator(); }) | ftxui::Maybe([&] {return _soundSettingsDirty; }),
+		ftxui::Renderer([] { return ftxui::text("Control Panel") | ftxui::color(ftxui::Color::GreenYellow); }),
+		ftxui::Renderer([] { return ftxui::separator(); }),
 
 		ftxui::Container::Horizontal({
 
-			ftxui::Renderer([] { return ftxui::text("Synth Voice(s)"); }) | ftxui::vcenter,
+			ftxui::Renderer([] { return ftxui::text("Synth Voice(s)"); }) | ftxui::color(ftxui::Color::BlueLight) | ftxui::vcenter,
+
+			ftxui::Dropdown(initialValue.GetSoundSettingsList(), _selectedSoundSettingsIndex->GetRef()) | ftxui::xflex_grow,
 
 			ftxui::Button("Save Voice", [&] { _saveClicked->SetValue(true); }) 
 				| ftxui::bgcolor(ftxui::Color::RGBA(0, 0, 255, 20))
 				| ftxui::Maybe([&] {return _soundSettingsDirty; })
 
-		}) | ftxui::Maybe([&] {return _soundSettingsDirty; }),
+		}),
 
 	}) | ftxui::border;
 }

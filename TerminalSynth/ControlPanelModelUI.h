@@ -8,6 +8,7 @@
 #include "SoundSettings.h"
 #include "SynthSettings.h"
 #include <string>
+#include <vector>
 
 class ControlPanelModelUI : public ModelUI
 {
@@ -27,6 +28,8 @@ public:
 
 	SoundSettings* GetCurrentSoundSettings() const { return _currentSoundSettings; }
 
+	std::vector<std::string>* GetSoundSettingsList() const { return _soundSettingsList; }
+
 	bool AreSoundSettingsDirty() const { return _soundSettingsDirty; }
 	bool GetStkEnabled() const { return _stkEnabled; }
 	bool GetSoundBankEnabled() const { return _soundBankEnabled; }
@@ -40,10 +43,17 @@ private:
 
 	// Sound Settings (synth voice, local copy)
 	SoundSettings* _currentSoundSettings;
+
+	std::vector<std::string>* _soundSettingsList;
 };
 
 ControlPanelModelUI::ControlPanelModelUI(const PlaybackUserData* playbackData)
 {
+	_soundSettingsList = new std::vector<std::string>();
+		
+	// Sound Settings List (of names)
+	playbackData->GetSynthSettings()->GetSoundSettingsList(*_soundSettingsList);
+
 	_currentSoundSettings = new SoundSettings(*playbackData->GetSynthSettings()->GetCurrentSoundSettings());
 	_soundBankEnabled = playbackData->GetSynthSettings()->GetSoundBankEnabled();
 	_stkEnabled = playbackData->GetSynthSettings()->GetStkEnabled();
@@ -56,11 +66,13 @@ ControlPanelModelUI::ControlPanelModelUI(const ControlPanelModelUI& copy)
 	_soundBankEnabled = copy.GetSoundBankEnabled();
 	_stkEnabled = copy.GetStkEnabled();
 	_soundSettingsDirty = false;
+	_soundSettingsList = new std::vector<std::string>(*copy.GetSoundSettingsList());
 }
 
 ControlPanelModelUI::~ControlPanelModelUI()
 {
 	delete _currentSoundSettings;
+	delete _soundSettingsList;
 }
 
 std::string ControlPanelModelUI::GetName() const

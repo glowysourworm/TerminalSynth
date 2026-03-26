@@ -63,18 +63,25 @@ private:
 	// Sound Bank Map
 	std::map<std::string, std::vector<std::string>*>* _soundBankMap;
 
-	// Oscillator Selected Index
-	ValueCapture<int>* _soundSourceChoiceIndex;
-	ValueCapture<int>* _oscillatorSelectedIndex;
+	// Synth Voice Selected Indices
+	ValueCapture<int>* _synthVoiceSelectedIndex;
+	ValueCapture<int>* _synthVoiceSimpleSelectedIndex;
+	ValueCapture<int>* _synthVoiceOtherSelectedIndex;
+	ValueCapture<int>* _synthVoiceStkSelectedIndex;
+
+	// Sound Bank Selected Indices
 	ValueCapture<int>* _soundBankSelectedIndex;
 	ValueCapture<int>* _soundNameSelectedIndex;
 
-	// Oscillator Choices
-	std::vector<std::string>* _soundSourceChoices;
-	std::vector<std::string>* _oscillatorItems;
-	std::vector<std::string>* _soundBankItems;
-	std::vector<std::string>* _soundNameItems;
+	// Synth Voice Settings
+	std::vector<std::string>* _synthVoiceChoices;
+	std::vector<std::string>* _synthVoiceSimpleItems;
+	std::vector<std::string>* _synthVoiceOtherItems;
+	std::vector<std::string>* _synthVoiceStkItems;
 
+	// Sound Bank(s)
+	std::vector<std::string>* _soundBankItems;
+	std::vector<std::string>* _soundNameItems;	
 
 };
 
@@ -84,17 +91,23 @@ OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const Osc
 	std::string initialSoundBank = soundBanks.size() > 0 ? soundBanks[0] : "";
 	std::vector<std::string> soundNames = initialSoundBank.size() > 0 ? soundBankSettings->GetSoundNames(initialSoundBank) : std::vector<std::string>();
 
-	_soundSourceChoices = new std::vector<std::string>({
-		"Oscillators",
-		"Sample Banks",
+	_synthVoiceChoices = new std::vector<std::string>({
+		"Simple",
+		"Other (Local)",
+		"STK (Stanford)",
+		"Sound Bank(s)",
 		"Harmonic Shaper"
 	});
-	_oscillatorItems = new std::vector<std::string>({
+	_synthVoiceSimpleItems = new std::vector<std::string>({
 		"Sine",
 		"Square",
 		"Triangle",
-		"Sawtooth",
-		"SynthesizedStringPluck",
+		"Sawtooth"
+	});
+	_synthVoiceOtherItems = new std::vector<std::string>({
+		"SynthesizedStringPluck"
+	});
+	_synthVoiceStkItems = new std::vector<std::string>({
 		"STK Rhodey",
 		"STK Bee Three",
 		"STK Clarinet",
@@ -113,11 +126,15 @@ OscillatorUI::OscillatorUI(const SoundBankSettings* soundBankSettings, const Osc
 		"STK Whistle",
 		"STK Wurley"
 	});
+
 	_soundBankItems = new std::vector<std::string>(soundBanks);
 	_soundNameItems = new std::vector<std::string>(soundNames);
 
-	_oscillatorSelectedIndex = new ValueCapture<int>(0);
-	_soundSourceChoiceIndex = new ValueCapture<int>(0);
+	_synthVoiceSelectedIndex = new ValueCapture<int>(0);
+	_synthVoiceSimpleSelectedIndex = new ValueCapture<int>(0);
+	_synthVoiceOtherSelectedIndex = new ValueCapture<int>(0);
+	_synthVoiceStkSelectedIndex = new ValueCapture<int>(0);
+	
 	_soundBankSelectedIndex = new ValueCapture<int>(0);
 	_soundNameSelectedIndex = new ValueCapture<int>(0);
 
@@ -156,15 +173,21 @@ OscillatorUI::~OscillatorUI()
 	delete _waveshaperSidebandCentsUI;
 	delete _waveshaperPhaseAmplitudeUI;
 
-	delete _soundBankItems;
-	delete _soundNameItems;
-	delete _soundSourceChoices;
-	delete _oscillatorItems;
+	delete _synthVoiceSelectedIndex;
+	delete _synthVoiceSimpleSelectedIndex;
+	delete _synthVoiceOtherSelectedIndex;
+	delete _synthVoiceStkSelectedIndex;
 
-	delete _soundSourceChoiceIndex;
 	delete _soundBankSelectedIndex;
 	delete _soundNameSelectedIndex;
-	delete _oscillatorSelectedIndex;
+
+	delete _synthVoiceChoices;
+	delete _synthVoiceSimpleItems;
+	delete _synthVoiceOtherItems;
+	delete _synthVoiceStkItems;
+
+	delete _soundBankItems;
+	delete _soundNameItems;
 
 	delete _soundBankMap;
 }
@@ -190,8 +213,11 @@ void OscillatorUI::Initialize(const OscillatorParameters& parameters)
 		waveshaperContainer->Add(sliderUI->GetComponent());
 	}
 
-	auto soundSourceChoiceUI = ftxui::Dropdown(_soundSourceChoices, _soundSourceChoiceIndex->GetRef());
-	auto oscillatorItemsUI = ftxui::Dropdown(_oscillatorItems, _oscillatorSelectedIndex->GetRef());
+	auto synthVoiceTypeUI = ftxui::Dropdown(_synthVoiceChoices, _synthVoiceSelectedIndex->GetRef());
+	auto synthVoiceSimpleUI = ftxui::Dropdown(_synthVoiceSimpleItems, _synthVoiceSimpleSelectedIndex->GetRef());
+	auto synthVoiceOtherUI = ftxui::Dropdown(_synthVoiceOtherItems, _synthVoiceOtherSelectedIndex->GetRef());
+	auto synthVoiceStkUI = ftxui::Dropdown(_synthVoiceStkItems, _synthVoiceStkSelectedIndex->GetRef());
+
 	auto soundBankItemsUI = ftxui::Dropdown(_soundBankItems, _soundBankSelectedIndex->GetRef());
 	auto soundNameItemsUI = ftxui::Dropdown(_soundNameItems, _soundNameSelectedIndex->GetRef());
 
@@ -199,13 +225,17 @@ void OscillatorUI::Initialize(const OscillatorParameters& parameters)
 
 			ftxui::Renderer([&] { return ftxui::text("Oscillator") | ftxui::color(ftxui::Color::GreenYellow); }),
 			ftxui::Renderer([&] { return ftxui::separator(); }),
-			soundSourceChoiceUI,
-			oscillatorItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 0; }),
-			soundBankItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 1; }),
-			soundNameItemsUI | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 1; }),
+			synthVoiceTypeUI,
+			synthVoiceSimpleUI | ftxui::Maybe([&] { return _synthVoiceSelectedIndex->GetValue() == 0; }),
+			synthVoiceOtherUI | ftxui::Maybe([&] { return _synthVoiceSelectedIndex->GetValue() == 1; }),
+			synthVoiceStkUI | ftxui::Maybe([&] { return _synthVoiceSelectedIndex->GetValue() == 2; }),
+
+			soundBankItemsUI | ftxui::Maybe([&] { return _synthVoiceSelectedIndex->GetValue() == 3; }),
+			soundNameItemsUI | ftxui::Maybe([&] { return _synthVoiceSelectedIndex->GetValue() == 3; }),
+
 			_octaveUI->GetComponent() | ftxui::border,
 
-			waveshaperContainer | ftxui::Maybe([&] { return _soundSourceChoiceIndex->GetValue() == 2; }) | ftxui::border
+			waveshaperContainer | ftxui::Maybe([&] { return _synthVoiceSelectedIndex->GetValue() == 4; }) | ftxui::border
 
 		}) | ftxui::CatchEvent([&] (ftxui::Event event) {
 
@@ -267,8 +297,10 @@ void OscillatorUI::ToUI(const OscillatorParameters& source)
 
 void OscillatorUI::ToUI(const OscillatorParameters* source)
 {
-	_soundSourceChoiceIndex->SetValue((int)source->GetType());
-	_oscillatorSelectedIndex->SetValue((int)source->GetBuiltInType());
+	_synthVoiceSelectedIndex->SetValue((int)source->GetVoiceType());
+	_synthVoiceSimpleSelectedIndex->SetValue((int)source->GetPrimitiveVoiceType());
+	_synthVoiceOtherSelectedIndex->SetValue((int)source->GetTerminalVoiceType());
+	_synthVoiceStkSelectedIndex->SetValue((int)source->GetStkVoiceType());
 
 	_soundBankSelectedIndex->SetValue(0);
 	_soundNameSelectedIndex->SetValue(0);
@@ -312,8 +344,10 @@ bool OscillatorUI::GetDirty() const
 	return isDirty || 
 		_waveshaperSidebandCentsUI->GetDirty() ||
 		_waveshaperPhaseAmplitudeUI->GetDirty() ||
-		_soundSourceChoiceIndex->HasChanged() ||
-		_oscillatorSelectedIndex->HasChanged() ||
+		_synthVoiceSelectedIndex->HasChanged() ||
+		_synthVoiceSimpleSelectedIndex->HasChanged() ||
+		_synthVoiceOtherSelectedIndex->HasChanged() ||
+		_synthVoiceStkSelectedIndex->HasChanged() ||
 		_soundBankSelectedIndex->HasChanged() ||
 		_soundNameSelectedIndex->HasChanged() ||
 		_octaveUI->GetDirty();
@@ -328,8 +362,10 @@ void OscillatorUI::ClearDirty()
 
 	_waveshaperSidebandCentsUI->ClearDirty();
 	_waveshaperPhaseAmplitudeUI->ClearDirty();
-	_soundSourceChoiceIndex->Clear();
-	_oscillatorSelectedIndex->Clear();
+	_synthVoiceSelectedIndex->Clear();
+	_synthVoiceSimpleSelectedIndex->Clear();
+	_synthVoiceOtherSelectedIndex->Clear();
+	_synthVoiceStkSelectedIndex->Clear();
 	_soundBankSelectedIndex->Clear();
 	_soundNameSelectedIndex->Clear();
 	_octaveUI->ClearDirty();
@@ -367,8 +403,10 @@ void OscillatorUI::FromUI(OscillatorParameters* destination)
 	}
 
 	destination->SetOctave((unsigned int)ceil(octave));
-	destination->SetType((OscillatorType)_soundSourceChoiceIndex->GetValue());
-	destination->SetBuiltInType((BuiltInOscillators)_oscillatorSelectedIndex->GetValue());
+	destination->SetVoiceType((SynthVoiceType)_synthVoiceSelectedIndex->GetValue());
+	destination->SetPrimitiveVoiceType((PrimitiveSynthVoices)_synthVoiceSelectedIndex->GetValue());
+	destination->SetTerminalVoiceType((TerminalSynthVoices)_synthVoiceOtherSelectedIndex->GetValue());
+	destination->SetStkVoiceType((StkSynthVoices)_synthVoiceStkSelectedIndex->GetValue());
 
 	if (_soundBankItems->size() > 0)
 		destination->SetSoundBank(_soundBankItems->at(_soundBankSelectedIndex->GetValue()));

@@ -71,7 +71,8 @@ bool MainController::Initialize(PlaybackUserData* userData)
 	success &= _audioController->OpenStream(_userData);
 
 	// STK (global sampling rate)
-	stk::Stk::setSampleRate(userData->GetPlaybackInfo()->GetStreamInfo()->streamSampleRate);
+	if (userData->GetSynthSettings()->GetStkEnabled())
+		stk::Stk::setSampleRate(userData->GetPlaybackInfo()->GetStreamInfo()->streamSampleRate);
 
 	// -> Effect Registry, Airwindows Plugins:  Require sampling rate! (Set by audio controller after stream is open)
 	success &= userData->Initialize();

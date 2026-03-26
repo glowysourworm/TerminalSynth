@@ -13,12 +13,14 @@ class PlaybackInfo
 {
 public:
 
-	PlaybackInfo()
+	PlaybackInfo(bool stkEnabaled, bool soundBankEnabled)
 	{
 		_hostApi = new std::string("");
 		_audioMetrics = new MetricAudioInfo();
 		_uiMetrics = new MetricUIInfo();
 		_streamInfo = new StreamInfo();
+		_stkEnabled = stkEnabaled;
+		_soundBankEnabled = soundBankEnabled;
 	}
 	PlaybackInfo(const PlaybackInfo& copy)
 	{
@@ -26,6 +28,8 @@ public:
 		_audioMetrics = new MetricAudioInfo(*copy.GetAudioMetrics());
 		_uiMetrics = new MetricUIInfo(*copy.GetUIMetrics());
 		_streamInfo = new StreamInfo(*copy.GetStreamInfo());
+		_stkEnabled = copy.GetStkEnabled();
+		_soundBankEnabled = copy.GetSoundBankEnabled();
 	}
 	~PlaybackInfo()
 	{
@@ -39,6 +43,9 @@ public:
 	MetricUIInfo* GetUIMetrics() const { return _uiMetrics; }
 	MetricAudioInfo* GetAudioMetrics() const { return _audioMetrics; }
 	StreamInfo* GetStreamInfo() const { return _streamInfo; }
+
+	bool GetStkEnabled() const { return _stkEnabled; }
+	bool GetSoundBankEnabled() const { return _soundBankEnabled; }
 
 	void SetForHostApi(const std::string& hostApi) 
 	{ 
@@ -125,6 +132,10 @@ private:
 	// RT Metrics
 	MetricAudioInfo* _audioMetrics;
 	MetricUIInfo* _uiMetrics;
+
+	// Features
+	bool _stkEnabled;
+	bool _soundBankEnabled;
 };
 
 #endif

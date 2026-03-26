@@ -11,7 +11,6 @@
 #include "SoundSettings.h"
 #include "SynthNoteParameters.h"
 #include <algorithm>
-#include <cmath>
 #include <exception>
 
 class SynthNoteProcessor

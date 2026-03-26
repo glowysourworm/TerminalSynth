@@ -62,6 +62,9 @@ private:
 	OscillatorParameters* _oscillatorParameters;			// These will not be the system values
 	OscillatorParameters* _oscillatorParametersRandom;		// These will not be the system values, set up for random value generation
 
+	float _oscillatorFrequency;
+	float _oscillatorRandomFrequency;
+
 	Envelope* _envelope;
 };
 

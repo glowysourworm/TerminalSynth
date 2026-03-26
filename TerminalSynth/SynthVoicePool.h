@@ -68,6 +68,9 @@ private:
 	SynthNoteMode _noteMode;
 	const PlaybackInfo* _playbackInfo;
 
+	// Used to know whether synth voice type has changed
+	size_t _lastParameterHash;
+
 	// Capacity-sized map, will hold notes up to the user capacity (should be 10, for 10 active voices)
 	std::map<int, SynthVoiceBase*>* _engagedNotes;
 

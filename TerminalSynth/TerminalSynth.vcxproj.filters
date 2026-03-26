@@ -97,6 +97,15 @@
     <Filter Include="Source Files\ModelPlayback">
       <UniqueIdentifier>{7600c1e3-950c-4e7d-9e75-ce5e64a2833a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\SynthVoice">
+      <UniqueIdentifier>{cbfdac3a-3e7b-418a-95fb-c3d7f5dcb44b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\SynthVoiceTerminalSynth">
+      <UniqueIdentifier>{4af23857-f6e1-4287-862c-92a35d5f2b9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\SynthVoiceStk">
+      <UniqueIdentifier>{c44f5553-4d8f-4997-8ff9-b1112f6242eb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp">
@@ -198,9 +207,6 @@
     <ClCompile Include="PlaybackUserData.cpp">
       <Filter>Source Files\ModelPlayback</Filter>
     </ClCompile>
-    <ClCompile Include="SynthVoiceDirect.cpp">
-      <Filter>Source Files\Synth</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WindowsKeyCodes.h">
@@ -283,9 +289,6 @@
     </ClInclude>
     <ClInclude Include="SignalBase.h">
       <Filter>Header Files\Signal</Filter>
-    </ClInclude>
-    <ClInclude Include="SynthVoicePool.h">
-      <Filter>Header Files\Synth</Filter>
     </ClInclude>
     <ClInclude Include="MainUI.h">
       <Filter>Header Files\UI</Filter>
@@ -455,15 +458,6 @@
     <ClInclude Include="MetricUIInfo.h">
       <Filter>Header Files\ModelPlayback</Filter>
     </ClInclude>
-    <ClInclude Include="SynthVoiceBase.h">
-      <Filter>Header Files\Synth</Filter>
-    </ClInclude>
-    <ClInclude Include="SynthVoiceDirect.h">
-      <Filter>Header Files\Synth</Filter>
-    </ClInclude>
-    <ClInclude Include="SynthVoiceWaveTable.h">
-      <Filter>Header Files\Synth</Filter>
-    </ClInclude>
     <ClInclude Include="SignalParameterizedBase.h">
       <Filter>Header Files\Signal</Filter>
     </ClInclude>
@@ -490,6 +484,36 @@
     </ClInclude>
     <ClInclude Include="ControlPanelModelUI.h">
       <Filter>Header Files\ModelUI</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthVoiceWaveTable.h">
+      <Filter>Header Files\SynthVoice</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthVoiceBase.h">
+      <Filter>Header Files\SynthVoice</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthVoiceDirect.h">
+      <Filter>Header Files\SynthVoice</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthVoicePool.h">
+      <Filter>Header Files\Synth</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthVoicePluckedString.h">
+      <Filter>Header Files\SynthVoiceTerminalSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthVoicePrimitiveSine.h">
+      <Filter>Header Files\SynthVoiceTerminalSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthVoicePrimitiveTriangle.h">
+      <Filter>Header Files\SynthVoiceTerminalSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthVoicePrimitiveSawtooth.h">
+      <Filter>Header Files\SynthVoiceTerminalSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthVoicePrimitiveSquare.h">
+      <Filter>Header Files\SynthVoiceTerminalSynth</Filter>
+    </ClInclude>
+    <ClInclude Include="SynthVoiceFactory.h">
+      <Filter>Header Files\SynthVoice</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

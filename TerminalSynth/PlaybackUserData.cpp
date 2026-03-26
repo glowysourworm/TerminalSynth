@@ -13,7 +13,7 @@ PlaybackUserData::PlaybackUserData(SynthSettings* synthSettings)
 {
 	_synthSettings = synthSettings;
 	_effectRegistry = new SoundRegistry();
-	_playbackInfo = new PlaybackInfo();	
+	_playbackInfo = new PlaybackInfo(synthSettings->GetStkEnabled(), synthSettings->GetSoundBankEnabled());	
 	_deviceRegister = new PlaybackDeviceRegister();
 	_equalizer = new EqualizerOutput(FFT_INPUT_SIZE, FFT_OUTPUT_SIZE);
 	_effectList = new std::vector<SignalSettings*>();

@@ -3,7 +3,6 @@
 #ifndef SYNTH_VOICE_BASE_H
 #define SYNTH_VOICE_BASE_H
 
-#include "Constant.h"
 #include "Envelope.h"
 #include "OscillatorParameters.h"
 #include "PlaybackFrame.h"
@@ -11,18 +10,20 @@
 #include "PlaybackTime.h"
 #include "SignalBase.h"
 #include "SignalChain.h"
+#include "SignalParameterizedBase.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
 #include "SynthNoteProcessor.h"
 
-class SynthVoiceBase : public SignalBase
+class SynthVoiceBase : public SignalParameterizedBase
 {
 public:
 
 	/// <summary>
 	/// Creates a synth voice; and stores private variables for the parameters.
 	/// </summary>
-	SynthVoiceBase(const SoundRegistry* soundRegistry, const SoundSettings* settings, const PlaybackInfo* playbackInfo) : SignalBase(settings->GetName())
+	SynthVoiceBase(const SoundRegistry* soundRegistry, const SoundSettings* settings, const PlaybackInfo* playbackInfo) 
+		: SignalParameterizedBase(*settings->GetSynthVoiceSettings())
 	{
 		SignalChain filters;
 		filters.Initialize(soundRegistry, settings->GetSignalChain(), playbackInfo);
@@ -31,6 +32,7 @@ public:
 		_envelope = new Envelope(*settings->GetOscillatorEnvelope());
 		_filters = new SignalChain(filters);
 		_noteProcessor = new SynthNoteProcessor(settings, playbackInfo);
+		_currentFrequency = 100;
 	}
 	~SynthVoiceBase()
 	{
@@ -52,7 +54,7 @@ public:
 		_envelope->Engage(playbackTime);
 
 		// Set local frequency (our copy)
-		_parameters->SetFrequency(_noteProcessor->GetFundamentalFrequency());
+		_currentFrequency = _noteProcessor->GetFundamentalFrequency();
 	}
 	virtual void NoteOff(int midiNumber, const PlaybackTime* playbackTime)
 	{
@@ -76,16 +78,21 @@ public:
 
 public:
 
-	OscillatorParameters* GetOscillatorParameters() { return _parameters; }
-	Envelope* GetEnvelope() { return _envelope; }
-	SignalChain* GetFilters() { return _filters; }
-	SynthNoteProcessor* GetNoteProcessor() { return _noteProcessor; }
+	OscillatorParameters* GetOscillatorParameters() const { return _parameters; }
+	Envelope* GetEnvelope() const { return _envelope; }
+	SignalChain* GetFilters() const { return _filters; }
+	SynthNoteProcessor* GetNoteProcessor() const { return _noteProcessor; }
 
 protected:
 
 	virtual void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) = 0;
 
+	// Fundamental frequency of current note being played
+	float GetCurrentFrequency() const { return _currentFrequency; }
+
 private:
+
+	float _currentFrequency;
 
 	OscillatorParameters* _parameters;
 	Envelope* _envelope;

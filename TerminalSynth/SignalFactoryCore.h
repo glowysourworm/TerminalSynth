@@ -3,25 +3,7 @@
 #ifndef SIGNAL_FACTORY_CORE_H
 #define SIGNAL_FACTORY_CORE_H
 
-#include "OscillatorParameters.h"
 #include "PlaybackTime.h"
-#include <BeeThree.h>
-#include <Clarinet.h>
-#include <Drummer.h>
-#include <FMVoices.h>
-#include <Flute.h>
-#include <Guitar.h>
-#include <HevyMetl.h>
-#include <Mandolin.h>
-#include <Moog.h>
-#include <Rhodey.h>
-#include <Saxofony.h>
-#include <Shakers.h>
-#include <Sitar.h>
-#include <TubeBell.h>
-#include <VoicForm.h>
-#include <Whistle.h>
-#include <Wurley.h>
 #include <vector>
 
 /// <summary>
@@ -39,36 +21,11 @@ public:
 	SignalFactoryCore(float samplingRate);
 	~SignalFactoryCore();
 
-	float GetFrequency(unsigned int midiNote);
-
-	/// <summary>
-	/// Sets the signal factory for the specified oscillator parameters, and resets all filters
-	/// </summary>
-	void Reset(const OscillatorParameters* parameters);
-
 	float GenerateTriangleSample(float frequency, const PlaybackTime* playbackTime);
 	float GenerateSquareSample(float frequency, const PlaybackTime* playbackTime);
 	float GenerateSawtoothSample(float frequency, const PlaybackTime* playbackTime);
 	float GenerateSineSample(float frequency, const PlaybackTime* playbackTime);
 	float GenerateRandomSample(float frequency, const PlaybackTime* playbackTime);
-
-	float GenerateRhodeySample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateBeeThreeSample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateClarinetSample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateDrummerSample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateFluteSample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateFMVoicesSample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateGuitarSample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateHevyMetlSample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateMandolinSample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateMoogSample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateSaxofonySample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateShakersSample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateSitarSample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateTubeBellSample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateVoicFormSample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateWhistleSample(float frequency, const PlaybackTime* playbackTime);
-	float GenerateWurleySample(float frequency, const PlaybackTime* playbackTime);
 
 private:
 
@@ -77,24 +34,6 @@ private:
 	float _signalLow;
 
 	std::vector<float>* _randomQuadrantValues;
-
-	stk::Rhodey* _stkRhodey;
-	stk::BeeThree* _stkB3;
-	stk::Clarinet* _stkClarinet;
-	stk::Drummer* _stkDrummer;
-	stk::Flute* _stkFlute;
-	stk::FMVoices* _stkFMVoices;
-	stk::Guitar* _stkGuitar;
-	stk::HevyMetl* _stkHevyMetl;
-	stk::Mandolin* _stkMandolin;
-	stk::Moog* _stkMoog;
-	stk::Saxofony* _stkSaxofony;
-	stk::Shakers* _stkShakers;
-	stk::Sitar* _stkSitar;
-	stk::TubeBell* _stkTubeBell;
-	stk::VoicForm* _stkVoicForm;
-	stk::Whistle* _stkWhistle;
-	stk::Wurley* _stkWurley;
 };
 
 #endif

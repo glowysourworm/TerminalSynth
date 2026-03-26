@@ -9,25 +9,24 @@
 #include <string>
 #include <vector>
 
-SynthSettings::SynthSettings(const std::string& soundSettingsDir)
-	: SynthSettings(soundSettingsDir, "", "", false, false)
+SynthSettings::SynthSettings()
+	: SynthSettings("", "", false, false)
 { }
 
-SynthSettings::SynthSettings(const std::string& soundSettingsDir, const std::string& soundBankDir)
-	: SynthSettings(soundSettingsDir, soundBankDir, "", true, false)
+SynthSettings::SynthSettings(const std::string& soundBankDir)
+	: SynthSettings(soundBankDir, "", true, false)
 {}
 
-SynthSettings::SynthSettings(const std::string& soundSettingsDir, const std::string& soundBankDir, const std::string& stkRawWaveDir)
-	: SynthSettings(soundSettingsDir, soundBankDir, stkRawWaveDir, true, true)
+SynthSettings::SynthSettings(const std::string& soundBankDir, const std::string& stkRawWaveDir)
+	: SynthSettings(soundBankDir, stkRawWaveDir, true, true)
 {}
 
-SynthSettings::SynthSettings(const std::string& soundSettingsDir, const std::string& soundBankDir, const std::string& stkRawWaveDir, bool soundBankEnabled, bool stkEnabled)
+SynthSettings::SynthSettings(const std::string& soundBankDir, const std::string& stkRawWaveDir, bool soundBankEnabled, bool stkEnabled)
 {
 	_keyMap = new SynthNoteMap();
 	_defaultSoundSettings = new SoundSettings("Default");
 	_currentSoundSettings = _defaultSoundSettings;						// DO NOT DELETE!
 	_soundBankSettings = new SoundBankSettings(soundBankDir);			// May fail during a try / catch. Settings will be empty, but useable.
-	_soundSettingsDirectory = new std::string(soundSettingsDir);
 	_stkRawWaveDirectory = new std::string(stkRawWaveDir);
 
 	_soundBankEnabled = soundBankEnabled;
@@ -58,7 +57,6 @@ SynthSettings::SynthSettings(const SynthSettings& copy)
 		_soundSettingsList->push_back(new SoundSettings(*copy.GetSoundSettings(index)));
 	}
 
-	_soundSettingsDirectory = new std::string(copy.GetSoundSettingsDirectory());
 	_stkRawWaveDirectory = new std::string(copy.GetStkRawWaveDirectory());
 
 	_soundBankEnabled = copy.GetSoundBankEnabled();
@@ -83,7 +81,6 @@ SynthSettings::~SynthSettings()
 	delete _soundSettingsList;
 	delete _soundBankSettings;
 
-	delete _soundSettingsDirectory;
 	delete _stkRawWaveDirectory;
 }
 bool SynthSettings::IsDirty() const
@@ -116,10 +113,6 @@ SoundSettings* SynthSettings::GetCurrentSoundSettings() const
 {
 	return _currentSoundSettings;
 }
-std::string SynthSettings::GetSoundSettingsDirectory() const
-{
-	return *_soundSettingsDirectory;
-}
 std::string SynthSettings::GetSoundBankDirectory() const
 {
 	return _soundBankSettings->GetSoundBankDirectory();
@@ -135,6 +128,10 @@ bool SynthSettings::GetStkEnabled() const
 bool SynthSettings::GetSoundBankEnabled() const
 {
 	return _soundBankEnabled;
+}
+void SynthSettings::DisableStk() 
+{
+	_stkEnabled = false;
 }
 void SynthSettings::Save(std::ostream& stream)
 {
@@ -262,17 +259,26 @@ void SynthSettings::SetMidiNote(WindowsKeyCodes keyCode, int midiNote)
 	_keyMap->Add(keyCode, midiNote);
 	_isDirty = true;
 }
-void SynthSettings::SaveCurrentSoundSettings(const std::string& name)
+void SynthSettings::SaveSoundSettings(const SoundSettings* soundSettings, const std::string& saveAsName, bool saveAs)
 {
-	SoundSettings* userSettings = new SoundSettings(name);
+	// Select Settings
+	if (!saveAs)
+	{
+		for (int index = 0; index < _soundSettingsList->size(); index++)
+		{
+			if (_soundSettingsList->at(index)->GetName() == soundSettings->GetName())
+				_soundSettingsList->at(index)->Update(soundSettings);
+		}
+	}
 
-	// Copy from current settings
-	userSettings->Update(_currentSoundSettings);
+	// Save As (copy to new)
+	else
+	{
+		SoundSettings* newSettings = new SoundSettings(saveAsName);
+		newSettings->Update(soundSettings);
 
-	// Store these and save to file (also)
-	_soundSettingsList->push_back(userSettings);
-
-	_isDirty = true;
+		_soundSettingsList->push_back(newSettings);
+	}
 }
 void SynthSettings::SetOversamplingFactor(float value)
 {

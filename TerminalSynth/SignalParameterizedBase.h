@@ -21,13 +21,11 @@ public:
 	{
 		_settings = new SignalSettings();
 		_parameterAutomaters = new std::vector<SignalParameterAutomater*>();
-		_outputSettings = nullptr;
 	}
 	SignalParameterizedBase(const SignalSettings& settings) : SignalBase(settings.GetName())
 	{
 		_settings = new SignalSettings(settings);
 		_parameterAutomaters = new std::vector<SignalParameterAutomater*>();
-		_outputSettings = nullptr;
 
 		for (int index = 0; index < _settings->GetParameterCount(); index++)
 		{
@@ -52,7 +50,7 @@ public:
 
 	virtual void Initialize(const PlaybackInfo* outputSettings)
 	{
-		_outputSettings = outputSettings;
+		SignalBase::Initialize(outputSettings);
 
 		for (int index = 0; index < _settings->GetParameterCount(); index++)
 		{
@@ -177,7 +175,7 @@ protected:
 	{
 		// MEMORY! ~SignalBase
 		auto automater = new SignalParameterAutomater();
-		automater->Initialize(_outputSettings);
+		automater->Initialize(this->GetPlaybackInfo());
 
 		_settings->AddParameter(SignalParameter(name, initialValue, min, max));
 		_parameterAutomaters->push_back(automater);
@@ -228,9 +226,6 @@ protected:
 private:
 
 	SignalSettings* _settings;
-
-	// We should try to remove this initialization dependency
-	const PlaybackInfo* _outputSettings;
 
 	std::vector<SignalParameterAutomater*>* _parameterAutomaters;
 };

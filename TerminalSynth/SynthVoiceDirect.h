@@ -6,7 +6,6 @@
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
 #include "PlaybackTime.h"
-#include "SignalFactoryCore.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
 #include "SynthVoiceBase.h"
@@ -18,16 +17,14 @@ public:
 	/// <summary>
 	/// Creates a synth voice (for direct waveform output); and stores private variables for the parameters.
 	/// </summary>
-	SynthVoiceDirect(const SoundRegistry* soundRegistry, const SoundSettings* settings, const PlaybackInfo* playbackInfo);
-	~SynthVoiceDirect();
-
-	void Initialize(const PlaybackInfo* playbackInfo) override;
+	SynthVoiceDirect(const SoundRegistry* soundRegistry, const SoundSettings* settings, const PlaybackInfo* playbackInfo)
+		: SynthVoiceBase(soundRegistry, settings, playbackInfo)
+	{}
+	~SynthVoiceDirect() {};
 
 	void NoteOn(int midiNumber, const PlaybackTime* playbackTime) override
 	{
 		SynthVoiceBase::NoteOn(midiNumber, playbackTime);
-
-		_core->Reset(this->GetOscillatorParameters());
 	}
 
 	void NoteOff(int midiNumber, const PlaybackTime* playbackTime)
@@ -37,11 +34,24 @@ public:
 
 protected:
 
-	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) override;
+	virtual void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) = 0;
 
-private:
+	// Override to create a class with parameter automation
+	virtual void UpdateParameter(int index, float value)
+	{
+		
+	}
 
-	SignalFactoryCore* _core;
+	// Override to handle synth voice envelopes
+	virtual bool HasOutput(const PlaybackTime* playbackTime) const
+	{
+		return true;
+	};
+
+	float GetFrequency() const { return this->GetCurrentFrequency(); }
+	float GetSamplingRate() const { return this->GetPlaybackInfo()->GetStreamInfo()->streamSampleRate; }
+	float GetSignalLow() const { return this->GetOscillatorParameters()->GetSignalLow(); }
+	float GetSignalHigh() const { return this->GetOscillatorParameters()->GetSignalHigh(); }
 };
 
 #endif

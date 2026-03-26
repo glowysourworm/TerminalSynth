@@ -7,6 +7,7 @@
 #include "Envelope.h"
 #include "OscillatorParameters.h"
 #include "SignalChainSettings.h"
+#include "SignalSettings.h"
 #include "SynthNoteParameters.h"
 #include <istream>
 #include <ostream>
@@ -22,6 +23,7 @@ public:
 	{
 		_name = new std::string(name);
 		_noteParameters = new SynthNoteParameters();
+		_synthVoiceSettings = new SignalSettings();
 		_postProcessing = new SignalChainSettings();
 		_signalProcessing = new SignalChainSettings();
 		_oscillatorParameters = new OscillatorParameters();
@@ -36,6 +38,7 @@ public:
 	{
 		_name = new std::string(copy.GetName());
 		_noteParameters = new SynthNoteParameters(*copy.GetNoteParameters());
+		_synthVoiceSettings = new SignalSettings(*copy.GetSynthVoiceSettings());
 		_postProcessing = new SignalChainSettings(*copy.GetPostProcessing());
 		_signalProcessing = new SignalChainSettings(*copy.GetSignalChain());
 		_oscillatorParameters = new OscillatorParameters(*copy.GetOscillatorParameters());
@@ -45,6 +48,7 @@ public:
 	{
 		delete _name;
 		delete _noteParameters;
+		delete _synthVoiceSettings;
 		delete _signalProcessing;
 		delete _postProcessing;
 		delete _oscillatorParameters;
@@ -53,7 +57,7 @@ public:
 
 	std::string GetName() const { return *_name; }
 	SynthNoteParameters* GetNoteParameters() const { return _noteParameters; }
-
+	SignalSettings* GetSynthVoiceSettings() const { return _synthVoiceSettings; }
 	OscillatorParameters* GetOscillatorParameters() const { return _oscillatorParameters; }
 	Envelope* GetOscillatorEnvelope() const { return _oscillatorEnvelope; }
 
@@ -68,6 +72,7 @@ public:
 		bool isDirty = false;
 
 		isDirty |= !_noteParameters->IsEqual(settings->GetNoteParameters());
+		isDirty |= _synthVoiceSettings->Update(settings->GetSynthVoiceSettings(), false);	// no overwrite
 		isDirty |= _oscillatorParameters->Update(settings->GetOscillatorParameters());		
 		isDirty |= _oscillatorEnvelope->Update(settings->GetOscillatorEnvelope());
 		isDirty |= _postProcessing->Update(settings->GetPostProcessing(), true);			// overwrite
@@ -87,6 +92,7 @@ public:
 	{
 		return *_name == other->GetName() &&
 			_noteParameters->IsEqual(other->GetNoteParameters()) &&
+			_synthVoiceSettings->IsEqual(other->GetSynthVoiceSettings()) &&
 			_oscillatorParameters->IsEqual(other->GetOscillatorParameters()) &&
 			_oscillatorEnvelope->IsEqual(other->GetOscillatorEnvelope()) &&
 			_postProcessing->IsEqual(other->GetPostProcessing()) &&
@@ -102,6 +108,9 @@ public:
 
 		// Synth Note Mode
 		_noteParameters->Save(stream);
+
+		// Synth Voice Settings
+		_synthVoiceSettings->Save(stream);
 
 		// Oscillator Parameters
 		_oscillatorParameters->Save(stream);
@@ -123,6 +132,9 @@ public:
 		// Synth Note Parameters
 		_noteParameters->Read(stream);
 
+		// Synth Voice Settings
+		_synthVoiceSettings->Read(stream);
+
 		// Oscillator Parameters
 		_oscillatorParameters->Read(stream);
 
@@ -143,6 +155,9 @@ private:
 
 	// Oscillator
 	OscillatorParameters* _oscillatorParameters;
+
+	// Synth Voice (parameters)
+	SignalSettings* _synthVoiceSettings;
 
 	// Envelope
 	Envelope* _oscillatorEnvelope;
