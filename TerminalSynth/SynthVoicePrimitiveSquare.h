@@ -28,7 +28,7 @@ protected:
 	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) override
 	{
 		float sample = SignalFactoryCore::GenerateSquareSample(
-			this->GetFrequency(),
+			this->GetNextFrequency(frame, playbackTime),
 			this->GetSamplingRate(),
 			this->GetSignalHigh(),
 			this->GetSignalLow(),

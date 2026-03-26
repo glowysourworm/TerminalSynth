@@ -22,16 +22,6 @@ public:
 	{}
 	~SynthVoiceDirect() {};
 
-	virtual void NoteOn(int midiNumber, const PlaybackTime* playbackTime) override
-	{
-		SynthVoiceBase::NoteOn(midiNumber, playbackTime);
-	}
-
-	virtual void NoteOff(int midiNumber, const PlaybackTime* playbackTime)
-	{
-		SynthVoiceBase::NoteOff(midiNumber, playbackTime);
-	}
-
 protected:
 
 	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) = 0;

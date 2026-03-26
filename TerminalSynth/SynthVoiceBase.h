@@ -95,7 +95,12 @@ protected:
 	}
 
 	float GetSamplingRate() const { return _samplingRate; }
-	float GetFrequency() const { return _noteProcessor->GetFundamentalFrequency(); }
+	float GetFrequency() const { return _noteProcessor->GetFrequency(); }
+	float GetFundamentalFrequency() const { return _noteProcessor->GetFundamentalFrequency(); }
+	float GetNextFrequency(PlaybackFrame* frame, const PlaybackTime* playbackTime) const 
+	{
+		return _noteProcessor->GetNextFrequency(frame, playbackTime); 
+	}
 	float GetSignalHigh() const { return _oscillatorParameters->GetSignalHigh(); }
 	float GetSignalLow() const { return _oscillatorParameters->GetSignalLow(); }
 

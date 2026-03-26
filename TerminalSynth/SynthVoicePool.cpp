@@ -139,10 +139,10 @@ bool SynthVoicePool::CanEngageNextNote() const
 	switch (_noteMode)
 	{
 	case SynthNoteMode::Normal:
+	case SynthNoteMode::Arpeggiator:
 		return _engagedNotes->size() < _capacity;
 
-	case SynthNoteMode::Portamento:
-	case SynthNoteMode::Arpeggiator:
+	case SynthNoteMode::Portamento:	
 		return _engagedNotes->size() == 0;
 	
 	default:

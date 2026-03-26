@@ -36,16 +36,16 @@ public:
 		delete _voice;
 	};
 
-	void NoteOn(float frequency, const PlaybackTime* playbackTime) override
+	void NoteOn(int midiNumber, const PlaybackTime* playbackTime) override
 	{
-		SynthVoiceDirect::NoteOn(frequency, playbackTime);
+		SynthVoiceDirect::NoteOn(midiNumber, playbackTime);
 
-		_voice->noteOn(frequency, 1);
+		_voice->noteOn(this->GetFrequency(), 1);
 	}
 
-	void NoteOff(float frequency, const PlaybackTime* playbackTime) override
+	void NoteOff(int midiNumber, const PlaybackTime* playbackTime) override
 	{
-		SynthVoiceDirect::NoteOff(frequency, playbackTime);
+		SynthVoiceDirect::NoteOff(midiNumber, playbackTime);
 
 		_voice->noteOff(1);
 	}
