@@ -7,7 +7,6 @@
 #include "Synth.h"
 #include "SynthSettings.h"
 #include "SynthVoiceBase.h"
-#include "SynthVoiceFactory.h"
 #include "SynthVoicePool.h"
 
 Synth::Synth(const SynthSettings* configuration, unsigned int numberOfChannels, unsigned int samplingRate)

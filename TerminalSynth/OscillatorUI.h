@@ -404,7 +404,7 @@ void OscillatorUI::FromUI(OscillatorParameters* destination)
 
 	destination->SetOctave((unsigned int)ceil(octave));
 	destination->SetVoiceType((SynthVoiceType)_synthVoiceSelectedIndex->GetValue());
-	destination->SetPrimitiveVoiceType((PrimitiveSynthVoices)_synthVoiceSelectedIndex->GetValue());
+	destination->SetPrimitiveVoiceType((PrimitiveSynthVoices)_synthVoiceSimpleSelectedIndex->GetValue());
 	destination->SetTerminalVoiceType((TerminalSynthVoices)_synthVoiceOtherSelectedIndex->GetValue());
 	destination->SetStkVoiceType((StkSynthVoices)_synthVoiceStkSelectedIndex->GetValue());
 

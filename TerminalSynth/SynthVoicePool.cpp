@@ -23,14 +23,18 @@ SynthVoicePool::SynthVoicePool(SoundRegistry* soundRegistry, const SoundSettings
 	_disengagedNotes = new std::vector<SynthVoiceBase*>();
 	_inactiveNotes = new std::stack<SynthVoiceBase*>();
 
-	for (int index = 0; index < capacity; index++)
-	{
-		// MEMORY! ~SynthVoicePool
-		_inactiveNotes->push(SynthVoiceFactory::CreateSynthVoiceDirect(soundRegistry, soundSettings, playbackInfo));
-	}
+	ResetVoices(soundRegistry, soundSettings, playbackInfo);
 }
 
 SynthVoicePool::~SynthVoicePool()
+{
+	DisposeVoices();
+
+	delete _engagedNotes;
+	delete _disengagedNotes;
+	delete _inactiveNotes;
+}
+void SynthVoicePool::DisposeVoices()
 {
 	// Engaged
 	for (auto iter = _engagedNotes->begin(); iter != _engagedNotes->end(); ++iter)
@@ -39,12 +43,16 @@ SynthVoicePool::~SynthVoicePool()
 		delete iter->second;
 	}
 
+	_engagedNotes->clear();
+
 	// Disengaged
 	for (auto iter = _disengagedNotes->begin(); iter != _disengagedNotes->end(); ++iter)
 	{
 		// MEMORY! ~SynthVoiceBase
 		delete (*iter);
 	}
+
+	_disengagedNotes->clear();
 
 	// Inactive
 	while (_inactiveNotes->size() > 0)
@@ -54,13 +62,26 @@ SynthVoicePool::~SynthVoicePool()
 
 		_inactiveNotes->pop();
 	}
+}
+void SynthVoicePool::ResetVoices(SoundRegistry* effectRegistry, const SoundSettings* soundSettings, const PlaybackInfo* parameters)
+{
+	DisposeVoices();
 
-	delete _engagedNotes;
-	delete _disengagedNotes;
-	delete _inactiveNotes;
+	for (int index = 0; index < _capacity; index++)
+	{
+		// MEMORY! ~SynthVoicePool -> DisposeVoices
+		_inactiveNotes->push(SynthVoiceFactory::CreateSynthVoiceDirect(effectRegistry, soundSettings, parameters));
+	}
+
+	// Signals a voice change
+	_lastSynthVoiceHashCode = soundSettings->GetOscillatorParameters()->GetVoiceHashCode();
 }
 void SynthVoicePool::Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings, const PlaybackInfo* parameters)
 {
+	// Synth Voice Change
+	if (_lastSynthVoiceHashCode != soundSettings->GetOscillatorParameters()->GetVoiceHashCode())
+		ResetVoices(effectRegistry, soundSettings, parameters);
+
 	// Synth Note Mode
 	_noteMode = soundSettings->GetNoteParameters()->mode;
 

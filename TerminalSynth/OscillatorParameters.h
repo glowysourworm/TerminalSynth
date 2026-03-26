@@ -129,8 +129,9 @@ public:
 	void SetWaveshaperSidebandCents(float value) { _waveshaperSidebandCents = value; }
 	void SetWaveshaperRandomPhaseAmplitude(float value) { _waveshaperRandomPhaseAmplitude = value; }
 
-	// Creates a hash code for identifying the TYPE of oscillator (based only just enums and the sound bank names)
-	size_t GetHashCode() const
+	// Creates a hash code for identifying the parameters for a unique synth voice. This is used
+	// to signal that there has been a parameter change to re-cache the synth voice(s).
+	size_t GetVoiceHashCode() const
 	{
 		std::hash<int> intHasher;
 		std::hash<float> floatHasher;

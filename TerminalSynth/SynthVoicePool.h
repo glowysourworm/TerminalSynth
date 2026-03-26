@@ -74,9 +74,23 @@ public:
 
 private:
 
+	/// <summary>
+	/// Re-creates synth voice cache - all as inactive notes
+	/// </summary>
+	void ResetVoices(SoundRegistry* effectRegistry, const SoundSettings* soundSettings, const PlaybackInfo* parameters);
+
+	/// <summary>
+	/// Deletes all synth voice instances
+	/// </summary>
+	void DisposeVoices();
+
+private:
+
 	int _capacity;
 	SynthNoteMode _noteMode;
 	const PlaybackInfo* _playbackInfo;
+
+	size_t _lastSynthVoiceHashCode;
 
 	// Capacity-sized map, will hold notes up to the user capacity (should be 10, for 10 active voices)
 	std::map<int, SynthVoiceBase*>* _engagedNotes;
