@@ -1,5 +1,4 @@
 #pragma once
-#include <vector>
 
 #ifndef SYNTH_NOTE_QUEUE_H
 #define SYNTH_NOTE_QUEUE_H
@@ -9,17 +8,18 @@
 #include "PlaybackTime.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
-#include "SynthVoiceNote.h"
+#include "SynthVoiceBase.h"
 #include <functional>
 #include <map>
 #include <stack>
+#include <vector>
 
-class SynthVoiceNotePool
+class SynthVoicePool
 {
 public:
 
-	SynthVoiceNotePool(SoundRegistry* soundRegistry, const SoundSettings* soundSettings, const PlaybackInfo* playbackInfo, int capacity);
-	~SynthVoiceNotePool();
+	SynthVoicePool(SoundRegistry* soundRegistry, const SoundSettings* soundSettings, const PlaybackInfo* playbackInfo, int capacity);
+	~SynthVoicePool();
 
 	/// <summary>
 	/// Updates synth voices with new settings
@@ -64,7 +64,7 @@ public:
 
 public:
 
-	using SynthVoiceNotePoolIterator = std::function<void(const SynthVoiceNote* note, bool isEngaged)>;
+	using SynthVoiceNotePoolIterator = std::function<void(SynthVoiceBase* note, bool isEngaged)>;
 
 	/// <summary>
 	/// Iterates notes and provides a callback to process note synthesis. Also, prunes the note pool
@@ -79,13 +79,13 @@ private:
 	const PlaybackInfo* _playbackInfo;
 
 	// Capacity-sized map, will hold notes up to the user capacity (should be 10, for 10 active voices)
-	std::map<int, SynthVoiceNote*>* _engagedNotes;
+	std::map<int, SynthVoiceBase*>* _engagedNotes;
 
 	// N-sized map, will hold notes until they've dissipated
-	std::vector<SynthVoiceNote*>* _disengagedNotes;
+	std::vector<SynthVoiceBase*>* _disengagedNotes;
 
 	// M-sized map, will hold notes after they've dissipated
-	std::stack<SynthVoiceNote*>* _inactiveNotes;
+	std::stack<SynthVoiceBase*>* _inactiveNotes;
 };
 
 #endif

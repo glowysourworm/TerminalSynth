@@ -173,9 +173,6 @@ void SignalParameterUI::Initialize(const SignalParameter& initialValue)
 ftxui::Component SignalParameterUI::GetComponent()
 {
 	return _component;
-	//return ftxui::Renderer(_component, [&] {
-	//	return _component->Render();
-	//});
 }
 
 void SignalParameterUI::ServicePendingAction()

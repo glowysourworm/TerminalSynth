@@ -11,7 +11,6 @@
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
 #include "SynthVoiceDirect.h"
-#include "SynthVoiceNote.h"
 #include <cstdlib>
 
 /// <summary>
@@ -44,13 +43,7 @@ public:
 
 protected:
 
-	// Bad Pattern:  This override should not be needed
 	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) override
-	{
-		SynthVoiceDirect::SetFrameImpl(frame, playbackTime);
-	}
-
-	float GetSample(const SynthVoiceNote* note, const PlaybackTime* playbackTime) override
 	{
 		// https://en.wikipedia.org/wiki/Karplus%E2%80%93Strong_string_synthesis
 		//
@@ -61,10 +54,9 @@ protected:
 		// Pluck Time
 		float attackTime = 0.001;
 		float sample = 0;
-		float envelopeLevel = note->GetEnvelopeLevel(playbackTime);
 		
 		// Noise Attack:  The delay + filter will make the line dissipate
-		if (playbackTime->FromCursor(note->GetSamplingRate()) < attackTime)
+		if (playbackTime->FromCursor(this->GetSamplingRate()) < attackTime)
 		{
 			sample = ((float)rand() / (float)RAND_MAX);
 		}
@@ -74,11 +66,11 @@ protected:
 		}
 		
 		// Process Sample
-		PlaybackFrame frame(sample * envelopeLevel, sample * envelopeLevel);
-		_combFilter->SetFrame(&frame, playbackTime);
-		_lowPassFilter->SetFrame(&frame, playbackTime);
+		PlaybackFrame localFrame(sample, sample);
+		_combFilter->SetFrame(&localFrame, playbackTime);
+		_lowPassFilter->SetFrame(&localFrame, playbackTime);
 
-		return frame.GetLeft();
+		frame->SetFrame(frame);
 	}
 
 private:

@@ -30,12 +30,6 @@ public:
 	bool SetForFrame(const PlaybackTime& playbackTime, const SynthSettings* configuration) override;
 	bool WriteSample(PlaybackFrame& playbackFrame, const PlaybackTime& playbackTime, float gain, float leftRightBalance) override;
 
-	/// <summary>
-	/// Returns average output for specified channel from the last frame buffer write
-	/// </summary>
-	float GetOutputLeft() const;
-	float GetOutputRight() const;
-
 private:
 
 	using KeyCodeIterator = std::function<void(WindowsKeyCodes keyCode, int midiNumber, bool isPressed)>;

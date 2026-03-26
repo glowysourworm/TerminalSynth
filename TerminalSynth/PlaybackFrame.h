@@ -50,8 +50,8 @@ public:
 	{
 		if (_previouslySet)
 		{
-			_left += left /* 2.0f */;
-			_right += right /* / 2.0f */ ;
+			_left += left /* _squareRoot2 */;
+			_right += right /* _squareRoot2 */;
 		}
 		else
 			this->SetFrame(left, right);
@@ -86,6 +86,8 @@ protected:
 	bool GetPreviouslySet() const { return _previouslySet; }
 
 private:
+
+	const float _squareRoot2 = std::sqrtf(2);
 
 	float _left;
 	float _right;

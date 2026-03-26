@@ -10,7 +10,6 @@
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
 #include "SynthVoiceDirect.h"
-#include "SynthVoiceNote.h"
 
 class SynthVoicePrimitiveSquare : public SynthVoiceDirect
 {
@@ -26,22 +25,16 @@ public:
 
 protected:
 
-	// Bad Pattern:  This override should not be needed
 	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) override
 	{
-		SynthVoiceDirect::SetFrameImpl(frame, playbackTime);
-	}
-
-	float GetSample(const SynthVoiceNote* note, const PlaybackTime* playbackTime) override
-	{
 		float sample = SignalFactoryCore::GenerateSquareSample(
-			note->GetFrequency(),
-			note->GetSamplingRate(),
-			note->GetSignalHigh(),
-			note->GetSignalLow(),
+			this->GetFrequency(),
+			this->GetSamplingRate(),
+			this->GetSignalHigh(),
+			this->GetSignalLow(),
 			playbackTime);
 
-		return note->GetEnvelopeLevel(playbackTime) * sample;
+		frame->SetFrame(sample, sample);
 	}
 };
 

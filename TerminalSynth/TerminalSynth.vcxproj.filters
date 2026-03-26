@@ -165,7 +165,7 @@
     <ClCompile Include="SignalFactory.cpp">
       <Filter>Source Files\Signal</Filter>
     </ClCompile>
-    <ClCompile Include="SynthVoiceNotePool.cpp">
+    <ClCompile Include="SynthVoicePool.cpp">
       <Filter>Source Files\Synth</Filter>
     </ClCompile>
     <ClCompile Include="WaveTable.cpp">
@@ -512,11 +512,11 @@
     <ClInclude Include="SynthVoiceFactory.h">
       <Filter>Header Files\SynthVoice</Filter>
     </ClInclude>
-    <ClInclude Include="SynthVoiceNotePool.h">
+    <ClInclude Include="SynthVoicePool.h">
       <Filter>Header Files\SynthVoice</Filter>
     </ClInclude>
-    <ClInclude Include="SynthVoiceNote.h">
-      <Filter>Header Files\SynthVoice</Filter>
+    <ClInclude Include="SynthVoiceStkBeeThree.h">
+      <Filter>Header Files\SynthVoiceStk</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

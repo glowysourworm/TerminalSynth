@@ -11,6 +11,7 @@
 #include "SoundSettings.h"
 #include "SynthSettings.h"
 #include "SynthVoiceBase.h"
+#include "SynthVoicePool.h"
 
 // Class to define static piano notes and store their names / frequencies w.r.t. the SDL keyboard
 // defined inputs.
@@ -38,8 +39,8 @@ public:
 
 private:
 
-	// Synth Notes by Midi Number
-	SynthVoiceBase* _synthVoice;
+	// Synth Note Pool (maintains a small cache of notes) (these contain envelope, and note processor data)
+	SynthVoicePool* _notePool;
 
 	// Post-processing effects	
 	SignalChain* _postProcessing;

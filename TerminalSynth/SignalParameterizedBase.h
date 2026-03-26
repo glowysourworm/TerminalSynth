@@ -3,6 +3,7 @@
 #ifndef SIGNAL_PARAMETERIZED_BASE_H
 #define SIGNAL_PARAMETERIZED_BASE_H
 
+#include "Constant.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
 #include "PlaybackTime.h"
@@ -86,8 +87,17 @@ public:
 	/// </summary>
 	void SetFrame(PlaybackFrame* frame, const PlaybackTime* playbackTime) override
 	{
+		// Update Parameters (may have level dependence)
 		UpdateParameterAutomaters(frame, playbackTime);
+
+		// Set Frame (sub-class)
 		SetFrameImpl(frame, playbackTime);
+
+		// Overridden to provide output gain, or envelope
+		float output = GetOutputLevel(playbackTime);
+
+		// Set Output (Gain, Envelope, etc...)
+		frame->MultFrame(output, output);
 	}
 
 	/// <summary>
@@ -95,12 +105,19 @@ public:
 	/// </summary>
 	void AddFrame(PlaybackFrame* frame, const PlaybackTime* playbackTime) override
 	{
-		PlaybackFrame localFrame(*frame);
+		// Update Parameters (may have level dependence)
+		UpdateParameterAutomaters(frame, playbackTime);
 
-		UpdateParameterAutomaters(&localFrame, playbackTime);
+		PlaybackFrame localFrame(0, 0);
+
+		// Set Frame (sub-class) (starting with blank frame)
 		SetFrameImpl(&localFrame, playbackTime);
 
-		frame->AddFrame(localFrame.GetLeft(), localFrame.GetRight());
+		// Overridden to provide output gain, or envelope
+		float output = GetOutputLevel(playbackTime);
+
+		// Add Frame
+		frame->AddFrame(localFrame.GetLeft() * output, localFrame.GetRight() * output);
 	}
 
 	/// <summary>
@@ -190,6 +207,17 @@ protected:
 	/// Function to set the frame with the next sample
 	/// </summary>
 	virtual void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) = 0;
+
+	/// <summary>
+	/// This virtual function is to provide a way to override the output level, which is 
+	/// multiplied during sampling. So, one use for this was the Envelope - which is not
+	/// a universal "Signal" property. The default for this is set to SIGNAL_HIGH, which 
+	/// should be the line limit.
+	/// </summary>
+	virtual float GetOutputLevel(const PlaybackTime* playbackTime)
+	{
+		return SIGNAL_HIGH;
+	}
 
 	/// <summary>
 	/// Function to update parameter automaters before playback

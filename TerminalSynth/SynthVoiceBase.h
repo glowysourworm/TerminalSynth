@@ -3,15 +3,17 @@
 #ifndef SYNTH_VOICE_BASE_H
 #define SYNTH_VOICE_BASE_H
 
+#include "Envelope.h"
+#include "OscillatorParameters.h"
 #include "PlaybackFrame.h"
 #include "PlaybackInfo.h"
 #include "PlaybackTime.h"
 #include "SignalBase.h"
+#include "SignalChain.h"
 #include "SignalParameterizedBase.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
-#include "SynthVoiceNote.h"
-#include "SynthVoiceNotePool.h"
+#include "SynthNoteProcessor.h"
 
 class SynthVoiceBase : public SignalParameterizedBase
 {
@@ -24,32 +26,50 @@ public:
 	SynthVoiceBase(SoundRegistry* soundRegistry, const SoundSettings* settings, const PlaybackInfo* playbackInfo) 
 		: SignalParameterizedBase(*settings->GetSynthVoiceSettings())
 	{
-		_notePool = new SynthVoiceNotePool(soundRegistry, settings, playbackInfo, 10);
+		SignalChain filters;
+		filters.Initialize(soundRegistry, settings->GetSignalChain(), playbackInfo);
+
+		_samplingRate = playbackInfo->GetStreamInfo()->streamSampleRate;
+		_oscillatorParameters = new OscillatorParameters(*settings->GetOscillatorParameters());
+		_envelope = new Envelope(*settings->GetOscillatorEnvelope());
+		_filters = new SignalChain(filters);
+		_noteProcessor = new SynthNoteProcessor(settings, playbackInfo);
+
+		_filters->Initialize(soundRegistry, settings->GetSignalChain(), playbackInfo);
+		_noteProcessor->Initialize(playbackInfo);
 	}
 	~SynthVoiceBase()
 	{
-		delete _notePool;
+		delete _oscillatorParameters;
+		delete _envelope;
+		delete _filters;
+		delete _noteProcessor;
 	}
 
-	bool IsEngaged(int midiNumber) const { return _notePool->IsEngaged(midiNumber); }
-	bool CanEngageNextNote() const { return _notePool->CanEngageNextNote(); }
-	bool HasEngagedNotes() const { return _notePool->HasEngagedNotes(); }
-
-	virtual bool HasOutput(const PlaybackTime* playbackTime) const
+	virtual bool HasOutput(const PlaybackTime* playbackTime) const override
 	{
-		return _notePool->HasOutput(playbackTime);
+		return _envelope->HasOutput(playbackTime);
 	}
+
+	// Override to update parameters (for parameter automation)
+	virtual void UpdateParameter(int index, float value) override
+	{
+		
+	}
+
 	virtual void NoteOn(int midiNumber, const PlaybackTime* playbackTime)
 	{
 		SignalBase::Engage(playbackTime);
-		
-		_notePool->NoteOn(midiNumber, playbackTime);
+
+		_noteProcessor->NoteOn(midiNumber, playbackTime);
+		_envelope->Engage(playbackTime);
 	}
 	virtual void NoteOff(int midiNumber, const PlaybackTime* playbackTime)
 	{
 		SignalBase::DisEngage(playbackTime);
 
-		_notePool->NoteOff(midiNumber, playbackTime);
+		_envelope->DisEngage(playbackTime);
+		_noteProcessor->NoteOff(midiNumber, playbackTime);
 	}
 	virtual void Clear()
 	{
@@ -58,31 +78,35 @@ public:
 
 	virtual void Update(SoundRegistry* soundRegistry, const SoundSettings* settings, const PlaybackInfo* playbackInfo)
 	{
-		_notePool->Update(soundRegistry, settings, playbackInfo);
+		_samplingRate = playbackInfo->GetStreamInfo()->streamSampleRate;
+		_oscillatorParameters->Update(settings->GetOscillatorParameters());
+		_envelope->Update(settings->GetOscillatorEnvelope());
+		_filters->Update(soundRegistry, settings->GetSignalChain());
+		_noteProcessor->Update(settings);
 	}
 
 protected:
 
-	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) override
-	{
-		// Synth Note(s):  Mix notes during iteration - calling sub-class GetSample functions.
-		//
-		_notePool->IterateNotes(playbackTime, [&](const SynthVoiceNote* note, bool isEngaged) {
-			
-			float sample = this->GetSample(note, playbackTime);
+	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) = 0;
 
-			frame->AddFrame(sample, sample);
-		});
+	float GetOutputLevel(const PlaybackTime* playbackTime) override
+	{
+		return _envelope->GetEnvelopeLevel(playbackTime);
 	}
 
-	/// <summary>
-	/// Gets a sample for the synth voice for the provided note
-	/// </summary>
-	virtual float GetSample(const SynthVoiceNote* note, const PlaybackTime* playbackTime) = 0;
+	float GetSamplingRate() const { return _samplingRate; }
+	float GetFrequency() const { return _noteProcessor->GetFundamentalFrequency(); }
+	float GetSignalHigh() const { return _oscillatorParameters->GetSignalHigh(); }
+	float GetSignalLow() const { return _oscillatorParameters->GetSignalLow(); }
 
 private:
 
-	SynthVoiceNotePool* _notePool;
+	float _samplingRate;
+
+	OscillatorParameters* _oscillatorParameters;
+	Envelope* _envelope;
+	SignalChain* _filters;
+	SynthNoteProcessor* _noteProcessor;
 };
 
 #endif

@@ -22,34 +22,19 @@ public:
 	{}
 	~SynthVoiceDirect() {};
 
-	void NoteOn(int midiNumber, const PlaybackTime* playbackTime) override
+	virtual void NoteOn(int midiNumber, const PlaybackTime* playbackTime) override
 	{
 		SynthVoiceBase::NoteOn(midiNumber, playbackTime);
 	}
 
-	void NoteOff(int midiNumber, const PlaybackTime* playbackTime)
+	virtual void NoteOff(int midiNumber, const PlaybackTime* playbackTime)
 	{
 		SynthVoiceBase::NoteOff(midiNumber, playbackTime);
 	}
 
 protected:
 
-	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) override
-	{
-		SynthVoiceBase::SetFrameImpl(frame, playbackTime);
-	}
-
-	// Override to create a class with parameter automation
-	virtual void UpdateParameter(int index, float value)
-	{
-		
-	}
-
-	// Override to handle synth voice envelopes
-	virtual bool HasOutput(const PlaybackTime* playbackTime) const
-	{
-		return true;
-	};
+	void SetFrameImpl(PlaybackFrame* frame, const PlaybackTime* playbackTime) = 0;
 };
 
 #endif

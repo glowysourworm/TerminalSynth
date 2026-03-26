@@ -5,49 +5,51 @@
 #include "PlaybackTime.h"
 #include "SoundRegistry.h"
 #include "SoundSettings.h"
-#include "SynthVoiceNote.h"
-#include "SynthVoiceNotePool.h"
+#include "SynthVoiceBase.h"
+#include "SynthVoiceFactory.h"
+#include "SynthVoicePool.h"
 #include <exception>
 #include <map>
 #include <stack>
 #include <utility>
 #include <vector>
 
-SynthVoiceNotePool::SynthVoiceNotePool(SoundRegistry* soundRegistry, const SoundSettings* soundSettings, const PlaybackInfo* playbackInfo, int capacity)
+SynthVoicePool::SynthVoicePool(SoundRegistry* soundRegistry, const SoundSettings* soundSettings, const PlaybackInfo* playbackInfo, int capacity)
 {
 	_capacity = capacity;
 	_noteMode = soundSettings->GetNoteParameters()->mode;
 	_playbackInfo = playbackInfo;
-	_engagedNotes = new std::map<int, SynthVoiceNote*>();
-	_disengagedNotes = new std::vector<SynthVoiceNote*>();
-	_inactiveNotes = new std::stack<SynthVoiceNote*>();
+	_engagedNotes = new std::map<int, SynthVoiceBase*>();
+	_disengagedNotes = new std::vector<SynthVoiceBase*>();
+	_inactiveNotes = new std::stack<SynthVoiceBase*>();
 
 	for (int index = 0; index < capacity; index++)
 	{
-		_inactiveNotes->push(new SynthVoiceNote(soundRegistry, soundSettings, playbackInfo, 0));
+		// MEMORY! ~SynthVoicePool
+		_inactiveNotes->push(SynthVoiceFactory::CreateSynthVoiceDirect(soundRegistry, soundSettings, playbackInfo));
 	}
 }
 
-SynthVoiceNotePool::~SynthVoiceNotePool()
+SynthVoicePool::~SynthVoicePool()
 {
 	// Engaged
 	for (auto iter = _engagedNotes->begin(); iter != _engagedNotes->end(); ++iter)
 	{
-		// MEMORY! ~SynthVoiceNote
+		// MEMORY! ~SynthVoiceBase
 		delete iter->second;
 	}
 
 	// Disengaged
 	for (auto iter = _disengagedNotes->begin(); iter != _disengagedNotes->end(); ++iter)
 	{
-		// MEMORY! ~SynthVoiceNote
+		// MEMORY! ~SynthVoiceBase
 		delete (*iter);
 	}
 
 	// Inactive
 	while (_inactiveNotes->size() > 0)
 	{
-		// MEMORY! ~SynthVoiceNote
+		// MEMORY! ~SynthVoiceBase
 		delete _inactiveNotes->top();
 
 		_inactiveNotes->pop();
@@ -57,7 +59,7 @@ SynthVoiceNotePool::~SynthVoiceNotePool()
 	delete _disengagedNotes;
 	delete _inactiveNotes;
 }
-void SynthVoiceNotePool::Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings, const PlaybackInfo* parameters)
+void SynthVoicePool::Update(SoundRegistry* effectRegistry, const SoundSettings* soundSettings, const PlaybackInfo* parameters)
 {
 	// Synth Note Mode
 	_noteMode = soundSettings->GetNoteParameters()->mode;
@@ -75,7 +77,7 @@ void SynthVoiceNotePool::Update(SoundRegistry* effectRegistry, const SoundSettin
 	}
 
 	// Inactive
-	std::stack<SynthVoiceNote*> tempStack;
+	std::stack<SynthVoiceBase*> tempStack;
 
 	while (_inactiveNotes->size() > 0)
 	{
@@ -90,7 +92,7 @@ void SynthVoiceNotePool::Update(SoundRegistry* effectRegistry, const SoundSettin
 		tempStack.pop();
 	}
 }
-bool SynthVoiceNotePool::HasOutput(const PlaybackTime* playbackTime)
+bool SynthVoicePool::HasOutput(const PlaybackTime* playbackTime)
 {
 	// Engaged
 	for (auto iter = _engagedNotes->begin(); iter != _engagedNotes->end(); ++iter)
@@ -107,11 +109,11 @@ bool SynthVoiceNotePool::HasOutput(const PlaybackTime* playbackTime)
 			return true;
 	}
 }
-bool SynthVoiceNotePool::HasEngagedNotes() const
+bool SynthVoicePool::HasEngagedNotes() const
 {
 	return _engagedNotes->size() > 0;
 }
-bool SynthVoiceNotePool::CanEngageNextNote() const
+bool SynthVoicePool::CanEngageNextNote() const
 {
 	switch (_noteMode)
 	{
@@ -126,11 +128,11 @@ bool SynthVoiceNotePool::CanEngageNextNote() const
 		throw new std::exception("Unhandled Synth Note Mode:  SynthVoiceNotePool.cpp");
 	}
 }
-bool SynthVoiceNotePool::IsEngaged(int midiNumber) const
+bool SynthVoicePool::IsEngaged(int midiNumber) const
 {
 	return _engagedNotes->contains(midiNumber);
 }
-bool SynthVoiceNotePool::NoteOn(int midiNumber, const PlaybackTime* playbackTime)
+bool SynthVoicePool::NoteOn(int midiNumber, const PlaybackTime* playbackTime)
 {
 	// Already Engaged
 	if (_engagedNotes->contains(midiNumber))
@@ -152,7 +154,7 @@ bool SynthVoiceNotePool::NoteOn(int midiNumber, const PlaybackTime* playbackTime
 		return false;
 }
 
-void SynthVoiceNotePool::NoteOff(int midiNumber, const PlaybackTime* playbackTime)
+void SynthVoicePool::NoteOff(int midiNumber, const PlaybackTime* playbackTime)
 {
 	// Not Engaged
 	if (!_engagedNotes->contains(midiNumber))
@@ -170,7 +172,7 @@ void SynthVoiceNotePool::NoteOff(int midiNumber, const PlaybackTime* playbackTim
 	}
 }
 
-void SynthVoiceNotePool::IterateNotes(const PlaybackTime* playbackTime, const SynthVoiceNotePoolIterator& callback)
+void SynthVoicePool::IterateNotes(const PlaybackTime* playbackTime, const SynthVoiceNotePoolIterator& callback)
 {
 	// Engaged
 	for (auto iter = _engagedNotes->begin(); iter != _engagedNotes->end(); ++iter)
